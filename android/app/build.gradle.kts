@@ -7,7 +7,12 @@ plugins {
 
 android {
     namespace = "dev.otomo.life_on_graph"
-    compileSdk = flutter.compileSdkVersion
+    // Health Connect / 依存プラグイン (health, flutter_secure_storage 等) が要求する
+    // AndroidX ライブラリのコンパイルに必要なため compileSdk を明示する。
+    // 技術調査資料の推奨値は 34 だが、現行プラグイン群 (health 13 が依存する
+    // androidx.health.connect:connect-client, flutter_secure_storage, device_info_plus)
+    // が compileSdk 36 を要求するため 36 を採用する。
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -22,10 +27,10 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.otomo.life_on_graph"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Health Connect SDK の動作要件 (Android 8.0 / API 26 以上) を満たすため
+        // minSdk を 26 に固定する (技術調査資料 §2)。
+        minSdk = 26
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

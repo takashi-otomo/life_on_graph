@@ -32,11 +32,10 @@ unlinked.ds
 unlinked_spec.ds
 
 # Android related
-**/android/**/gradle-wrapper.jar
+# 注: Gradle ラッパー (gradle-wrapper.jar / gradlew / gradlew.bat) は
+# 再現性のあるビルドのため意図的にコミットする (ignore しない)。
 .gradle/
 **/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties

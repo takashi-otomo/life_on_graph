@@ -1,8 +1,7 @@
-gradle-wrapper.jar
+# Gradle ラッパー (gradlew / gradlew.bat / gradle-wrapper.jar) は
+# 再現性のあるビルドのため意図的にコミットする。
 /.gradle
 /captures/
-/gradlew
-/gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/

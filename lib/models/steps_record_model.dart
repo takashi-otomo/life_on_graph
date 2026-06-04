@@ -35,4 +35,12 @@ class StepsRecordModel extends HiveObject {
   /// 書き込み元アプリのパッケージ名。
   @HiveField(4)
   final String sourcePackage;
+
+  /// Hive 上の一意キー。
+  ///
+  /// 歩数レコードは通常一意な UUID を持つが、集計区間の異なる同一 UUID 由来データの
+  /// 取りこぼしを防ぐため、UUID に区間 (開始・終了ミリ秒) を組み合わせた複合キーを用いる。
+  /// 同一区間の再取得は同じキーとなり重複排除が成立する。
+  String get hiveKey =>
+      '$uuid:${startTime.millisecondsSinceEpoch}:${endTime.millisecondsSinceEpoch}';
 }

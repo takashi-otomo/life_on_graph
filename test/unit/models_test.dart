@@ -66,6 +66,58 @@ void main() {
     expect(restored.sourcePackage, 'com.example.phone');
   });
 
+  group('hiveKey 複合キー (Health Connect の親 UUID 共有対策)', () {
+    test('同一セッション(同一uuid)の異なる睡眠ステージは別キーになる', () {
+      final session = 'session-1';
+      final deep = SleepRecordModel(
+        uuid: session,
+        startTime: DateTime(2026, 6, 1, 23),
+        endTime: DateTime(2026, 6, 1, 23, 40),
+        stageType: 'deep',
+        sourcePackage: 'pkg',
+      );
+      final rem = SleepRecordModel(
+        uuid: session,
+        startTime: DateTime(2026, 6, 1, 23, 40),
+        endTime: DateTime(2026, 6, 2, 0, 20),
+        stageType: 'rem',
+        sourcePackage: 'pkg',
+      );
+
+      // 親 UUID が同じでもステージ・時刻が異なれば別キー → 1件に潰れない。
+      expect(deep.hiveKey, isNot(rem.hiveKey));
+    });
+
+    test('同一の睡眠セグメントを再生成すると同じキー (重複排除が成立)', () {
+      SleepRecordModel seg() => SleepRecordModel(
+        uuid: 'session-1',
+        startTime: DateTime(2026, 6, 1, 23),
+        endTime: DateTime(2026, 6, 1, 23, 40),
+        stageType: 'deep',
+        sourcePackage: 'pkg',
+      );
+      expect(seg().hiveKey, seg().hiveKey);
+    });
+
+    test('同一シリーズ(同一uuid)の異なる心拍サンプルは別キーになる', () {
+      final s1 = HeartRateRecordModel(
+        uuid: 'series-1',
+        startTime: DateTime(2026, 6, 1, 3, 0, 0),
+        endTime: DateTime(2026, 6, 1, 3, 0, 0),
+        beatsPerMinute: 58,
+        sourcePackage: 'pkg',
+      );
+      final s2 = HeartRateRecordModel(
+        uuid: 'series-1',
+        startTime: DateTime(2026, 6, 1, 3, 0, 30),
+        endTime: DateTime(2026, 6, 1, 3, 0, 30),
+        beatsPerMinute: 61,
+        sourcePackage: 'pkg',
+      );
+      expect(s1.hiveKey, isNot(s2.hiveKey));
+    });
+  });
+
   test('HeartRateRecordModel が Hive に保存・復元できる (瞬時値)', () async {
     final box = await Hive.openBox<HeartRateRecordModel>('hr_test');
     final ts = DateTime(2026, 6, 1, 3, 15, 30);

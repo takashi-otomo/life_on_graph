@@ -35,4 +35,12 @@ class HeartRateRecordModel extends HiveObject {
   /// 書き込み元アプリのパッケージ名。
   @HiveField(4)
   final String sourcePackage;
+
+  /// Hive 上の一意キー。
+  ///
+  /// Health Connect の `HeartRateRecord` はシリーズであり、配下の各サンプルは
+  /// 個別の ID を持たず親レコードの UUID を共有する。`uuid` 単独をキーにすると
+  /// 同一シリーズの複数サンプルが 1 点に潰れるため、親 UUID にサンプル時刻 (ミリ秒) を
+  /// 組み合わせた複合キーを用いる。
+  String get hiveKey => '$uuid:${startTime.millisecondsSinceEpoch}';
 }

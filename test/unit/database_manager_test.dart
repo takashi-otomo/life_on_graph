@@ -71,20 +71,44 @@ void main() {
     expect(db.heartRateBox.get('h1')!.beatsPerMinute, 60);
   });
 
-  test('同一 uuid の再 put は上書きされ重複が増えない (Deduplication)', () async {
-    SleepRecordModel sleep(String stage) => SleepRecordModel(
+  test('同一セグメントの再取得は hiveKey 上書きで重複が増えない (Deduplication)', () async {
+    SleepRecordModel sleep() => SleepRecordModel(
       uuid: 'dup',
       startTime: DateTime(2026, 6, 1, 23),
       endTime: DateTime(2026, 6, 2, 6),
-      stageType: stage,
+      stageType: 'deep',
       sourcePackage: 'pkg.a',
     );
 
-    await db.sleepBox.put('dup', sleep('light'));
-    await db.sleepBox.put('dup', sleep('deep'));
+    final a = sleep();
+    final b = sleep();
+    await db.sleepBox.put(a.hiveKey, a);
+    await db.sleepBox.put(b.hiveKey, b);
 
     expect(db.sleepBox.length, 1);
-    expect(db.sleepBox.get('dup')!.stageType, 'deep');
+  });
+
+  test('同一セッションの複数ステージは hiveKey で別管理され潰れない', () async {
+    final deep = SleepRecordModel(
+      uuid: 'session-x',
+      startTime: DateTime(2026, 6, 1, 23),
+      endTime: DateTime(2026, 6, 1, 23, 40),
+      stageType: 'deep',
+      sourcePackage: 'pkg.a',
+    );
+    final rem = SleepRecordModel(
+      uuid: 'session-x',
+      startTime: DateTime(2026, 6, 1, 23, 40),
+      endTime: DateTime(2026, 6, 2, 0, 20),
+      stageType: 'rem',
+      sourcePackage: 'pkg.a',
+    );
+
+    await db.sleepBox.put(deep.hiveKey, deep);
+    await db.sleepBox.put(rem.hiveKey, rem);
+
+    // 親 UUID は同じだが 2 ステージとも保持される。
+    expect(db.sleepBox.length, 2);
   });
 
   test('メタデータボックスに同期タイムスタンプを保存・取得できる', () async {

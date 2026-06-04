@@ -37,6 +37,7 @@ class DatabaseManager {
   late Box<dynamic> _metadataBox;
 
   bool _initialized = false;
+  Future<void>? _initFuture;
 
   /// 暗号化された睡眠レコードボックス。
   Box<SleepRecordModel> get sleepBox => _sleepBox;
@@ -58,9 +59,19 @@ class DatabaseManager {
   /// [path] を指定した場合は `Hive.init(path)` を用いる (テストや非 Flutter 環境向け)。
   /// 省略時は `Hive.initFlutter()` を用いてアプリのドキュメントディレクトリを使う。
   /// [keyStore] を省略すると本番用の [FlutterSecureKeyStore] を使用する。
-  Future<void> initialize({String? path, SecureKeyStore? keyStore}) async {
-    if (_initialized) return;
+  ///
+  /// 並行して複数回呼び出されても初期化は一度だけ実行される (進行中の Future を
+  /// メモ化)。これによりコールドスタート時に異なる暗号鍵が二重生成される競合を防ぐ。
+  Future<void> initialize({String? path, SecureKeyStore? keyStore}) {
+    if (_initialized) return Future<void>.value();
+    return _initFuture ??= _doInitialize(path: path, keyStore: keyStore)
+        .whenComplete(() {
+          // 失敗時は次回の再初期化を許可するためメモ化をリセットする。
+          if (!_initialized) _initFuture = null;
+        });
+  }
 
+  Future<void> _doInitialize({String? path, SecureKeyStore? keyStore}) async {
     if (path != null) {
       Hive.init(path);
     } else {
@@ -95,6 +106,7 @@ class DatabaseManager {
     if (!_initialized) return;
     await Hive.close();
     _initialized = false;
+    _initFuture = null;
   }
 
   void _registerAdapters() {

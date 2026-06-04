@@ -37,4 +37,14 @@ class SleepRecordModel extends HiveObject {
   /// 書き込み元アプリのパッケージ名 (データ競合の優先順位判定に使用)。
   @HiveField(4)
   final String sourcePackage;
+
+  /// Hive 上の一意キー。
+  ///
+  /// Health Connect の睡眠ステージは親 `SleepSessionRecord` の UUID を共有し、
+  /// ステージ個別の ID を持たない。そのため `uuid` 単独をキーにすると同一セッション内の
+  /// 複数ステージが 1 件に潰れてしまう。これを防ぐため親 UUID にステージ種別と
+  /// 開始・終了時刻 (ミリ秒) を組み合わせた複合キーを用いる。
+  /// 同一セグメントの再取得は同じキーになるため重複排除 (Deduplication) も成立する。
+  String get hiveKey =>
+      '$uuid:$stageType:${startTime.millisecondsSinceEpoch}:${endTime.millisecondsSinceEpoch}';
 }

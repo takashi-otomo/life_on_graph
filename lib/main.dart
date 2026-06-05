@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_constants.dart';
+import 'core/database_manager.dart';
 import 'features/dashboard/dashboard_view.dart';
 
 /// アプリのエントリポイント。
 ///
-/// 現時点 (M0) ではローカル DB 初期化前のスケルトンであり、後続のフェーズ
-/// (M2 で `DatabaseManager().initialize()` を追加) で初期化処理を組み込む。
-void main() {
+/// 暗号化ローカル DB (Hive) を起動前に初期化し、ローカルファーストな描画に備える。
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseManager().initialize();
   runApp(const ProviderScope(child: LifeOnGraphApp()));
 }
 

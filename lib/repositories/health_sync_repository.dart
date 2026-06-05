@@ -103,6 +103,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   /// 初回バックフィル日数 (設計doc 8 章)。
   static const int backfillDays = AppConstants.backfillDays;
 
+  /// 履歴権限付与時の初回バックフィル日数。
+  static const int historyBackfillDays = AppConstants.historyBackfillDays;
+
   /// `app_sync_metadata` 上の最終同期時刻キー (ミリ秒エポック)。
   static const String lastSyncTimeKey = 'last_sync_time';
 
@@ -169,15 +172,19 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   @override
   SyncWindow computeSyncWindow(DateTime now) {
     final int lastSyncMs = _lastSyncMs();
-    final DateTime floor = now.subtract(const Duration(days: backfillDays));
     final DateTime start;
     if (lastSyncMs <= 0) {
-      // 初回バックフィルは過去 30 日。
-      start = floor;
+      // 初回バックフィル。履歴権限ありなら遡及範囲を拡張する (T-304)。
+      // Health Connect の 30 日制限は権限付与時点が起点のため、フォールバック
+      // (30 日クランプ) を適用するのはこの初回境界のみとする。
+      final int days = _historyAuthorized ? historyBackfillDays : backfillDays;
+      start = now.subtract(Duration(days: days));
     } else {
-      final DateTime last = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
-      // 履歴権限ありなら 30 日以前も遡る。なければ 30 日を下限にクランプ (T-304)。
-      start = _historyAuthorized ? last : (last.isBefore(floor) ? floor : last);
+      // 付与後の差分は保存済み last_sync_time をそのまま開始に用いる。
+      // 付与後に書かれたデータは 30 日を超えても読めるため、移動する 30 日床へ
+      // クランプすると長期間未起動・部分失敗後の再開で恒久的な欠損を生む。
+      // よって差分ではクランプしない (P1-1)。
+      start = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
     }
     return SyncWindow(start: start, end: now);
   }

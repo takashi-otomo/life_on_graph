@@ -86,14 +86,23 @@ void main() {
       expect(window.end, now);
     });
 
-    test('履歴権限なしではバックフィルが 30 日を超えない', () async {
-      // 60 日前の last_sync_time でも 30 日にクランプされる。
+    test('差分は last_sync_time を維持し移動 30 日床にクランプしない (P1-1)', () async {
+      // 付与後に書かれたデータは 30 日超でも読めるため、60 日前の last_sync_time でも
+      // クランプせずそのまま開始に用いる (恒久的なデータ欠損を防ぐ)。
       final now = DateTime(2026, 6, 5, 12);
       final old = now.subtract(const Duration(days: 60));
       await db.metadataBox.put(
         HealthSyncRepositoryImpl.lastSyncTimeKey,
         old.millisecondsSinceEpoch,
       );
+      final window = repo(FakeHealthClient()).computeSyncWindow(now);
+
+      expect(window.start, old);
+    });
+
+    test('初回・履歴権限なしのバックフィルは 30 日に制限される', () {
+      final now = DateTime(2026, 6, 5, 12);
+      // last_sync_time 未設定 (== 0) の初回。
       final window = repo(FakeHealthClient()).computeSyncWindow(now);
 
       expect(window.start, now.subtract(const Duration(days: 30)));
@@ -298,24 +307,20 @@ void main() {
       expect(client.historyRequestCount, 0);
     });
 
-    test('履歴権限ありではバックフィルが 30 日以前へ拡張される', () async {
+    test('初回・履歴権限ありでバックフィルが 365 日へ拡張される (P1-2)', () async {
+      // 新規ユーザーが初回同期前に履歴権限を許可したケース (last_sync_time == 0)。
       final now = DateTime(2026, 6, 5, 12);
-      final old = now.subtract(const Duration(days: 60));
-      await setLastSync(old);
       final client = FakeHealthClient(historyAlreadyAuthorized: true);
       final r = repo(client);
 
       await r.ensureHistoryPermission();
       final window = r.computeSyncWindow(now);
 
-      // クランプされず 60 日前の last_sync_time から取得する。
-      expect(window.start, old);
+      expect(window.start, now.subtract(const Duration(days: 365)));
     });
 
-    test('履歴権限拒否時は 30 日に制限され例外が出ない', () async {
+    test('初回・履歴権限拒否時は 30 日に制限され例外が出ない', () async {
       final now = DateTime(2026, 6, 5, 12);
-      final old = now.subtract(const Duration(days: 60));
-      await setLastSync(old);
       final client = FakeHealthClient(
         historyAlreadyAuthorized: false,
         historyRequestResult: false,
@@ -325,6 +330,19 @@ void main() {
       expect(await r.ensureHistoryPermission(), isFalse);
       final window = r.computeSyncWindow(now);
       expect(window.start, now.subtract(const Duration(days: 30)));
+    });
+
+    test('履歴権限ありでも差分 (last_sync_time>0) は保存済み値をそのまま使う', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final last = now.subtract(const Duration(days: 60));
+      await setLastSync(last);
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+
+      await r.ensureHistoryPermission();
+      final window = r.computeSyncWindow(now);
+
+      expect(window.start, last);
     });
 
     test('履歴権限 API が例外でも 30 日フォールバックする', () async {

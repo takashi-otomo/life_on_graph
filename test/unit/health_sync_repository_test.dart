@@ -209,6 +209,34 @@ void main() {
       );
     });
 
+    test('異なる uuid のレコードは別々に共存して保存される', () async {
+      final t = DateTime(2026, 6, 5, 8);
+      final client = FakeHealthClient(
+        dataByType: {
+          HealthDataType.STEPS: [
+            fakePoint(
+              uuid: 'step-a',
+              type: HealthDataType.STEPS,
+              from: t,
+              to: t.add(const Duration(hours: 1)),
+              value: 100,
+            ),
+            fakePoint(
+              uuid: 'step-b',
+              type: HealthDataType.STEPS,
+              from: t.add(const Duration(hours: 1)),
+              to: t.add(const Duration(hours: 2)),
+              value: 200,
+            ),
+          ],
+        },
+      );
+
+      await repo(client).sync(now: DateTime(2026, 6, 5, 12));
+
+      expect(db.stepsBox.length, 2);
+    });
+
     test('1 種別の取得失敗が他種別の保存を阻害しない', () async {
       final t = DateTime(2026, 6, 5, 8);
       final client = FakeHealthClient(
@@ -240,6 +268,228 @@ void main() {
         ),
         0,
       );
+    });
+  });
+
+  group('T-304 履歴権限フローとフォールバック', () {
+    Future<void> setLastSync(DateTime t) => db.metadataBox.put(
+      HealthSyncRepositoryImpl.lastSyncTimeKey,
+      t.millisecondsSinceEpoch,
+    );
+
+    test('未付与時は requestHealthDataHistoryAuthorization が呼ばれる', () async {
+      final client = FakeHealthClient(
+        historyAlreadyAuthorized: false,
+        historyRequestResult: true,
+      );
+      final r = repo(client);
+
+      expect(await r.ensureHistoryPermission(), isTrue);
+      expect(client.historyRequestCount, 1);
+      expect(r.isHistoryAuthorized, isTrue);
+    });
+
+    test('既に許可済みなら権限ダイアログを再表示しない', () async {
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+
+      expect(await r.ensureHistoryPermission(), isTrue);
+      // 追加要求は呼ばれない。
+      expect(client.historyRequestCount, 0);
+    });
+
+    test('履歴権限ありではバックフィルが 30 日以前へ拡張される', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final old = now.subtract(const Duration(days: 60));
+      await setLastSync(old);
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+
+      await r.ensureHistoryPermission();
+      final window = r.computeSyncWindow(now);
+
+      // クランプされず 60 日前の last_sync_time から取得する。
+      expect(window.start, old);
+    });
+
+    test('履歴権限拒否時は 30 日に制限され例外が出ない', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final old = now.subtract(const Duration(days: 60));
+      await setLastSync(old);
+      final client = FakeHealthClient(
+        historyAlreadyAuthorized: false,
+        historyRequestResult: false,
+      );
+      final r = repo(client);
+
+      expect(await r.ensureHistoryPermission(), isFalse);
+      final window = r.computeSyncWindow(now);
+      expect(window.start, now.subtract(const Duration(days: 30)));
+    });
+
+    test('履歴権限 API が例外でも 30 日フォールバックする', () async {
+      final client = FakeHealthClient(throwOnHistory: true);
+      final r = repo(client);
+
+      expect(await r.ensureHistoryPermission(), isFalse);
+      expect(r.isHistoryAuthorized, isFalse);
+    });
+  });
+
+  group('T-305 差分極小時のクエリスキップ', () {
+    Future<void> setLastSync(DateTime t) => db.metadataBox.put(
+      HealthSyncRepositoryImpl.lastSyncTimeKey,
+      t.millisecondsSinceEpoch,
+    );
+
+    test('5 分未満の経過では getHealthDataFromTypes が呼ばれずスキップする', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      await setLastSync(now.subtract(const Duration(minutes: 4)));
+      final client = FakeHealthClient();
+
+      final outcome = await repo(client).sync(now: now);
+
+      expect(outcome.skipped, isTrue);
+      expect(client.queriedWindows, isEmpty);
+    });
+
+    test('スキップ時は last_sync_time が更新されない', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final last = now.subtract(const Duration(minutes: 4));
+      await setLastSync(last);
+
+      await repo(FakeHealthClient()).sync(now: now);
+
+      expect(
+        db.metadataBox.get(HealthSyncRepositoryImpl.lastSyncTimeKey),
+        last.millisecondsSinceEpoch,
+      );
+    });
+
+    test('境界 5 分ちょうどは通常通り差分取得が走る', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      await setLastSync(now.subtract(const Duration(minutes: 5)));
+      final client = FakeHealthClient();
+
+      final outcome = await repo(client).sync(now: now);
+
+      expect(outcome.skipped, isFalse);
+      expect(client.queriedWindows, isNotEmpty);
+    });
+
+    test('初回 (last_sync_time == 0) はスキップされずバックフィルする', () async {
+      final client = FakeHealthClient();
+      final outcome = await repo(client).sync(now: DateTime(2026, 6, 5, 12));
+
+      expect(outcome.skipped, isFalse);
+      expect(client.queriedWindows, isNotEmpty);
+    });
+
+    test('force 指定時は閾値未満でも強制同期する', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      await setLastSync(now.subtract(const Duration(minutes: 1)));
+      final client = FakeHealthClient();
+
+      final outcome = await repo(client).sync(now: now, force: true);
+
+      expect(outcome.skipped, isFalse);
+      expect(client.queriedWindows, isNotEmpty);
+    });
+  });
+
+  group('T-306 重複排除 (UUID 上書き) 各ボックス', () {
+    HealthDataPoint sleepDeep(DateTime from, DateTime to, {String s = 'pkg'}) =>
+        fakePoint(
+          uuid: 'sleep-dup',
+          type: HealthDataType.SLEEP_DEEP,
+          from: from,
+          to: to,
+          sourceName: s,
+        );
+
+    test('睡眠: 同一 uuid・同一区間の更新は最新 sourcePackage で上書きされる', () async {
+      final from = DateTime(2026, 6, 4, 23);
+      final to = from.add(const Duration(minutes: 40));
+      final r1 = repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.SLEEP_DEEP: [sleepDeep(from, to, s: 'old.pkg')],
+          },
+        ),
+      );
+      await r1.sync(now: DateTime(2026, 6, 5, 12));
+
+      // 同一 hiveKey (uuid:stage:start:end) で sourcePackage のみ更新。
+      final r2 = repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.SLEEP_DEEP: [sleepDeep(from, to, s: 'new.pkg')],
+          },
+        ),
+      );
+      await r2.sync(now: DateTime(2026, 6, 5, 13));
+
+      expect(db.sleepBox.length, 1);
+      expect(db.sleepBox.values.single.sourcePackage, 'new.pkg');
+    });
+
+    test('歩数: 同一 uuid・同一区間の更新は最新 count に上書きされる', () async {
+      final t = DateTime(2026, 6, 5, 8);
+      final end = t.add(const Duration(hours: 1));
+      HealthDataPoint step(num v) => fakePoint(
+        uuid: 'steps-dup',
+        type: HealthDataType.STEPS,
+        from: t,
+        to: end,
+        value: v,
+      );
+
+      await repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.STEPS: [step(100)],
+          },
+        ),
+      ).sync(now: DateTime(2026, 6, 5, 12));
+      await repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.STEPS: [step(250)],
+          },
+        ),
+      ).sync(now: DateTime(2026, 6, 5, 13));
+
+      expect(db.stepsBox.length, 1);
+      expect(db.stepsBox.values.single.count, 250);
+    });
+
+    test('心拍: 同一 uuid・同一時刻の更新は最新 bpm に上書きされる', () async {
+      final t = DateTime(2026, 6, 5, 3);
+      HealthDataPoint hr(num v) => fakePoint(
+        uuid: 'hr-dup',
+        type: HealthDataType.HEART_RATE,
+        from: t,
+        to: t,
+        value: v,
+      );
+
+      await repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.HEART_RATE: [hr(58)],
+          },
+        ),
+      ).sync(now: DateTime(2026, 6, 5, 12));
+      await repo(
+        FakeHealthClient(
+          dataByType: {
+            HealthDataType.HEART_RATE: [hr(64)],
+          },
+        ),
+      ).sync(now: DateTime(2026, 6, 5, 13));
+
+      expect(db.heartRateBox.length, 1);
+      expect(db.heartRateBox.values.single.beatsPerMinute, 64);
     });
   });
 }

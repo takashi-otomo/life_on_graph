@@ -1,4 +1,4 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 
 import '../models/heart_rate_record_model.dart';
 import '../models/sleep_record_model.dart';

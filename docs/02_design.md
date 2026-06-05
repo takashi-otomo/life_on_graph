@@ -156,9 +156,11 @@ android.enableJetifier=true
 > モデル定義後は `flutter pub run build_runner build --delete-conflicting-outputs` で
 > `*.g.dart` アダプタを生成する。
 
-## 7. ローカル永続化 (Hive)
+## 7. ローカル永続化 (Hive CE)
 
-- Pure Dart の軽量 KVS。`HiveAesCipher` で AES-256 暗号化。
+- Pure Dart の軽量 KVS。本家 Hive のメンテ停滞に伴い、API・オンディスク形式互換の後継
+  **Hive Community Edition (`hive_ce` / `hive_ce_flutter` / `hive_ce_generator`)** を採用
+  (新しい analyzer・Dart / Flutter 3.44.1 に対応)。`HiveAesCipher` で AES-256 暗号化。
 - ボックス構成:
   - `encrypted_sleep_records` (暗号化)
   - `encrypted_steps_records` (暗号化)

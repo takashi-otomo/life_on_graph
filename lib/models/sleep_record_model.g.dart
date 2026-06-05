@@ -8,7 +8,7 @@ part of 'sleep_record_model.dart';
 
 class SleepRecordModelAdapter extends TypeAdapter<SleepRecordModel> {
   @override
-  final int typeId = 0;
+  final typeId = 0;
 
   @override
   SleepRecordModel read(BinaryReader reader) {

@@ -8,7 +8,7 @@ part of 'steps_record_model.dart';
 
 class StepsRecordModelAdapter extends TypeAdapter<StepsRecordModel> {
   @override
-  final int typeId = 1;
+  final typeId = 1;
 
   @override
   StepsRecordModel read(BinaryReader reader) {
@@ -20,7 +20,7 @@ class StepsRecordModelAdapter extends TypeAdapter<StepsRecordModel> {
       uuid: fields[0] as String,
       startTime: fields[1] as DateTime,
       endTime: fields[2] as DateTime,
-      count: fields[3] as int,
+      count: (fields[3] as num).toInt(),
       sourcePackage: fields[4] as String,
     );
   }

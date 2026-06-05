@@ -1,5 +1,6 @@
 import 'package:health/health.dart';
 
+import '../core/app_constants.dart';
 import '../core/database_manager.dart';
 import '../models/heart_rate_record_model.dart';
 import '../models/sleep_record_model.dart';
@@ -23,7 +24,17 @@ class SyncOutcome {
     required this.window,
     required this.savedCounts,
     required this.failedTypes,
+    this.skipped = false,
   });
+
+  /// 差分極小によりクエリをスキップした no-op 結果 (T-305)。
+  const SyncOutcome.skipped(SyncWindow window)
+    : this(
+        window: window,
+        savedCounts: const <String, int>{},
+        failedTypes: const <String>{},
+        skipped: true,
+      );
 
   /// 実行した同期ウィンドウ。
   final SyncWindow window;
@@ -33,6 +44,9 @@ class SyncOutcome {
 
   /// 取得に失敗した種別キーの集合。
   final Set<String> failedTypes;
+
+  /// 差分極小でクエリをスキップしたか (no-op)。
+  final bool skipped;
 
   /// 全種別が成功したか。
   bool get isFullSuccess => failedTypes.isEmpty;
@@ -51,11 +65,19 @@ abstract interface class HealthSyncRepository {
   /// 睡眠・歩数・心拍の READ 権限を要求し、許可結果を返す。
   Future<bool> requestPermissions();
 
+  /// 履歴権限 (`READ_HEALTH_DATA_HISTORY`) を確認・追加要求する (T-304)。
+  ///
+  /// 既に許可済みなら再ダイアログを出さず `true` を返す。拒否・例外時は `false` を
+  /// 返し、以降のバックフィルは過去 30 日に制限される (フォールバック)。
+  Future<bool> ensureHistoryPermission();
+
   /// [now] を終端とする同期ウィンドウを算出する。
   SyncWindow computeSyncWindow(DateTime now);
 
   /// 差分を取得してローカル DB へバッチ保存する。
-  Future<SyncOutcome> sync({DateTime? now});
+  ///
+  /// [force] が `true` の場合、差分極小スキップ (T-305) を無視して強制同期する。
+  Future<SyncOutcome> sync({DateTime? now, bool force = false});
 }
 
 /// [HealthSyncRepository] の本番実装。
@@ -70,8 +92,16 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   final HealthClient _health;
   final DatabaseManager _db;
 
+  /// 履歴権限 (`READ_HEALTH_DATA_HISTORY`) の付与状態。
+  ///
+  /// `true` のときのみ 30 日以前のバックフィルを許容する (T-304)。
+  bool _historyAuthorized = false;
+
+  /// 履歴権限が付与済みか (バックフィル範囲算出に反映される)。
+  bool get isHistoryAuthorized => _historyAuthorized;
+
   /// 初回バックフィル日数 (設計doc 8 章)。
-  static const int backfillDays = 30;
+  static const int backfillDays = AppConstants.backfillDays;
 
   /// `app_sync_metadata` 上の最終同期時刻キー (ミリ秒エポック)。
   static const String lastSyncTimeKey = 'last_sync_time';
@@ -122,25 +152,56 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   );
 
   @override
+  Future<bool> ensureHistoryPermission() async {
+    try {
+      // 既に許可済みなら再ダイアログを出さない。
+      if (await _health.isHealthDataHistoryAuthorized()) {
+        return _historyAuthorized = true;
+      }
+      return _historyAuthorized = await _health
+          .requestHealthDataHistoryAuthorization();
+    } catch (_) {
+      // 拒否・キャンセル・例外時は 30 日フォールバックで同期を継続する。
+      return _historyAuthorized = false;
+    }
+  }
+
+  @override
   SyncWindow computeSyncWindow(DateTime now) {
-    final int lastSyncMs =
-        (_db.metadataBox.get(lastSyncTimeKey, defaultValue: 0) as int?) ?? 0;
-    // 履歴権限 (T-304) 未対応のため、バックフィルは過去 30 日を下限としてクランプする。
+    final int lastSyncMs = _lastSyncMs();
     final DateTime floor = now.subtract(const Duration(days: backfillDays));
     final DateTime start;
     if (lastSyncMs <= 0) {
+      // 初回バックフィルは過去 30 日。
       start = floor;
     } else {
       final DateTime last = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
-      start = last.isBefore(floor) ? floor : last;
+      // 履歴権限ありなら 30 日以前も遡る。なければ 30 日を下限にクランプ (T-304)。
+      start = _historyAuthorized ? last : (last.isBefore(floor) ? floor : last);
     }
     return SyncWindow(start: start, end: now);
   }
 
+  /// `app_sync_metadata` から最終同期時刻 (ミリ秒) を読み出す (未設定は 0)。
+  int _lastSyncMs() =>
+      (_db.metadataBox.get(lastSyncTimeKey, defaultValue: 0) as int?) ?? 0;
+
   @override
-  Future<SyncOutcome> sync({DateTime? now}) async {
+  Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {
     final DateTime end = now ?? DateTime.now();
     final SyncWindow window = computeSyncWindow(end);
+
+    // T-305: 前回同期からの差分が極小ならクエリをスキップ (初回・強制時は対象外)。
+    final int lastSyncMs = _lastSyncMs();
+    if (!force && lastSyncMs > 0) {
+      final Duration elapsed = end.difference(
+        DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
+      );
+      if (elapsed < AppConstants.syncSkipThreshold) {
+        return SyncOutcome.skipped(window);
+      }
+    }
+
     final Map<String, int> saved = <String, int>{};
     final Set<String> failed = <String>{};
 

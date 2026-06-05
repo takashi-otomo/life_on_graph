@@ -10,11 +10,26 @@ class FakeHealthClient implements HealthClient {
     this.authorized = true,
     Map<HealthDataType, List<HealthDataPoint>>? dataByType,
     Set<HealthDataType>? throwOnTypes,
+    this.historyAlreadyAuthorized = false,
+    this.historyRequestResult = false,
+    this.throwOnHistory = false,
   }) : _dataByType = dataByType ?? <HealthDataType, List<HealthDataPoint>>{},
        _throwOnTypes = throwOnTypes ?? <HealthDataType>{};
 
   /// [requestAuthorization] が返す許可結果。
   bool authorized;
+
+  /// 履歴権限が既に付与済みか ([isHealthDataHistoryAuthorized] の戻り値)。
+  bool historyAlreadyAuthorized;
+
+  /// [requestHealthDataHistoryAuthorization] が返す許可結果。
+  bool historyRequestResult;
+
+  /// 履歴権限 API で例外を投げるか。
+  bool throwOnHistory;
+
+  /// [requestHealthDataHistoryAuthorization] の呼び出し回数。
+  int historyRequestCount = 0;
 
   final Map<HealthDataType, List<HealthDataPoint>> _dataByType;
   final Set<HealthDataType> _throwOnTypes;
@@ -63,6 +78,19 @@ class FakeHealthClient implements HealthClient {
       result.addAll(_dataByType[type] ?? const <HealthDataPoint>[]);
     }
     return result;
+  }
+
+  @override
+  Future<bool> isHealthDataHistoryAuthorized() async {
+    if (throwOnHistory) throw StateError('fake history check failure');
+    return historyAlreadyAuthorized;
+  }
+
+  @override
+  Future<bool> requestHealthDataHistoryAuthorization() async {
+    historyRequestCount++;
+    if (throwOnHistory) throw StateError('fake history request failure');
+    return historyRequestResult;
   }
 }
 

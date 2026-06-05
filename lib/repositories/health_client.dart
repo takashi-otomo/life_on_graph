@@ -24,6 +24,12 @@ abstract interface class HealthClient {
     required DateTime startTime,
     required DateTime endTime,
   });
+
+  /// 履歴権限 (`READ_HEALTH_DATA_HISTORY`) が既に付与済みか確認する。
+  Future<bool> isHealthDataHistoryAuthorized();
+
+  /// 履歴権限を実行時に追加要求し、許可結果を返す。
+  Future<bool> requestHealthDataHistoryAuthorization();
 }
 
 /// [Health] シングルトンに委譲する本番用 [HealthClient] 実装。
@@ -52,4 +58,12 @@ class HealthPackageClient implements HealthClient {
     startTime: startTime,
     endTime: endTime,
   );
+
+  @override
+  Future<bool> isHealthDataHistoryAuthorized() =>
+      _health.isHealthDataHistoryAuthorized();
+
+  @override
+  Future<bool> requestHealthDataHistoryAuthorization() =>
+      _health.requestHealthDataHistoryAuthorization();
 }

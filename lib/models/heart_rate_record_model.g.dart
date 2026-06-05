@@ -8,7 +8,7 @@ part of 'heart_rate_record_model.dart';
 
 class HeartRateRecordModelAdapter extends TypeAdapter<HeartRateRecordModel> {
   @override
-  final int typeId = 2;
+  final typeId = 2;
 
   @override
   HeartRateRecordModel read(BinaryReader reader) {
@@ -20,7 +20,7 @@ class HeartRateRecordModelAdapter extends TypeAdapter<HeartRateRecordModel> {
       uuid: fields[0] as String,
       startTime: fields[1] as DateTime,
       endTime: fields[2] as DateTime,
-      beatsPerMinute: fields[3] as int,
+      beatsPerMinute: (fields[3] as num).toInt(),
       sourcePackage: fields[4] as String,
     );
   }

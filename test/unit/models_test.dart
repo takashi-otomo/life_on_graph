@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:life_on_graph/models/heart_rate_record_model.dart';
 import 'package:life_on_graph/models/sleep_record_model.dart';
 import 'package:life_on_graph/models/steps_record_model.dart';

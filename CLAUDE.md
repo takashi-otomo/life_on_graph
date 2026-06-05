@@ -35,7 +35,7 @@ Android ヘルスコネクトから睡眠・歩数・脈拍 (心拍) データ�
 - **対象 OS**: Android (Health Connect)。iOS は将来拡張余地を残す
 - **ヘルス連携**: `health` パッケージ
 - **状態管理**: Riverpod
-- **ローカル永続化**: Hive + `HiveAesCipher` (AES-256)
+- **ローカル永続化**: Hive CE (`hive_ce` / 本家 Hive の後継・API 互換) + `HiveAesCipher` (AES-256)
 - **鍵管理**: `flutter_secure_storage` (Android Keystore 連携)
 - **可視化**: `fl_chart` / 睡眠ステージ用チャート
 - **コード生成**: `build_runner`

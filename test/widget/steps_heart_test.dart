@@ -68,7 +68,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 全日(暦日): 当日 日中の 90 のみ。
+      // 全日(暦日): 当日 日中の 90 のみ。直近 bpm も主表示される (F1)。
+      expect(find.text('90 bpm'), findsOneWidget);
       expect(find.text('安静 90 ・ 最高 90'), findsOneWidget);
 
       // 睡眠中: 翌朝 2時の 54 (日跨ぎでも欠落しない)。

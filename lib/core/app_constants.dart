@@ -24,4 +24,21 @@ class AppConstants {
   /// 前回同期からの経過がこの値未満なら `getHealthDataFromTypes` を呼ばずに
   /// 早期リターンし、短時間の連続起動での無駄な I/O・電力消費を抑える。
   static const Duration syncSkipThreshold = Duration(minutes: 5);
+
+  /// 信頼ソースの優先順位リスト (先頭ほど高優先, 設計doc 9 章)。
+  ///
+  /// 複数アプリが同一時間帯に重複データを書き込む場合、このリストの上位ソースを
+  /// 採用して単一ソース化する (クレンジング第1段)。リストに無いソースのみが存在
+  /// する場合は、唯一のソースとして採用する (データ消失を避けるフェイルオープン)。
+  static const List<String> trustedSleepSources = <String>[
+    'com.google.android.apps.healthdata', // Health Connect 本体
+    'com.sec.android.app.shealth', // Samsung Health
+    'com.fitbit.FitbitMobile', // Fitbit
+    'com.google.android.apps.fitness', // Google Fit
+    'com.ouraring.oura', // Oura
+    'com.garmin.android.apps.connectmobile', // Garmin Connect
+  ];
+
+  /// 隣接同一ステージ結合の既定ギャップ許容値 (設計doc 9 章)。
+  static const Duration adjacentMergeTolerance = Duration(seconds: 30);
 }

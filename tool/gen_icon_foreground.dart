@@ -55,7 +55,14 @@ void main() {
     );
   }
   // 末端の赤ドット。
-  img.fillCircle(image, x: 744, y: 484, radius: 26, color: red, antialias: true);
+  img.fillCircle(
+    image,
+    x: 744,
+    y: 484,
+    radius: 26,
+    color: red,
+    antialias: true,
+  );
 
   File(
     'assets/branding/app_icon_foreground.png',

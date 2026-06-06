@@ -28,11 +28,13 @@ void main() {
       expect(find.byType(DashboardView), findsOneWidget);
     });
 
-    testWidgets('アプリ名 "Life On Graph" が AppBar に表示される', (tester) async {
+    testWidgets('共通ボトムタブ [ホーム/サマリー/設定] が表示される', (tester) async {
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppConstants.appName), findsWidgets);
+      expect(find.text('ホーム'), findsOneWidget);
+      expect(find.text('サマリー'), findsOneWidget);
+      expect(find.text('設定'), findsOneWidget);
       expect(AppConstants.appName, 'Life On Graph');
     });
   });

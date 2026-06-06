@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health/health.dart';
 import 'package:life_on_graph/core/database_manager.dart';
+import 'package:life_on_graph/models/sleep_record_model.dart';
 import 'package:life_on_graph/repositories/health_sync_repository.dart';
 
 import '../helpers/fake_health_client.dart';
@@ -508,6 +509,61 @@ void main() {
 
       expect(db.heartRateBox.length, 1);
       expect(db.heartRateBox.values.single.beatsPerMinute, 64);
+    });
+  });
+
+  group('M4 getCleanedSleepSegmentsForDay (読み出し経路統合)', () {
+    const String shealth = 'com.sec.android.app.shealth';
+
+    test('保存レコードにクレンジングパイプラインを適用して返す', () async {
+      final day = DateTime(2026, 6, 5);
+      final noon = DateTime(2026, 6, 5, 12);
+      // 正午枠を前方にまたぐ deep (11:30→12:40)
+      final crossing = SleepRecordModel(
+        uuid: 'r1',
+        startTime: noon.subtract(const Duration(minutes: 30)),
+        endTime: noon.add(const Duration(minutes: 40)),
+        stageType: 'deep',
+        sourcePackage: shealth,
+      );
+      // 隣接 deep (12:40→12:50, ギャップ0) → 結合対象
+      final adjacent = SleepRecordModel(
+        uuid: 'r2',
+        startTime: noon.add(const Duration(minutes: 40)),
+        endTime: noon.add(const Duration(minutes: 50)),
+        stageType: 'deep',
+        sourcePackage: shealth,
+      );
+      await db.sleepBox.put(crossing.hiveKey, crossing);
+      await db.sleepBox.put(adjacent.hiveKey, adjacent);
+
+      final result = repo(
+        FakeHealthClient(),
+      ).getCleanedSleepSegmentsForDay(day);
+
+      expect(result.length, 1);
+      // 前方クリップで開始は正午、隣接 deep は結合され 12:50 まで。
+      expect(result.single.startTime, noon);
+      expect(result.single.endTime, noon.add(const Duration(minutes: 50)));
+      expect(result.single.stageType, 'deep');
+    });
+
+    test('表示枠外のレコードは結果に含まれない', () async {
+      final day = DateTime(2026, 6, 5);
+      // 前日 10:00 (正午枠外)
+      final outside = SleepRecordModel(
+        uuid: 'r3',
+        startTime: DateTime(2026, 6, 5, 10),
+        endTime: DateTime(2026, 6, 5, 11),
+        stageType: 'light',
+        sourcePackage: shealth,
+      );
+      await db.sleepBox.put(outside.hiveKey, outside);
+
+      expect(
+        repo(FakeHealthClient()).getCleanedSleepSegmentsForDay(day),
+        isEmpty,
+      );
     });
   });
 }

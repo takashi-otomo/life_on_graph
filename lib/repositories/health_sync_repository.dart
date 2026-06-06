@@ -4,7 +4,9 @@ import '../core/app_constants.dart';
 import '../core/database_manager.dart';
 import '../models/heart_rate_record_model.dart';
 import '../models/sleep_record_model.dart';
+import '../models/sleep_segment.dart';
 import '../models/steps_record_model.dart';
+import 'cleansing.dart';
 import 'health_client.dart';
 
 /// 同期ウィンドウ (`[start, end]`) を表す値オブジェクト。
@@ -78,6 +80,12 @@ abstract interface class HealthSyncRepository {
   ///
   /// [force] が `true` の場合、差分極小スキップ (T-305) を無視して強制同期する。
   Future<SyncOutcome> sync({DateTime? now, bool force = false});
+
+  /// [day] (正午〜翌正午の表示枠) のクレンジング済み睡眠セグメントを返す (M4)。
+  ///
+  /// ローカル DB の保存レコードに ①ソース優先順位 →②境界クリップ →③オーバーラップ
+  /// 解消 →④隣接結合 のパイプライン (設計doc 9 章) を適用した結果を返す。
+  List<SleepSegment> getCleanedSleepSegmentsForDay(DateTime day);
 }
 
 /// [HealthSyncRepository] の本番実装。
@@ -242,6 +250,17 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     }
 
     return SyncOutcome(window: window, savedCounts: saved, failedTypes: failed);
+  }
+
+  @override
+  List<SleepSegment> getCleanedSleepSegmentsForDay(DateTime day) {
+    // 表示枠は正午〜翌正午の 24 時間 (設計doc 9 章)。
+    final DateTime start = DateTime(day.year, day.month, day.day, 12);
+    final DateTime end = start.add(const Duration(days: 1));
+    final List<SleepSegment> segments = _db.sleepBox.values
+        .map(SleepSegment.fromRecord)
+        .toList();
+    return runSleepCleansingPipeline(segments, start: start, end: end);
   }
 
   Future<int> _runCategory({

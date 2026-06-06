@@ -9,6 +9,7 @@ import '../../providers/data_providers.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
 import '../../widgets/health_status_banner.dart';
+import '../cross_data/widgets/cross_data_chart.dart';
 import '../heart_rate/widgets/heart_rate_chart.dart';
 import '../sleep/sleep_summary.dart';
 import '../sleep/widgets/date_nav_header.dart';
@@ -50,6 +51,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     // 「睡眠中」フィルタで翌朝分が欠落しないようにする (#38)。
     final List<HeartRateRecordModel> hrPoints = ref.watch(
       heartRateProvider(DateRange(date, date.add(const Duration(hours: 36)))),
+    );
+    // 統合ビュー(#39)は睡眠窓が日跨ぎのため、心拍と同じ36h範囲の生歩数を用いる。
+    final List<StepsRecordModel> crossSteps = ref.watch(
+      stepsProvider(DateRange(date, date.add(const Duration(hours: 36)))),
     );
     final SyncState sync = ref.watch(syncNotifierProvider);
     final SleepSummary summary = SleepSummary.fromSegments(segments);
@@ -93,6 +98,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     dayEnd: dayEnd,
                     sleepStart: sleepStart,
                     sleepEnd: sleepEnd,
+                  ),
+                  const SizedBox(height: 16),
+                  CrossDataChart(
+                    segments: segments,
+                    heartRate: hrPoints,
+                    steps: crossSteps,
                   ),
                 ],
               ),

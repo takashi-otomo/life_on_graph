@@ -4,14 +4,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/app_constants.dart';
 import 'core/database_manager.dart';
 import 'features/dashboard/dashboard_view.dart';
+import 'providers/repository_providers.dart';
 
 /// アプリのエントリポイント。
 ///
-/// 暗号化ローカル DB (Hive) を起動前に初期化し、ローカルファーストな描画に備える。
+/// 暗号化ローカル DB (Hive) を起動前に初期化し、初期化済みインスタンスを
+/// [databaseManagerProvider] へ注入して、ローカルファーストな描画に備える。
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseManager().initialize();
-  runApp(const ProviderScope(child: LifeOnGraphApp()));
+  final DatabaseManager databaseManager = DatabaseManager();
+  await databaseManager.initialize();
+  runApp(
+    ProviderScope(
+      overrides: [databaseManagerProvider.overrideWithValue(databaseManager)],
+      child: const LifeOnGraphApp(),
+    ),
+  );
 }
 
 /// Life On Graph (LOG) アプリのルートウィジェット。

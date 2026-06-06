@@ -108,6 +108,12 @@ abstract interface class HealthSyncRepository {
   /// 暗号化ボックス (睡眠・歩数・心拍) を空にし `last_sync_time` を削除する。
   /// 次回同期は初回バックフィルとして再取得される。
   Future<void> clearAllData();
+
+  /// Health Connect が利用可能 (導入済み) か (#42 状態別UI 判定用)。
+  Future<bool> isHealthConnectAvailable();
+
+  /// Health Connect の導入 (Google Play) へ誘導する (#42 未導入導線)。
+  Future<void> installHealthConnect();
 }
 
 /// [HealthSyncRepository] の本番実装。
@@ -252,6 +258,12 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     await _db.heartRateBox.clear();
     await _db.metadataBox.delete(lastSyncTimeKey);
   }
+
+  @override
+  Future<bool> isHealthConnectAvailable() => _health.isHealthConnectAvailable();
+
+  @override
+  Future<void> installHealthConnect() => _health.installHealthConnect();
 
   @override
   Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {

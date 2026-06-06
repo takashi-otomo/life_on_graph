@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,7 +56,25 @@ void main() {
     await tester.pumpWidget(app(repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('同期に失敗しました。表示中のデータはローカル保存分です。'), findsOneWidget);
+    expect(find.text('同期に失敗しました'), findsOneWidget);
+    expect(find.text('表示中のデータはローカル保存分です。'), findsOneWidget);
+  });
+
+  testWidgets('#40 同期中 (syncing) もブロックせずローカルデータを即時描画する', (tester) async {
+    // syncGate で同期を保留し SyncInProgress を維持する。
+    final repo = FakeHealthSyncRepository(sleep: [deepSeg()])
+      ..syncGate = Completer<void>();
+
+    await tester.pumpWidget(app(repo));
+    // pump 1 回のみ (pumpAndSettle に依存しない)。同期未完了でも描画される。
+    await tester.pump();
+
+    expect(find.byType(SleepSummaryCard), findsOneWidget);
+    expect(find.text('1時間 0分'), findsWidgets);
+
+    // 後始末: 同期を完了させる。
+    repo.syncGate!.complete();
+    await tester.pumpAndSettle();
   });
 
   testWidgets('一部種別失敗 (SyncPartial) でもフォールバックバナーを表示する', (tester) async {
@@ -66,7 +86,8 @@ void main() {
     await tester.pumpWidget(app(repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('同期に失敗しました。表示中のデータはローカル保存分です。'), findsOneWidget);
+    expect(find.text('同期に失敗しました'), findsOneWidget);
+    expect(find.text('表示中のデータはローカル保存分です。'), findsOneWidget);
     expect(find.byType(SleepSummaryCard), findsOneWidget);
   });
 }

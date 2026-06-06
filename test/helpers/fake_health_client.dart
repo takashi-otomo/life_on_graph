@@ -92,6 +92,18 @@ class FakeHealthClient implements HealthClient {
     if (throwOnHistory) throw StateError('fake history request failure');
     return historyRequestResult;
   }
+
+  /// Health Connect 導入状態 ([isHealthConnectAvailable] の戻り値)。
+  bool healthConnectAvailable = true;
+
+  /// [installHealthConnect] の呼び出し回数。
+  int installCount = 0;
+
+  @override
+  Future<bool> isHealthConnectAvailable() async => healthConnectAvailable;
+
+  @override
+  Future<void> installHealthConnect() async => installCount++;
 }
 
 /// テスト用に [HealthDataPoint] を簡潔に生成するヘルパ。

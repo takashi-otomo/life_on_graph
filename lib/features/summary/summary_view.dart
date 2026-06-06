@@ -5,6 +5,7 @@ import '../../core/app_colors.dart';
 import '../../providers/nav_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/summary_providers.dart';
+import '../../widgets/health_status_banner.dart';
 import '../../widgets/metric_card.dart';
 import '../../widgets/segmented_toggle.dart';
 import '../sleep/sleep_summary.dart';
@@ -119,6 +120,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
               onNext: _atLatest ? null : () => _shift(1),
             ),
             const SizedBox(height: 16),
+            const HealthStatusBanner(),
             _MetricGrid(summary: s, deltaPrefix: dp),
             const SizedBox(height: 12),
             if (_period == SummaryPeriod.day) ...<Widget>[

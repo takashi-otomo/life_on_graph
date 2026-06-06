@@ -17,6 +17,7 @@ class AppColors {
   // アクセント
   static const Color accent = Color(0xFF4338CA);
   static const Color accentSoft = Color(0xFFEEF2FF);
+  static const Color accentText = Color(0xFF6366F1);
 
   // 睡眠ステージ色 (設計doc 6.1 / デザイン準拠)
   static const Color sleepDeep = Color(0xFF4338CA);

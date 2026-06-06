@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/app_constants.dart';
+import '../../core/app_colors.dart';
+import '../../models/sleep_segment.dart';
 import '../../providers/data_providers.dart';
+import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
+import '../sleep/sleep_summary.dart';
+import '../sleep/widgets/date_nav_header.dart';
+import '../sleep/widgets/sleep_stage_timeline.dart';
+import '../sleep/widgets/sleep_summary_card.dart';
 
-/// ダッシュボードのトップ画面 (M5 リアクティブ結線, T-504)。
+/// ホーム (ダッシュボード): 選択日の詳細を表示する (#34 / #35 / #41)。
 ///
 /// 起動直後にローカル DB から即時描画し (ローカルファースト)、背後で差分同期を実行。
-/// 同期完了 (done) で派生プロバイダが再評価され、購読ウィジェットが自動再描画される。
-/// M6 で各可視化チャート (睡眠 / 歩数 / 心拍) に置き換えていく。
+/// 同期完了で派生プロバイダが再評価され自動再描画される。歩数・心拍は #36-#38 で追加。
 class DashboardView extends ConsumerStatefulWidget {
   const DashboardView({super.key});
 
@@ -21,7 +26,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   void initState() {
     super.initState();
-    // 初期描画 (ローカル DB) の後に、背後で差分同期を開始する。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(syncNotifierProvider.notifier).sync();
     });
@@ -29,52 +33,30 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    final DateTime today = DateTime.now();
-    final DateTime dateOnly = DateTime(today.year, today.month, today.day);
-    final DateRange range = DateRange(
-      dateOnly,
-      dateOnly.add(const Duration(days: 1)),
-    );
-
-    // ローカル DB から待ち無しで取得 (即時描画)。同期完了で自動再評価される。
-    final int sleepCount = ref.watch(sleepSegmentsProvider(dateOnly)).length;
-    final int stepsTotal = ref
-        .watch(stepsProvider(range))
-        .fold(0, (sum, r) => sum + r.count);
-    final int heartRateCount = ref.watch(heartRateProvider(range)).length;
+    final DateTime date = ref.watch(selectedDateProvider);
+    final List<SleepSegment> segments = ref.watch(sleepSegmentsProvider(date));
     final SyncState sync = ref.watch(syncNotifierProvider);
+    final SleepSummary summary = SleepSummary.fromSegments(segments);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConstants.appName),
-        bottom: sync is SyncInProgress
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(4),
-                child: LinearProgressIndicator(minHeight: 4),
-              )
-            : null,
-      ),
-      // 手動同期は設定の「今すぐ同期」(#69) と起動時の自動同期に集約。
-      // FAB は廃止し、ボトムタブ (AppShell) に隠れないよう下部に余白を確保する。
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      backgroundColor: AppColors.background,
+      body: Column(
         children: <Widget>[
-          if (sync is SyncError || sync is SyncPartial)
-            const _SyncErrorBanner(),
-          _MetricTile(
-            icon: Icons.bedtime,
-            label: '睡眠セグメント',
-            value: '$sleepCount 件',
-          ),
-          _MetricTile(
-            icon: Icons.directions_walk,
-            label: '歩数',
-            value: '$stepsTotal 歩',
-          ),
-          _MetricTile(
-            icon: Icons.favorite,
-            label: '心拍サンプル',
-            value: '$heartRateCount 件',
+          const SafeArea(bottom: false, child: SizedBox.shrink()),
+          if (sync is SyncInProgress)
+            const LinearProgressIndicator(minHeight: 3),
+          const DateNavHeader(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+              children: <Widget>[
+                if (sync is SyncError || sync is SyncPartial)
+                  const _SyncErrorBanner(),
+                SleepSummaryCard(summary: summary),
+                const SizedBox(height: 16),
+                SleepStageTimeline(segments: segments),
+              ],
+            ),
           ),
         ],
       ),
@@ -82,48 +64,25 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 }
 
-/// 同期エラー・部分失敗時のフォールバック表示 (未導入 / 未許可 / クエリ制限, 設計doc 12 章)。
+/// 同期エラー・部分失敗時のフォールバック表示 (設計doc 12 章)。
 class _SyncErrorBanner extends StatelessWidget {
   const _SyncErrorBanner();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.errorContainer,
-      child: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Row(
-          children: <Widget>[
-            Icon(Icons.error_outline),
-            SizedBox(width: 12),
-            Expanded(child: Text('同期に失敗しました。表示中のデータはローカル保存分です。')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(label),
-        trailing: Text(
-          value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        color: Theme.of(context).colorScheme.errorContainer,
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.error_outline),
+              SizedBox(width: 12),
+              Expanded(child: Text('同期に失敗しました。表示中のデータはローカル保存分です。')),
+            ],
+          ),
         ),
       ),
     );

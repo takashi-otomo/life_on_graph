@@ -61,6 +61,7 @@ dev_dependencies:
   hive_ce_generator: ^1.11.2
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.8
+  image: ^4.9.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -92,7 +93,8 @@ flutter_native_splash:
   color: "#F5F6FA"
   image: "assets/branding/app_icon.png"
   android_12:
-    image: "assets/branding/app_icon.png"
+    # Android 12+ は円形マスクのため、セーフゾーン中央に収まる透過前景を用いる。
+    image: "assets/branding/app_icon_foreground.png"
     color: "#F5F6FA"
     icon_background_color: "#4F46E5"
   android: true

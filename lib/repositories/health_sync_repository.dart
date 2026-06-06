@@ -86,6 +86,12 @@ abstract interface class HealthSyncRepository {
   /// ローカル DB の保存レコードに ①ソース優先順位 →②境界クリップ →③オーバーラップ
   /// 解消 →④隣接結合 のパイプライン (設計doc 9 章) を適用した結果を返す。
   List<SleepSegment> getCleanedSleepSegmentsForDay(DateTime day);
+
+  /// `[start, end]` と交差する歩数レコードを開始昇順で返す (M5 派生Provider 用)。
+  List<StepsRecordModel> getStepsForRange(DateTime start, DateTime end);
+
+  /// `[start, end]` と交差する心拍レコードを開始昇順で返す (M5 派生Provider 用)。
+  List<HeartRateRecordModel> getHeartRateForRange(DateTime start, DateTime end);
 }
 
 /// [HealthSyncRepository] の本番実装。
@@ -264,6 +270,25 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
         .map(SleepSegment.fromRecord)
         .toList();
     return runSleepCleansingPipeline(segments, start: start, end: end);
+  }
+
+  @override
+  List<StepsRecordModel> getStepsForRange(DateTime start, DateTime end) {
+    return _db.stepsBox.values
+        .where((r) => r.endTime.isAfter(start) && r.startTime.isBefore(end))
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  @override
+  List<HeartRateRecordModel> getHeartRateForRange(
+    DateTime start,
+    DateTime end,
+  ) {
+    return _db.heartRateBox.values
+        .where((r) => r.endTime.isAfter(start) && r.startTime.isBefore(end))
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
   Future<int> _runCategory({

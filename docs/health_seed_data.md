@@ -64,10 +64,21 @@ scripts/run_app.sh <serial>
 
 ## 制約・既知事項
 
-- **マルチソース(ソース優先順位)**: シーダーは単一アプリ(`dev.otomo.life_on_graph` の
-  デバッグビルド)として書き込むため、複数書き込み元が同一時間帯に重複するケースは
-  実データとして再現できない。`allocateBySourcePriority` の信頼ソース選別は
-  ユニットテスト([`test/unit/cleansing_test.dart`](../test/unit/cleansing_test.dart))で
-  検証済み。シーダーのデータは信頼リスト外の単一ソースのため、フェイルオープンで表示される。
-- **再投入**: 同じデータを再度投入すると重複する。クリアするには Health Connect 設定で
-  当該データを削除するか、アプリのデータを消去する。
+- **クリーンな Health Connect ストアで投入すること**: シーダーは信頼リスト外の単一ソース
+  (`dev.otomo.life_on_graph`)として書き込む。**実機に Samsung Health / Fitbit 等の信頼ソースの
+  同日睡眠が既に存在する**と、`allocateBySourcePriority` は信頼ソースが在る場合に信頼外を除外
+  するため、シードした睡眠が表示されず実データ側が優先される。テスト用エミュレータなど
+  クリーンなストアで投入すること(クリーン時はフェイルオープンでシードが表示される)。
+  なお複数ソース衝突時の優先順位選別自体は
+  [`test/unit/cleansing_test.dart`](../test/unit/cleansing_test.dart) で検証済み。
+- **再投入時は LOG のローカルデータも消去すること**: シーダーは安定した `clientRecordId` で
+  書き込むため Health Connect 側は冪等(上書き)。ただし **LOG 側の Hive は削除反映が未実装**
+  ([#64](https://github.com/takashi-otomo/life_on_graph/issues/64))のため、過去に同期済みの
+  古いレコードが残り新旧が混在しうる。再投入後は LOG のアプリデータを消去してから初回
+  バックフィルし直すこと:
+  `adb shell pm clear dev.otomo.life_on_graph`(または設定→ストレージ→消去)。
+- **過去2か月の全件取得には履歴権限が必要**: LOG の初回バックフィルは履歴権限なしだと
+  過去30日に制限される。LOG 起動時の権限ダイアログで「過去データへのアクセス」も許可すると
+  365日まで遡って 60 日分すべてを取得できる。
+- **投入の部分失敗**: 書き込みクォータが回復しきらないと一部が失敗しうる。その場合シーダーは
+  「⚠ 一部失敗」と件数を表示する。再実行すると `clientRecordId` により冪等に補完される。

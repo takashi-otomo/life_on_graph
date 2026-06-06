@@ -452,10 +452,29 @@ class _SeederPageState extends State<SeederPage> {
       setState(() => _status = '既存データを削除中...');
       final DateTime clearFrom = today.subtract(const Duration(days: 62));
       final DateTime clearTo = today.add(const Duration(days: 1));
+      bool deleteFailed = false;
       for (final HealthDataType t in _writeTypes) {
         try {
-          await _health.delete(type: t, startTime: clearFrom, endTime: clearTo);
-        } catch (_) {}
+          final bool ok = await _health.delete(
+            type: t,
+            startTime: clearFrom,
+            endTime: clearTo,
+          );
+          if (!ok) deleteFailed = true;
+        } catch (_) {
+          deleteFailed = true;
+        }
+      }
+      // 削除に失敗すると既存レコードが残り再投入で重複するため中断する。
+      // (clientRecordId による冪等性で大半は上書きされるが、安全側に倒す)
+      if (deleteFailed) {
+        setState(() {
+          _status =
+              '既存データの削除に失敗しました。重複を避けるため中断します。\n'
+              'Health Connect でアプリのデータを削除してから再実行してください。';
+          _running = false;
+        });
+        return;
       }
 
       final List<_DayScenario> scenarios = _SeedGenerator(today).generate();
@@ -464,8 +483,11 @@ class _SeederPageState extends State<SeederPage> {
       int done = 0;
       int ok = 0;
       for (final _Write w in all) {
-        // Health Connect の書き込みクォータ超過に備え、失敗時はバックオフして
-        // リトライする (クォータは時間で回復する)。
+        // 再投入・リトライで重複しないよう安定した clientRecordId を付与する
+        // (Health Connect は同一 clientRecordId を上書き = 冪等)。
+        final String clientId =
+            '${w.type.name}_${w.start.millisecondsSinceEpoch}_${w.end.millisecondsSinceEpoch}';
+        // 書き込みクォータ超過に備え、失敗時はバックオフしてリトライする。
         bool success = false;
         for (int attempt = 0; attempt < 8 && !success; attempt++) {
           try {
@@ -475,6 +497,7 @@ class _SeederPageState extends State<SeederPage> {
               startTime: w.start,
               endTime: w.end,
               recordingMethod: RecordingMethod.automatic,
+              clientRecordId: clientId,
             );
           } catch (_) {
             success = false;
@@ -497,9 +520,13 @@ class _SeederPageState extends State<SeederPage> {
         }
       }
 
+      final bool complete = ok == all.length;
       setState(() {
-        _status =
-            '完了: ${scenarios.length} 日分 / $ok 件投入。\nLOG アプリで日付を選択して確認してください。';
+        _status = complete
+            ? '完了: ${scenarios.length} 日分 / 全 $ok 件投入。\n'
+                  'LOG アプリで日付を選択して確認してください。'
+            : '⚠ 一部失敗: $ok / ${all.length} 件のみ投入 (クォータ未回復の可能性)。\n'
+                  '再実行すると冪等に補完されます。';
         _running = false;
         _progress = 1;
       });

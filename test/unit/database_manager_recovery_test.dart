@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +78,21 @@ void main() {
     expect(db2.recoveredFromKeyFailure, isTrue);
     expect(db2.metadataBox.get('last_sync_time', defaultValue: 0), 0);
     await db2.close();
+  });
+
+  test('鍵長が不正 (cipher 構築失敗) でも復旧して起動を継続する', () async {
+    final keyStore = FakeSecureKeyStore();
+    // read は成功するが鍵長が AES-256 (32byte) でない → HiveAesCipher 構築で失敗。
+    await keyStore.write(
+      EncryptionKeyProvider.keyAlias,
+      base64UrlEncode(<int>[1, 2, 3]),
+    );
+
+    await db.initialize(path: tempDir.path, keyStore: keyStore);
+
+    expect(db.isInitialized, isTrue);
+    expect(db.recoveredFromKeyFailure, isTrue);
+    expect(db.sleepBox.isOpen, isTrue);
   });
 
   test('正常な鍵では復旧は走らない (recoveredFromKeyFailure=false)', () async {

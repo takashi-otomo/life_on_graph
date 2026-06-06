@@ -97,23 +97,26 @@ class DatabaseManager {
     _metadataBox = await Hive.openBox<dynamic>(metadataBoxName);
 
     final provider = EncryptionKeyProvider(keyStore ?? FlutterSecureKeyStore());
+
+    // 復旧対象は **鍵の取得/復号失敗のみ** に限定する。Auto Backup 復元で Keystore
+    // 材料が欠落すると secure storage の unwrap (read) や base64 復号で失敗するため、
+    // その例外を捕捉して鍵再生成で復旧する (#56)。ボックス open のディスク I/O・
+    // ロック・アダプタ不整合などは復旧不能/一時障害であり、データを破棄せず上位へ
+    // 伝播させる (誤った破壊的復旧を防ぐ)。
+    HiveAesCipher cipher;
     try {
-      await _openEncryptedBoxes(provider);
+      cipher = HiveAesCipher(await provider.getOrCreateKey());
     } catch (_) {
-      // 鍵不整合 (Auto Backup 復元で Keystore 材料が欠落し復号に失敗する等) で
-      // 起動時クラッシュを起こさないよう、鍵を再生成し暗号化ボックスを破棄して
-      // 再構築する。破棄したデータは Health Connect から再同期して復旧する。
-      await _recoverFromKeyFailure(provider);
+      cipher = await _recoverKey(provider);
+      recoveredFromKeyFailure = true;
     }
 
+    await _openEncryptedBoxes(cipher);
     _initialized = true;
   }
 
-  /// 暗号鍵を取得し、3 つの暗号化ボックスを開く。
-  Future<void> _openEncryptedBoxes(EncryptionKeyProvider provider) async {
-    final encryptionKey = await provider.getOrCreateKey();
-    final cipher = HiveAesCipher(encryptionKey);
-
+  /// 指定 [cipher] で 3 つの暗号化ボックスを開く (open 失敗は上位へ伝播)。
+  Future<void> _openEncryptedBoxes(HiveAesCipher cipher) async {
     _sleepBox = await Hive.openBox<SleepRecordModel>(
       sleepBoxName,
       encryptionCipher: cipher,
@@ -128,20 +131,17 @@ class DatabaseManager {
     );
   }
 
-  /// 鍵不整合からの復旧: 鍵を再生成し暗号化ボックスを破棄して再構築する。
+  /// 鍵不整合からの復旧: 破損鍵を破棄して再生成し、暗号化ボックスを破棄する。
   ///
-  /// 3 ボックスは同一鍵を共有するため、失敗は鍵取得時点 (= ボックス open 前) に
-  /// 起きる。よって破棄前に open 済みボックスを閉じる必要はない。
-  Future<void> _recoverFromKeyFailure(EncryptionKeyProvider provider) async {
+  /// 破棄した暗号化データは Health Connect から再同期して復旧するため、同期メタデータ
+  /// もクリアして次回 30 日バックフィルを走らせる。再生成した鍵の cipher を返す。
+  Future<HiveAesCipher> _recoverKey(EncryptionKeyProvider provider) async {
     await provider.resetKey();
     for (final name in encryptedBoxNames) {
       await Hive.deleteBoxFromDisk(name);
     }
-    // 同期メタデータをクリアし、次回同期で 30 日バックフィルを走らせる。
     await _metadataBox.clear();
-
-    await _openEncryptedBoxes(provider);
-    recoveredFromKeyFailure = true;
+    return HiveAesCipher(await provider.getOrCreateKey());
   }
 
   /// 全ボックスを閉じる (主にテストのクリーンアップ用)。

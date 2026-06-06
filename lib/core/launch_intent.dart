@@ -32,4 +32,14 @@ class LaunchIntent {
   /// [action] が権限根拠/権限使用状況からの起動か (根拠画面へ遷移すべきか)。
   static bool isRationale(String? action) =>
       action == rationaleAction || action == permissionUsageAction;
+
+  /// 実行中のアプリへ権限根拠インテントが `onNewIntent` で届いた場合の通知を購読する。
+  ///
+  /// ネイティブが `showRationale` を呼ぶと [onRationale] を実行する (#54)。
+  static void setRationaleHandler(void Function() onRationale) {
+    _channel.setMethodCallHandler((MethodCall call) async {
+      if (call.method == 'showRationale') onRationale();
+      return null;
+    });
+  }
 }

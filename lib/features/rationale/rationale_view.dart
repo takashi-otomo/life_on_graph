@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/app_constants.dart';
+import 'policy_view.dart';
 
 /// 権限根拠 / プライバシーポリシー画面 (#54)。
 ///
@@ -34,6 +35,13 @@ class RationaleView extends StatelessWidget {
       color: AppColors.heart,
       title: '心拍',
       desc: '心拍数・安静時/最高値・睡眠中心拍を可視化するために読み取ります。',
+    ),
+    (
+      icon: Icons.history,
+      color: AppColors.accent,
+      title: '過去データ(履歴)',
+      desc:
+          '初回起動時に過去30日より前のデータを遡って取得し、過去のトレンドを表示するための一時的な利用です。継続的なバックグラウンド取得は行いません。',
     ),
   ];
 
@@ -109,10 +117,20 @@ class RationaleView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            OutlinedButton.icon(
+            // Health Connect のポリシーリンクからの遷移先として、アプリ内で
+            // 同一のプライバシーポリシー全文を表示する (ガイドライン準拠)。
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const PolicyView()),
+              ),
+              icon: const Icon(Icons.description_outlined, size: 18),
+              label: const Text('プライバシーポリシーを読む'),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
               onPressed: _openPolicy,
-              icon: const Icon(Icons.open_in_new, size: 18),
-              label: const Text('プライバシーポリシーを開く'),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('ブラウザで公開版を開く'),
             ),
             if (onContinue != null) ...<Widget>[
               const SizedBox(height: 12),

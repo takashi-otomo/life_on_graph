@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_constants.dart';
 import 'core/database_manager.dart';
-import 'features/dashboard/dashboard_view.dart';
+import 'features/app_shell.dart';
 import 'providers/repository_providers.dart';
 
 /// アプリのエントリポイント。
@@ -32,7 +32,7 @@ class LifeOnGraphApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: const DashboardView(),
+      home: const AppShell(),
     );
   }
 }

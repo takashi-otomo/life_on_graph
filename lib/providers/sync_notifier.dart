@@ -91,6 +91,9 @@ class SyncNotifier extends Notifier<SyncState> {
         return;
       }
       await repo.ensureHistoryPermission();
+      // 歩数取得に必要な ACTIVITY_RECOGNITION 権限を best-effort で確保 (#58)。
+      // 拒否されても歩数のみ影響し、睡眠・心拍は継続するため結果は問わない。
+      await repo.ensureActivityRecognitionPermission();
       final SyncOutcome outcome = await repo.sync(force: force);
       state = outcome.isFullSuccess ? SyncDone(outcome) : SyncPartial(outcome);
     } catch (e) {

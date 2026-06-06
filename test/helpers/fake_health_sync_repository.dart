@@ -37,10 +37,14 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   /// `sync()` 成功直前に呼ばれるフック (新データ到着のシミュレーションに使う)。
   void Function()? onSync;
 
+  /// `ensureActivityRecognitionPermission()` の許可結果。
+  bool activityRecognitionGranted = true;
+
   int syncCalls = 0;
   bool configureCalled = false;
   bool requestPermissionsCalled = false;
   bool ensureHistoryCalled = false;
+  bool ensureActivityCalled = false;
 
   @override
   Future<void> configure() async {
@@ -57,6 +61,12 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   Future<bool> ensureHistoryPermission() async {
     ensureHistoryCalled = true;
     return true;
+  }
+
+  @override
+  Future<bool> ensureActivityRecognitionPermission() async {
+    ensureActivityCalled = true;
+    return activityRecognitionGranted;
   }
 
   @override

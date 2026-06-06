@@ -6,6 +6,7 @@ import '../models/heart_rate_record_model.dart';
 import '../models/sleep_record_model.dart';
 import '../models/sleep_segment.dart';
 import '../models/steps_record_model.dart';
+import 'activity_recognition_permission.dart';
 import 'cleansing.dart';
 import 'health_client.dart';
 
@@ -73,6 +74,12 @@ abstract interface class HealthSyncRepository {
   /// 返し、以降のバックフィルは過去 30 日に制限される (フォールバック)。
   Future<bool> ensureHistoryPermission();
 
+  /// 歩数取得に必要な ACTIVITY_RECOGNITION ランタイム権限を確認・要求する (#58)。
+  ///
+  /// 既に許可済みなら再ダイアログを出さず `true` を返す。拒否・例外時は `false` を
+  /// 返すが、歩数のみが影響し睡眠・心拍の同期は継続する (種別独立実行)。
+  Future<bool> ensureActivityRecognitionPermission();
+
   /// [now] を終端とする同期ウィンドウを算出する。
   SyncWindow computeSyncWindow(DateTime now);
 
@@ -100,11 +107,15 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   HealthSyncRepositoryImpl({
     required HealthClient healthClient,
     required DatabaseManager databaseManager,
+    ActivityRecognitionPermission? activityPermission,
   }) : _health = healthClient,
-       _db = databaseManager;
+       _db = databaseManager,
+       _activity =
+           activityPermission ?? const PermissionHandlerActivityRecognition();
 
   final HealthClient _health;
   final DatabaseManager _db;
+  final ActivityRecognitionPermission _activity;
 
   /// 履歴権限 (`READ_HEALTH_DATA_HISTORY`) の付与状態。
   ///
@@ -180,6 +191,18 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     } catch (_) {
       // 拒否・キャンセル・例外時は 30 日フォールバックで同期を継続する。
       return _historyAuthorized = false;
+    }
+  }
+
+  @override
+  Future<bool> ensureActivityRecognitionPermission() async {
+    try {
+      // 既に許可済みなら再ダイアログを出さない (#58)。
+      if (await _activity.isGranted()) return true;
+      return await _activity.request();
+    } catch (_) {
+      // 拒否・例外でも歩数のみ影響し、睡眠・心拍の同期は継続する。
+      return false;
     }
   }
 

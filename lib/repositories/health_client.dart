@@ -30,6 +30,14 @@ abstract interface class HealthClient {
 
   /// 履歴権限を実行時に追加要求し、許可結果を返す。
   Future<bool> requestHealthDataHistoryAuthorization();
+
+  /// Health Connect が利用可能 (導入済み) か (#42)。
+  ///
+  /// Android で未導入・要更新なら `false`。iOS では常に `true` を返す。
+  Future<bool> isHealthConnectAvailable();
+
+  /// Health Connect の導入 (Google Play ストア) へ誘導する (#42)。
+  Future<void> installHealthConnect();
 }
 
 /// [Health] シングルトンに委譲する本番用 [HealthClient] 実装。
@@ -66,4 +74,10 @@ class HealthPackageClient implements HealthClient {
   @override
   Future<bool> requestHealthDataHistoryAuthorization() =>
       _health.requestHealthDataHistoryAuthorization();
+
+  @override
+  Future<bool> isHealthConnectAvailable() => _health.isHealthConnectAvailable();
+
+  @override
+  Future<void> installHealthConnect() => _health.installHealthConnect();
 }

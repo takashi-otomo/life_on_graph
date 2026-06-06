@@ -114,6 +114,18 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     DateTime end,
   ) => heartRate;
 
+  /// Health Connect 導入状態 ([isHealthConnectAvailable] の戻り値)。
+  bool healthConnectAvailable = true;
+
+  /// [installHealthConnect] の呼び出し回数。
+  int installCount = 0;
+
+  @override
+  Future<bool> isHealthConnectAvailable() async => healthConnectAvailable;
+
+  @override
+  Future<void> installHealthConnect() async => installCount++;
+
   @override
   DateTime? get lastSyncTime => lastSync;
 

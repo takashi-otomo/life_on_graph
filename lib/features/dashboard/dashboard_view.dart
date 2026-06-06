@@ -8,6 +8,7 @@ import '../../models/steps_record_model.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
+import '../../widgets/health_status_banner.dart';
 import '../heart_rate/widgets/heart_rate_chart.dart';
 import '../sleep/sleep_summary.dart';
 import '../sleep/widgets/date_nav_header.dart';
@@ -79,8 +80,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                 children: <Widget>[
-                  if (sync is SyncError || sync is SyncPartial)
-                    const _SyncErrorBanner(),
+                  const HealthStatusBanner(),
                   SleepSummaryCard(summary: summary),
                   const SizedBox(height: 16),
                   SleepStageTimeline(segments: segments),
@@ -98,31 +98,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 同期エラー・部分失敗時のフォールバック表示 (設計doc 12 章)。
-class _SyncErrorBanner extends StatelessWidget {
-  const _SyncErrorBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        color: Theme.of(context).colorScheme.errorContainer,
-        child: const Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: <Widget>[
-              Icon(Icons.error_outline),
-              SizedBox(width: 12),
-              Expanded(child: Text('同期に失敗しました。表示中のデータはローカル保存分です。')),
-            ],
-          ),
         ),
       ),
     );

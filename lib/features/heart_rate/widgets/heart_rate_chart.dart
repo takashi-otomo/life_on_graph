@@ -83,12 +83,33 @@ class _HeartRateChartState extends State<HeartRateChart> {
                       ),
                     ),
                     if (!stats.isEmpty)
-                      Text(
-                        '安静 ${stats.resting} ・ 最高 ${stats.max}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textMuted,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: <Widget>[
+                            // 直近の心拍を主表示 (デザイン準拠)。
+                            Text(
+                              '${stats.current} bpm',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.heart,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                '安静 ${stats.resting} ・ 最高 ${stats.max}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],

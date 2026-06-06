@@ -68,35 +68,37 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: <Widget>[
-          const SafeArea(bottom: false, child: SizedBox.shrink()),
-          if (sync is SyncInProgress)
-            const LinearProgressIndicator(minHeight: 3),
-          const DateNavHeader(),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-              children: <Widget>[
-                if (sync is SyncError || sync is SyncPartial)
-                  const _SyncErrorBanner(),
-                SleepSummaryCard(summary: summary),
-                const SizedBox(height: 16),
-                SleepStageTimeline(segments: segments),
-                const SizedBox(height: 16),
-                StepsBarChart(steps: steps),
-                const SizedBox(height: 16),
-                HeartRateChart(
-                  points: hrPoints,
-                  dayStart: date,
-                  dayEnd: dayEnd,
-                  sleepStart: sleepStart,
-                  sleepEnd: sleepEnd,
-                ),
-              ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: <Widget>[
+            if (sync is SyncInProgress)
+              const LinearProgressIndicator(minHeight: 3),
+            const DateNavHeader(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                children: <Widget>[
+                  if (sync is SyncError || sync is SyncPartial)
+                    const _SyncErrorBanner(),
+                  SleepSummaryCard(summary: summary),
+                  const SizedBox(height: 16),
+                  SleepStageTimeline(segments: segments),
+                  const SizedBox(height: 16),
+                  StepsBarChart(steps: steps),
+                  const SizedBox(height: 16),
+                  HeartRateChart(
+                    points: hrPoints,
+                    dayStart: date,
+                    dayEnd: dayEnd,
+                    sleepStart: sleepStart,
+                    sleepEnd: sleepEnd,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

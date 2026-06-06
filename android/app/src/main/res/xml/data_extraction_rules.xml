@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Android 12 以上 (android:dataExtractionRules) のバックアップ/転送除外ルール。
-  flutter_secure_storage の SharedPreferences を Cloud Backup・端末間転送の双方から
-  除外し、鍵不整合による起動時クラッシュ/データ消失を防ぐ (#56)。
+
+  本アプリはローカルファースト設計でヘルスケアデータを端末内のみに保持する方針のため、
+  クラウドバックアップ・端末間転送の双方から **全アプリデータを除外** する。これにより
+  暗号化 Hive データ・暗号鍵 (flutter_secure_storage) のいずれもクラウドへ複製されず、
+  プライバシーポリシーの「端末内にのみ保持」を保証する。Android 11 以下は
+  android:allowBackup="false" によりバックアップ自体が無効化される。
+  破棄されたデータは Health Connect から再同期して復旧可能。
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
     </device-transfer>
 </data-extraction-rules>

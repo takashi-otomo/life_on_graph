@@ -160,9 +160,9 @@ class _MetricGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int sleepD = summary.sleepDeltaMinutes;
-    final int stepD = summary.stepsDeltaPercent;
-    final int hrD = summary.hrDelta;
+    final int? sleepD = summary.sleepDeltaMinutes;
+    final int? stepD = summary.stepsDeltaPercent;
+    final int? hrD = summary.hrDelta;
 
     final List<Widget> cards = <Widget>[
       MetricCard(
@@ -172,34 +172,34 @@ class _MetricGrid extends StatelessWidget {
         value: summary.avgSleep == Duration.zero
             ? '—'
             : formatHm(summary.avgSleep),
-        trend: sleepD == 0
-            ? MetricTrend.flat
-            : (sleepD > 0 ? MetricTrend.up : MetricTrend.down),
-        trendLabel: '$deltaPrefix ${sleepD >= 0 ? '+' : ''}$sleepD分',
-        trendPositive: sleepD == 0 ? null : sleepD > 0,
+        trend: _trend(sleepD),
+        trendLabel: sleepD == null
+            ? null
+            : '$deltaPrefix ${sleepD >= 0 ? '+' : ''}$sleepD分',
+        trendPositive: (sleepD == null || sleepD == 0) ? null : sleepD > 0,
       ),
       MetricCard(
         icon: Icons.directions_walk,
         iconColor: AppColors.steps,
         label: '平均歩数',
         value: summary.avgSteps == 0 ? '—' : '${_fmt(summary.avgSteps)} 歩',
-        trend: stepD == 0
-            ? MetricTrend.flat
-            : (stepD > 0 ? MetricTrend.up : MetricTrend.down),
-        trendLabel: '$deltaPrefix ${stepD >= 0 ? '+' : ''}$stepD%',
-        trendPositive: stepD == 0 ? null : stepD > 0,
+        trend: _trend(stepD),
+        trendLabel: stepD == null
+            ? null
+            : '$deltaPrefix ${stepD >= 0 ? '+' : ''}$stepD%',
+        trendPositive: (stepD == null || stepD == 0) ? null : stepD > 0,
       ),
       MetricCard(
         icon: Icons.favorite,
         iconColor: AppColors.heart,
         label: '平均心拍',
         value: summary.avgHr == null ? '—' : '${summary.avgHr} bpm',
-        trend: hrD == 0
-            ? MetricTrend.flat
-            : (hrD > 0 ? MetricTrend.up : MetricTrend.down),
-        trendLabel: '$deltaPrefix ${hrD >= 0 ? '+' : ''}$hrD',
+        trend: _trend(hrD),
+        trendLabel: hrD == null
+            ? null
+            : '$deltaPrefix ${hrD >= 0 ? '+' : ''}$hrD',
         // 心拍は低下が良い傾向なので down を positive とみなす。
-        trendPositive: hrD == 0 ? null : hrD < 0,
+        trendPositive: (hrD == null || hrD == 0) ? null : hrD < 0,
       ),
       MetricCard(
         icon: Icons.monitor_heart,
@@ -229,6 +229,10 @@ class _MetricGrid extends StatelessWidget {
       ],
     );
   }
+
+  static MetricTrend _trend(int? d) => (d == null || d == 0)
+      ? MetricTrend.flat
+      : (d > 0 ? MetricTrend.up : MetricTrend.down);
 
   static String _fmt(int n) {
     final String s = n.toString();

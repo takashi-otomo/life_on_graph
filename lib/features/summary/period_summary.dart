@@ -71,28 +71,45 @@ class PeriodSummary {
   /// トレンドバー列。
   final List<TrendBar> bars;
 
-  /// 前期間比: 睡眠の差 (分)。
-  final int sleepDeltaMinutes;
+  /// 前期間比: 睡眠の差 (分)。両期間にデータが無ければ `null` (比較不能)。
+  final int? sleepDeltaMinutes;
 
-  /// 前期間比: 歩数の差 (%)。
-  final int stepsDeltaPercent;
+  /// 前期間比: 歩数の差 (%)。両期間にデータが無ければ `null`。
+  final int? stepsDeltaPercent;
 
-  /// 前期間比: 平均心拍の差 (bpm)。
-  final int hrDelta;
+  /// 前期間比: 平均心拍の差 (bpm)。両期間にデータが無ければ `null`。
+  final int? hrDelta;
 
   /// 指定 [period] / [anchor] について、各日の集計を [read] で取得して構築する。
+  ///
+  /// [now] は「今日」判定の基準 (省略時は現在日)。
   factory PeriodSummary.build({
     required SummaryPeriod period,
     required DateTime anchor,
     required DaySummary Function(DateTime day) read,
+    DateTime? now,
   }) {
-    final _Range range = _Range.of(period, anchor);
+    final DateTime today = now == null
+        ? _Range._d(DateTime.now())
+        : _Range._d(now);
+    final _Range range = _Range.of(period, anchor, today);
     final List<DaySummary> current = range.kpiDays.map(read).toList();
     final List<DaySummary> previous = range.prevDays.map(read).toList();
     final List<TrendBar> bars = range.buildBars(read);
 
     final _Kpi cur = _Kpi.from(current);
     final _Kpi prev = _Kpi.from(previous);
+
+    // 差分は両期間に有効データがある場合のみ算出する (欠損で偽の比較を作らない)。
+    final int? sleepDelta = (cur.hasSleep && prev.hasSleep)
+        ? cur.avgSleep.inMinutes - prev.avgSleep.inMinutes
+        : null;
+    final int? stepsDelta = (cur.hasSteps && prev.hasSteps && prev.avgSteps > 0)
+        ? (((cur.avgSteps - prev.avgSteps) / prev.avgSteps) * 100).round()
+        : null;
+    final int? hrDelta = (cur.avgHr != null && prev.avgHr != null)
+        ? cur.avgHr! - prev.avgHr!
+        : null;
 
     return PeriodSummary(
       period: period,
@@ -101,23 +118,34 @@ class PeriodSummary {
       avgHr: cur.avgHr,
       restingHr: cur.restingHr,
       bars: bars,
-      sleepDeltaMinutes: cur.avgSleep.inMinutes - prev.avgSleep.inMinutes,
-      stepsDeltaPercent: prev.avgSteps == 0
-          ? 0
-          : (((cur.avgSteps - prev.avgSteps) / prev.avgSteps) * 100).round(),
-      hrDelta: (cur.avgHr ?? 0) - (prev.avgHr ?? 0),
+      sleepDeltaMinutes: sleepDelta,
+      stepsDeltaPercent: stepsDelta,
+      hrDelta: hrDelta,
     );
   }
 }
 
 /// 集計の中間値 (平均・安静)。
 class _Kpi {
-  _Kpi(this.avgSleep, this.avgSteps, this.avgHr, this.restingHr);
+  _Kpi(
+    this.avgSleep,
+    this.avgSteps,
+    this.avgHr,
+    this.restingHr, {
+    this.hasSleep = false,
+    this.hasSteps = false,
+  });
 
   final Duration avgSleep;
   final int avgSteps;
   final int? avgHr;
   final int? restingHr;
+
+  /// 期間内に睡眠データのある日があったか (前期間比の有効性判定用)。
+  final bool hasSleep;
+
+  /// 期間内に歩数データのある日があったか。
+  final bool hasSteps;
 
   factory _Kpi.from(List<DaySummary> days) {
     if (days.isEmpty) {
@@ -154,7 +182,14 @@ class _Kpi {
     final int? resting = restings.isEmpty
         ? null
         : restings.reduce((a, b) => a < b ? a : b);
-    return _Kpi(avgSleep, avgSteps, avgHr, resting);
+    return _Kpi(
+      avgSleep,
+      avgSteps,
+      avgHr,
+      resting,
+      hasSleep: sleptDays.isNotEmpty,
+      hasSteps: stepDays.isNotEmpty,
+    );
   }
 }
 
@@ -179,7 +214,7 @@ class _Range {
 
   static DateTime _d(DateTime x) => DateTime(x.year, x.month, x.day);
 
-  factory _Range.of(SummaryPeriod period, DateTime anchor) {
+  factory _Range.of(SummaryPeriod period, DateTime anchor, DateTime today) {
     final DateTime a = _d(anchor);
     switch (period) {
       case SummaryPeriod.day:
@@ -187,7 +222,8 @@ class _Range {
           kpiDays: <DateTime>[a],
           prevDays: <DateTime>[a.subtract(const Duration(days: 1))],
           buildBars: (read) {
-            // 過去 7 日 (anchor を最終・強調)。
+            // 過去 7 日 (anchor を最終・強調)。anchor が実際の今日のときのみ
+            // 「今日」と表示し、過去日を閲覧中は曜日ラベルにする。
             final List<DateTime> days = <DateTime>[
               for (int i = 6; i >= 0; i--) a.subtract(Duration(days: i)),
             ];
@@ -195,7 +231,9 @@ class _Range {
               for (int i = 0; i < days.length; i++)
                 _bar(
                   read(days[i]),
-                  label: i == days.length - 1 ? '今日' : _wd[days[i].weekday - 1],
+                  label: (i == days.length - 1 && days[i] == today)
+                      ? '今日'
+                      : _wd[days[i].weekday - 1],
                   highlighted: i == days.length - 1,
                 ),
             ];
@@ -235,13 +273,21 @@ class _Range {
           kpiDays: monthDays,
           prevDays: prevMonthDays,
           buildBars: (read) {
-            // 週次ロールアップ (1週=1〜7日, 2週=8〜14日, ...)。
+            // 暦週 (月曜始まり) でロールアップする。月初の部分週を 1 週目とし、
+            // 以降は月〜日の暦週で区切る (週表示と境界を揃える)。
             final List<TrendBar> bars = <TrendBar>[];
-            for (int w = 0; w * 7 < days; w++) {
-              final List<DaySummary> chunk = <DaySummary>[
-                for (int i = w * 7; i < (w + 1) * 7 && i < days; i++)
-                  read(monthDays[i]),
-              ];
+            final List<List<DaySummary>> weeks = <List<DaySummary>>[];
+            DateTime? curWeekStart;
+            for (final DateTime day in monthDays) {
+              final DateTime ws = day.subtract(Duration(days: day.weekday - 1));
+              if (curWeekStart == null || ws != curWeekStart) {
+                curWeekStart = ws;
+                weeks.add(<DaySummary>[]);
+              }
+              weeks.last.add(read(day));
+            }
+            for (int w = 0; w < weeks.length; w++) {
+              final List<DaySummary> chunk = weeks[w];
               final List<DaySummary> slept = chunk
                   .where((d) => d.sleep > Duration.zero)
                   .toList();

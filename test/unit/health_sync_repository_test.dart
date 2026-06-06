@@ -6,6 +6,7 @@ import 'package:life_on_graph/core/database_manager.dart';
 import 'package:life_on_graph/models/sleep_record_model.dart';
 import 'package:life_on_graph/repositories/health_sync_repository.dart';
 
+import '../helpers/fake_activity_recognition_permission.dart';
 import '../helpers/fake_health_client.dart';
 import '../helpers/fake_secure_key_store.dart';
 
@@ -26,8 +27,14 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  HealthSyncRepositoryImpl repo(FakeHealthClient client) =>
-      HealthSyncRepositoryImpl(healthClient: client, databaseManager: db);
+  HealthSyncRepositoryImpl repo(
+    FakeHealthClient client, {
+    FakeActivityRecognitionPermission? activity,
+  }) => HealthSyncRepositoryImpl(
+    healthClient: client,
+    databaseManager: db,
+    activityPermission: activity ?? FakeActivityRecognitionPermission(),
+  );
 
   group('T-301 configure / 権限要求', () {
     test('configure はヘルスクライアントの configure を呼ぶ', () async {
@@ -594,6 +601,58 @@ void main() {
 
       expect(result.length, 1);
       expect(result.single.sourcePackage, 'com.fitbit.FitbitMobile');
+    });
+  });
+
+  group('#58 ensureActivityRecognitionPermission', () {
+    test('未許可なら request を呼び結果を返す', () async {
+      final activity = FakeActivityRecognitionPermission(
+        alreadyGranted: false,
+        requestResult: true,
+      );
+      final granted = await repo(
+        FakeHealthClient(),
+        activity: activity,
+      ).ensureActivityRecognitionPermission();
+
+      expect(granted, isTrue);
+      expect(activity.requestCount, 1);
+    });
+
+    test('既に許可済みなら再要求しない', () async {
+      final activity = FakeActivityRecognitionPermission(alreadyGranted: true);
+      final granted = await repo(
+        FakeHealthClient(),
+        activity: activity,
+      ).ensureActivityRecognitionPermission();
+
+      expect(granted, isTrue);
+      expect(activity.requestCount, 0);
+    });
+
+    test('拒否されても例外を出さず false を返す', () async {
+      final activity = FakeActivityRecognitionPermission(
+        alreadyGranted: false,
+        requestResult: false,
+      );
+      expect(
+        await repo(
+          FakeHealthClient(),
+          activity: activity,
+        ).ensureActivityRecognitionPermission(),
+        isFalse,
+      );
+    });
+
+    test('権限 API が例外でも false にフォールバックする', () async {
+      final activity = FakeActivityRecognitionPermission(throwOnAccess: true);
+      expect(
+        await repo(
+          FakeHealthClient(),
+          activity: activity,
+        ).ensureActivityRecognitionPermission(),
+        isFalse,
+      );
     });
   });
 }

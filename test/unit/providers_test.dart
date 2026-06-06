@@ -112,6 +112,8 @@ void main() {
         expect(repo.configureCalled, isTrue);
         expect(repo.requestPermissionsCalled, isTrue);
         expect(repo.ensureHistoryCalled, isTrue);
+        // 歩数取得のための ACTIVITY_RECOGNITION も前置される (#58)。
+        expect(repo.ensureActivityCalled, isTrue);
       },
     );
 

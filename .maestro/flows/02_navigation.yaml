@@ -1,0 +1,16 @@
+appId: dev.otomo.life_on_graph
+name: タブ遷移 (ホーム/サマリー/設定)
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "ホーム"
+    timeout: 60000
+- tapOn:
+    id: "tab_summary"
+- assertVisible: "平均睡眠"
+- tapOn:
+    id: "tab_settings"
+- assertVisible: "データ同期"
+- tapOn:
+    id: "tab_home"
+- assertVisible: "睡眠"

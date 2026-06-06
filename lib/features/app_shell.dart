@@ -16,9 +16,21 @@ class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   static const List<CapsuleTabItem> _tabs = <CapsuleTabItem>[
-    CapsuleTabItem(icon: Icons.home_rounded, label: 'ホーム'),
-    CapsuleTabItem(icon: Icons.bar_chart_rounded, label: 'サマリー'),
-    CapsuleTabItem(icon: Icons.settings_rounded, label: '設定'),
+    CapsuleTabItem(
+      icon: Icons.home_rounded,
+      label: 'ホーム',
+      identifier: 'tab_home',
+    ),
+    CapsuleTabItem(
+      icon: Icons.bar_chart_rounded,
+      label: 'サマリー',
+      identifier: 'tab_summary',
+    ),
+    CapsuleTabItem(
+      icon: Icons.settings_rounded,
+      label: '設定',
+      identifier: 'tab_settings',
+    ),
   ];
 
   @override

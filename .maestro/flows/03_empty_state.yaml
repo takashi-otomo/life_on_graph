@@ -1,0 +1,8 @@
+appId: dev.otomo.life_on_graph
+name: 空状態 (当日データ無し)
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "ホーム"
+    timeout: 60000
+- assertVisible: "この日の睡眠データはありません"

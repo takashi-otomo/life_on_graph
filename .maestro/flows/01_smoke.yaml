@@ -1,0 +1,10 @@
+appId: dev.otomo.life_on_graph
+name: Smoke - 起動とボトムタブ
+---
+- launchApp
+# デバッグビルドのコールドスタートが遅いため描画を待つ。
+- extendedWaitUntil:
+    visible: "ホーム"
+    timeout: 60000
+- assertVisible: "サマリー"
+- assertVisible: "設定"

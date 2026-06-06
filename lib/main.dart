@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_constants.dart';
@@ -24,6 +25,9 @@ final ThemeData _appTheme = ThemeData(
 /// ローカル DB (Hive) を初期化し、ローカルファーストな描画に備える。
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // セマンティクスツリーを常時有効化し、アクセシビリティと E2E (Maestro, #75) で
+  // 各要素を識別可能にする (profile/release でも露出させる)。
+  SemanticsBinding.instance.ensureSemantics();
 
   final String? action = await LaunchIntent.action();
   if (LaunchIntent.isRationale(action)) {

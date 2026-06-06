@@ -40,7 +40,11 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   /// `ensureActivityRecognitionPermission()` の許可結果。
   bool activityRecognitionGranted = true;
 
+  /// `lastSyncTime` の返り値 (テストで差し替え可能)。
+  DateTime? lastSync;
+
   int syncCalls = 0;
+  int clearAllCalls = 0;
   bool configureCalled = false;
   bool requestPermissionsCalled = false;
   bool ensureHistoryCalled = false;
@@ -103,4 +107,16 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     DateTime start,
     DateTime end,
   ) => heartRate;
+
+  @override
+  DateTime? get lastSyncTime => lastSync;
+
+  @override
+  Future<void> clearAllData() async {
+    clearAllCalls++;
+    sleep = <SleepSegment>[];
+    steps = <StepsRecordModel>[];
+    heartRate = <HeartRateRecordModel>[];
+    lastSync = null;
+  }
 }

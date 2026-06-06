@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -70,5 +72,27 @@ void main() {
 
     expect(repo.clearAllCalls, 1);
     expect(find.text('ローカルデータを削除しました'), findsOneWidget);
+  });
+
+  testWidgets('#69 同期中はデータ削除を抑止する (P1)', (tester) async {
+    final repo = FakeHealthSyncRepository()..syncGate = Completer<void>();
+    await tester.pumpWidget(app(repo));
+    await tester.pumpAndSettle();
+
+    // 同期を起動し SyncInProgress を保持させる。
+    await tester.tap(find.text('今すぐ同期'));
+    await tester.pump(); // settle しない (gate 未完了)
+
+    expect(find.text('同期中は削除できません'), findsOneWidget);
+
+    // 削除タップは無効 (ダイアログが出ない)。
+    await tester.tap(find.text('すべてのデータを削除'));
+    await tester.pump();
+    expect(find.text('削除する'), findsNothing);
+    expect(repo.clearAllCalls, 0);
+
+    // 後始末: 同期を完了させる。
+    repo.syncGate!.complete();
+    await tester.pumpAndSettle();
   });
 }

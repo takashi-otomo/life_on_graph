@@ -94,9 +94,14 @@ class SettingsView extends ConsumerWidget {
                   icon: Icons.delete_forever,
                   iconColor: AppColors.danger,
                   title: 'すべてのデータを削除',
-                  subtitle: '端末内の睡眠・歩数・心拍データを消去',
+                  subtitle: sync is SyncInProgress
+                      ? '同期中は削除できません'
+                      : '端末内の睡眠・歩数・心拍データを消去',
                   titleColor: AppColors.danger,
-                  onTap: () => _confirmDelete(context, ref),
+                  // 同期中の削除は実行中の sync が直後に再保存しうるため抑止する。
+                  onTap: sync is SyncInProgress
+                      ? null
+                      : () => _confirmDelete(context, ref),
                 ),
               ],
             ),
@@ -178,6 +183,16 @@ class SettingsView extends ConsumerWidget {
       ),
     );
     if (ok != true) return;
+
+    // ダイアログ表示中に同期が始まっていたら、再保存との競合を避けて中止する。
+    if (ref.read(syncNotifierProvider) is SyncInProgress) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('同期中のため削除を中止しました')));
+      }
+      return;
+    }
 
     await ref.read(healthSyncRepositoryProvider).clearAllData();
     // 派生プロバイダを再評価させ、各画面を空状態に更新する。

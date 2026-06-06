@@ -65,9 +65,11 @@ void main() {
 
     expect(find.text('統合ビュー (睡眠×心拍×歩数)'), findsOneWidget);
     expect(find.byType(CustomPaint), findsWidgets);
-    // 凡例。
-    expect(find.text('心拍'), findsOneWidget);
-    expect(find.text('歩数'), findsOneWidget);
+    // 心拍/歩数 はレーンラベル + 凡例の双方に現れる。
+    expect(find.text('心拍'), findsWidgets);
+    expect(find.text('歩数'), findsWidgets);
+    // 横スクロール領域。
+    expect(find.byType(SingleChildScrollView), findsWidgets);
   });
 
   testWidgets('#39 睡眠なしは空状態を表示する', (tester) async {

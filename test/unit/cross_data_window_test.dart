@@ -25,6 +25,21 @@ void main() {
       expect(CrossDataWindow.fromSegments([]), isNull);
     });
 
+    test('trailing24h は睡眠終点を右端に24時間窓を作る', () {
+      final w = CrossDataWindow.trailing24h([
+        seg('light', DateTime(2026, 6, 6, 23), DateTime(2026, 6, 7, 1)),
+        seg('deep', DateTime(2026, 6, 7, 1), DateTime(2026, 6, 7, 6, 47)),
+      ]);
+      expect(w, isNotNull);
+      expect(w!.end, DateTime(2026, 6, 7, 6, 47)); // 睡眠終点
+      expect(w.start, DateTime(2026, 6, 6, 6, 47)); // 24h 前
+      expect(w.duration, const Duration(hours: 24));
+    });
+
+    test('trailing24h は睡眠なしで null', () {
+      expect(CrossDataWindow.trailing24h([]), isNull);
+    });
+
     test('fractionOf は 0..1 にクランプされ中点は0.5', () {
       final w = CrossDataWindow(
         start: DateTime(2026, 6, 6, 0),

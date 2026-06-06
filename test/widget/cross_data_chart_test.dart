@@ -77,6 +77,40 @@ void main() {
     expect(find.text('睡眠データがないため統合表示できません'), findsOneWidget);
   });
 
+  testWidgets('#39 窓内に心拍が1点でもマーカー描画され破綻しない (P1)', (tester) async {
+    await tester.pumpWidget(
+      host(
+        CrossDataChart(
+          segments: [seg('deep', base, base.add(const Duration(hours: 5)))],
+          heartRate: [hr(base.add(const Duration(hours: 2)), 55)],
+          steps: const [],
+        ),
+      ),
+    );
+    expect(find.text('睡眠データがないため統合表示できません'), findsNothing);
+    expect(find.byType(CustomPaint), findsWidgets);
+  });
+
+  testWidgets('#39 窓境界をまたぐ歩数があっても破綻しない (P1)', (tester) async {
+    await tester.pumpWidget(
+      host(
+        CrossDataChart(
+          segments: [seg('light', base, base.add(const Duration(hours: 5)))],
+          heartRate: const [],
+          // 窓開始 (23:00) をまたぐ 21:00–23:30 の歩数。
+          steps: [
+            step(
+              base.subtract(const Duration(hours: 2)),
+              base.add(const Duration(minutes: 30)),
+              1000,
+            ),
+          ],
+        ),
+      ),
+    );
+    expect(find.byType(CustomPaint), findsWidgets);
+  });
+
   testWidgets('#39 心拍・歩数が欠損しても睡眠だけで描画される', (tester) async {
     await tester.pumpWidget(
       host(

@@ -5,7 +5,6 @@ import '../../../models/heart_rate_record_model.dart';
 import '../../../models/steps_record_model.dart';
 import '../../../models/sleep_segment.dart';
 import '../../../widgets/app_card.dart';
-import '../../sleep/sleep_summary.dart' show canonicalSleepStage;
 import '../cross_data_window.dart';
 
 /// クロスデータ統合ビュー (#39): 睡眠ステージ(背景)×心拍(折れ線)×歩数(棒)を
@@ -106,31 +105,48 @@ class _CrossDataPainter extends CustomPainter {
       final double left = x(s.startTime);
       final double right = x(s.endTime);
       if (right <= left) continue;
+      // 元のステージ種別で着色する (out_of_bed / awake_in_bed の固有色を保持し、
+      // 離床期間と歩数レイヤの相関を読み取れるようにする)。
       final Paint bg = Paint()
-        ..color = AppColors.sleepStage(
-          canonicalSleepStage(s.stageType),
-        ).withValues(alpha: 0.16);
+        ..color = AppColors.sleepStage(s.stageType).withValues(alpha: 0.16);
       canvas.drawRect(Rect.fromLTRB(left, 0, right, h), bg);
     }
 
     // 2) 歩数: 下端の棒 (覚醒・離床中の活動を示す)。最大25%の高さ。
-    final List<StepsRecordModel> inWindow = steps
-        .where(
-          (r) =>
-              r.endTime.isAfter(window.start) &&
-              r.startTime.isBefore(window.end),
-        )
-        .toList();
+    //    窓境界をまたぐレコードは重なり時間で按分し、窓外の歩数を窓内として
+    //    過大表示しない (境界レコードが maxCount を支配して他を潰すのも防ぐ)。
+    final List<({DateTime at, double count})> inWindow =
+        <({DateTime at, double count})>[];
+    for (final StepsRecordModel r in steps) {
+      if (!r.endTime.isAfter(window.start) ||
+          !r.startTime.isBefore(window.end)) {
+        continue;
+      }
+      final DateTime ostart = r.startTime.isBefore(window.start)
+          ? window.start
+          : r.startTime;
+      final DateTime oend = r.endTime.isAfter(window.end)
+          ? window.end
+          : r.endTime;
+      final int overlapMs = oend.difference(ostart).inMilliseconds;
+      final int totalMs = r.endTime.difference(r.startTime).inMilliseconds;
+      final double prorated = (overlapMs <= 0)
+          ? 0
+          : (totalMs <= 0
+                ? r.count.toDouble()
+                : r.count * (overlapMs / totalMs));
+      if (prorated > 0) inWindow.add((at: ostart, count: prorated));
+    }
     if (inWindow.isNotEmpty) {
-      final int maxCount = inWindow
-          .map((r) => r.count)
+      final double maxCount = inWindow
+          .map((e) => e.count)
           .reduce((a, b) => a > b ? a : b);
       final double stepsMaxH = h * 0.25;
       final Paint stepPaint = Paint()..color = AppColors.steps;
-      for (final StepsRecordModel r in inWindow) {
-        if (r.count <= 0 || maxCount <= 0) continue;
-        final double cx = x(r.startTime);
-        final double barH = stepsMaxH * (r.count / maxCount);
+      for (final e in inWindow) {
+        if (maxCount <= 0) continue;
+        final double cx = x(e.at);
+        final double barH = stepsMaxH * (e.count / maxCount);
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(cx - 2, h - barH, 4, barH),
@@ -151,7 +167,7 @@ class _CrossDataPainter extends CustomPainter {
             )
             .toList()
           ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    if (hr.length >= 2) {
+    if (hr.isNotEmpty) {
       int minBpm = hr.first.beatsPerMinute;
       int maxBpm = hr.first.beatsPerMinute;
       for (final HeartRateRecordModel p in hr) {
@@ -160,25 +176,37 @@ class _CrossDataPainter extends CustomPainter {
       }
       final int range = (maxBpm - minBpm) == 0 ? 1 : (maxBpm - minBpm);
       const double pad = 14;
-      double y(int bpm) => h - pad - (bpm - minBpm) / range * (h - 2 * pad);
+      // 単一サンプル (min==max) は中央へ配置する。
+      double y(int bpm) => (maxBpm == minBpm)
+          ? h / 2
+          : h - pad - (bpm - minBpm) / range * (h - 2 * pad);
 
-      final Path path = Path();
-      for (int i = 0; i < hr.length; i++) {
-        final double px = x(hr[i].startTime);
-        final double py = y(hr[i].beatsPerMinute);
-        if (i == 0) {
-          path.moveTo(px, py);
-        } else {
-          path.lineTo(px, py);
+      if (hr.length == 1) {
+        // 折れ線にできない単一サンプルはマーカーで描画する (欠損耐性)。
+        canvas.drawCircle(
+          Offset(x(hr.first.startTime), y(hr.first.beatsPerMinute)),
+          3.5,
+          Paint()..color = AppColors.heart,
+        );
+      } else {
+        final Path path = Path();
+        for (int i = 0; i < hr.length; i++) {
+          final double px = x(hr[i].startTime);
+          final double py = y(hr[i].beatsPerMinute);
+          if (i == 0) {
+            path.moveTo(px, py);
+          } else {
+            path.lineTo(px, py);
+          }
         }
+        final Paint linePaint = Paint()
+          ..color = AppColors.heart
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round;
+        canvas.drawPath(path, linePaint);
       }
-      final Paint linePaint = Paint()
-        ..color = AppColors.heart
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-      canvas.drawPath(path, linePaint);
     }
   }
 

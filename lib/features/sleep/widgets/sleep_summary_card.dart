@@ -16,6 +16,7 @@ class SleepSummaryCard extends StatelessWidget {
         (key: 'light', label: '浅い睡眠'),
         (key: 'rem', label: 'レム睡眠'),
         (key: 'awake', label: '覚醒'),
+        (key: 'unknown', label: '不明'),
       ];
 
   @override

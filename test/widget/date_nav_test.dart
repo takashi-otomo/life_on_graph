@@ -50,4 +50,19 @@ void main() {
     notifier.next();
     expect(container.read(selectedDateProvider), before);
   });
+
+  testWidgets('#41 select() は未来日を今日にクランプする', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(selectedDateProvider.notifier);
+    final today = container.read(selectedDateProvider);
+
+    notifier.select(today.add(const Duration(days: 10)));
+    expect(container.read(selectedDateProvider), today);
+
+    // 過去日は許可される。
+    final past = today.subtract(const Duration(days: 3));
+    notifier.select(past);
+    expect(container.read(selectedDateProvider), past);
+  });
 }

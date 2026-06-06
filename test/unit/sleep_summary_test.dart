@@ -43,6 +43,23 @@ void main() {
       expect(summary.ratio('light'), closeTo(2 / 3, 1e-9));
     });
 
+    test('覚醒エイリアス(awake_in_bed/out_of_bed)は awake に畳み込まれ合計と整合する', () {
+      final summary = SleepSummary.fromSegments([
+        seg(0, 420, 'light'),
+        seg(420, 450, 'awake_in_bed'),
+        seg(450, 480, 'out_of_bed'),
+      ]);
+
+      // 合計 = 全セグメント、覚醒 = エイリアス合算。
+      expect(summary.total, const Duration(minutes: 480));
+      expect(summary.stage('awake'), const Duration(minutes: 60));
+      // 比率の合計が 1.0 (表示内訳が合計を網羅)。
+      expect(
+        summary.ratio('light') + summary.ratio('awake'),
+        closeTo(1.0, 1e-9),
+      );
+    });
+
     test('空入力は isEmpty かつ比率 0', () {
       final summary = SleepSummary.fromSegments(const []);
       expect(summary.isEmpty, isTrue);

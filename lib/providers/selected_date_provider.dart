@@ -22,9 +22,12 @@ class SelectedDateNotifier extends Notifier<DateTime> {
     if (!candidate.isAfter(_today())) state = candidate;
   }
 
-  /// 任意の日付に設定する (時刻は切り捨て)。
-  void select(DateTime date) =>
-      state = DateTime(date.year, date.month, date.day);
+  /// 任意の日付に設定する (時刻は切り捨て)。未来日は今日にクランプする。
+  void select(DateTime date) {
+    final DateTime d = DateTime(date.year, date.month, date.day);
+    final DateTime today = _today();
+    state = d.isAfter(today) ? today : d;
+  }
 
   /// 今日へ移動する。
   void today() => state = _today();

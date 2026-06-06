@@ -1,5 +1,14 @@
 import '../../models/sleep_segment.dart';
 
+/// ステージ種別を表示用の正準キーへ正規化する (#35)。
+///
+/// `awake_in_bed` / `out_of_bed` は覚醒層 (`awake`) に畳み込み、合計時間と
+/// 表示内訳 (deep/light/rem/awake) の不整合を防ぐ。タイムラインの層割当とも一致。
+String canonicalSleepStage(String stage) => switch (stage) {
+  'awake_in_bed' || 'out_of_bed' => 'awake',
+  _ => stage,
+};
+
 /// 睡眠サマリー: 合計時間とステージ別内訳 (#35, 純粋計算)。
 class SleepSummary {
   const SleepSummary({required this.total, required this.byStage});
@@ -16,8 +25,9 @@ class SleepSummary {
     Duration total = Duration.zero;
     for (final SleepSegment s in segments) {
       final Duration d = s.duration;
+      final String key = canonicalSleepStage(s.stageType);
       total += d;
-      byStage[s.stageType] = (byStage[s.stageType] ?? Duration.zero) + d;
+      byStage[key] = (byStage[key] ?? Duration.zero) + d;
     }
     return SleepSummary(total: total, byStage: byStage);
   }

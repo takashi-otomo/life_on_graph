@@ -36,18 +36,32 @@ Android の **ヘルスコネクト (Health Connect)** に接続し、**睡眠�
 
 ## セットアップ
 
-> ⚠️ 本リポジトリは現在ドキュメント整備フェーズです。Flutter プロジェクト本体は未生成です。
-
 ```bash
 # 1. 依存解決
 flutter pub get
 
-# 2. Hive アダプタ等のコード生成
-flutter pub run build_runner build --delete-conflicting-outputs
-
-# 3. 実機 (Android) で起動
-flutter run
+# 2. Hive (CE) アダプタ等のコード生成
+dart run build_runner build
 ```
+
+### エミュレータで起動する
+
+```bash
+# 利用可能な AVD を一覧 / 起動
+flutter emulators
+flutter emulators --launch <avd-id>      # 例: Medium_Phone_API_36.1
+
+# ビルド・インストール・起動 (arm64 デバッグ)
+scripts/run_app.sh                        # 起動中の最初のエミュレータを使用
+scripts/run_app.sh emulator-5556          # シリアル指定も可
+```
+
+> 通常の `flutter run` でも起動できますが、fat デバッグ APK (全 ABI) は
+> エミュレータのストレージが逼迫していると失敗するため、`scripts/run_app.sh` は
+> arm64 限定でビルドします。
+>
+> 睡眠・歩数・心拍データを表示するには、エミュレータ/実機の **Health Connect** に
+> 対象データを投入し、アプリ初回起動時の権限ダイアログで許可してください。
 
 ## ドキュメント
 

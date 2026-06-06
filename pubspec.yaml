@@ -59,6 +59,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.4.13
   hive_ce_generator: ^1.11.2
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -74,6 +76,28 @@ flutter:
   assets:
     # プライバシーポリシー全文 (権限根拠画面でアプリ内表示する, #54)。
     - assets/privacy_policy.md
+
+# アプリアイコン生成 (#86)。`dart run flutter_launcher_icons` で適用。
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/branding/app_icon.png"
+  adaptive_icon_background: "#4F46E5"
+  adaptive_icon_foreground: "assets/branding/app_icon_foreground.png"
+  adaptive_icon_monochrome: "assets/branding/app_icon_foreground.png"
+  min_sdk_android: 21
+
+# 起動画面 (スプラッシュ) 生成 (#87)。`dart run flutter_native_splash:create` で適用。
+flutter_native_splash:
+  color: "#F5F6FA"
+  image: "assets/branding/app_icon.png"
+  android_12:
+    image: "assets/branding/app_icon.png"
+    color: "#F5F6FA"
+    icon_background_color: "#4F46E5"
+  android: true
+  ios: false
+  web: false
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

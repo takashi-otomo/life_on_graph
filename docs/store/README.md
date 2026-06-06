@@ -6,9 +6,12 @@ Google Play 公開用の掲載素材。実際のアップロードは公開作�
 
 | 素材 | ファイル | 仕様 | 状態 |
 | --- | --- | --- | --- |
-| アプリアイコン | [app_icon.png](app_icon.png) | 512×512(マスターは 1024) | ✅ 完了(#86) |
-| フィーチャーグラフィック | [feature_graphic.png](feature_graphic.png) | 1024×500 | ✅ 完了 |
-| スクリーンショット | [screenshots/](screenshots/) | 1080×2400(携帯) | ✅ 4点(実データ) |
+| アプリアイコン | [app_icon.png](app_icon.png) | 512×512 32bit PNG(マスター 1024) | ✅ 完了(#86) |
+| フィーチャーグラフィック | [feature_graphic.png](feature_graphic.png) | 1024×500 24bit RGB(アルファ無) | ✅ 完了 |
+| スクリーンショット | [screenshots/](screenshots/) | 1200×2400(縦横比 2:1, RGB) | ✅ 4点(実データ) |
+
+> Play 規定: スクショは縦横比 2:1 以内・アルファ無、FG は 1024×500・アルファ無。
+> 整形は `dart run tool/prepare_store_assets.dart` で実施(元の 1080×2400 を左右パディングし 2:1 化)。
 | 掲載テキスト | [listing.md](listing.md) | 名称/説明/カテゴリ等 | ✅ 完了 |
 
 ### スクリーンショット

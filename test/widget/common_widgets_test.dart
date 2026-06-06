@@ -40,6 +40,7 @@ void main() {
             value: '7時間 4分',
             trend: MetricTrend.up,
             trendLabel: '先週比 +12分',
+            trendPositive: true,
           ),
         ),
       );
@@ -48,6 +49,27 @@ void main() {
       expect(find.text('7時間 4分'), findsOneWidget);
       expect(find.text('先週比 +12分'), findsOneWidget);
       expect(find.byIcon(Icons.trending_up), findsOneWidget);
+    });
+
+    testWidgets('下向きトレンドでも悪化は danger 色で表示する (方向と色を分離)', (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const MetricCard(
+            icon: Icons.directions_walk,
+            iconColor: AppColors.steps,
+            label: '歩数',
+            value: '8,432 歩',
+            trend: MetricTrend.down,
+            trendLabel: '前日比 -640',
+            trendPositive: false,
+          ),
+        ),
+      );
+
+      // 下向き矢印 + danger 色のテキスト。
+      expect(find.byIcon(Icons.trending_down), findsOneWidget);
+      final Text trendText = tester.widget<Text>(find.text('前日比 -640'));
+      expect(trendText.style?.color, AppColors.danger);
     });
   });
 

@@ -54,15 +54,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               )
             : null,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: sync is SyncInProgress
-            ? null
-            : () => ref.read(syncNotifierProvider.notifier).sync(force: true),
-        tooltip: '同期',
-        child: const Icon(Icons.sync),
-      ),
+      // 手動同期は設定の「今すぐ同期」(#69) と起動時の自動同期に集約。
+      // FAB は廃止し、ボトムタブ (AppShell) に隠れないよう下部に余白を確保する。
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: <Widget>[
           if (sync is SyncError || sync is SyncPartial)
             const _SyncErrorBanner(),

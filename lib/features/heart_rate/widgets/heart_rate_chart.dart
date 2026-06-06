@@ -12,11 +12,18 @@ class HeartRateChart extends StatefulWidget {
   const HeartRateChart({
     super.key,
     required this.points,
+    required this.dayStart,
+    required this.dayEnd,
     this.sleepStart,
     this.sleepEnd,
   });
 
+  /// 心拍レコード。睡眠期間が暦日をまたぐ場合に備え、暦日より広い範囲を渡すこと。
   final List<HeartRateRecordModel> points;
+
+  /// 「全日」表示の対象暦日ウィンドウ `[dayStart, dayEnd)`。
+  final DateTime dayStart;
+  final DateTime dayEnd;
 
   /// 睡眠期間 (#38 フィルタ用)。null の場合「睡眠中」トグルは無効化。
   final DateTime? sleepStart;
@@ -33,6 +40,7 @@ class _HeartRateChartState extends State<HeartRateChart> {
       widget.sleepStart != null && widget.sleepEnd != null;
 
   List<HeartRateRecordModel> get _visiblePoints {
+    // 睡眠中: 睡眠期間でフィルタ (暦日をまたいでも全期間を表示)。
     if (_filterIndex == 1 && _canFilterSleep) {
       return filterHeartRateToWindow(
         widget.points,
@@ -40,7 +48,12 @@ class _HeartRateChartState extends State<HeartRateChart> {
         widget.sleepEnd!,
       );
     }
-    return widget.points;
+    // 全日: 対象暦日のみ (広めに渡された範囲から当日分へ絞る)。
+    return filterHeartRateToWindow(
+      widget.points,
+      widget.dayStart,
+      widget.dayEnd,
+    );
   }
 
   @override

@@ -50,15 +50,17 @@ void main() {
   });
 
   group('#37/#38 HeartRateChart', () {
-    testWidgets('安静/最高を表示し、睡眠中トグルでフィルタする', (tester) async {
+    testWidgets('全日は暦日に絞り、睡眠中トグルで日跨ぎ睡眠もフィルタする (P1-1)', (tester) async {
       final points = <HeartRateRecordModel>[
-        hr(DateTime(2026, 6, 6, 12), 90), // 日中(睡眠外)
-        hr(DateTime(2026, 6, 7, 2), 54), // 睡眠中
+        hr(DateTime(2026, 6, 6, 12), 90), // 当日 日中
+        hr(DateTime(2026, 6, 7, 2), 54), // 翌朝(日跨ぎ睡眠中)
       ];
       await tester.pumpWidget(
         wrap(
           HeartRateChart(
             points: points,
+            dayStart: DateTime(2026, 6, 6),
+            dayEnd: DateTime(2026, 6, 7),
             sleepStart: DateTime(2026, 6, 6, 23),
             sleepEnd: DateTime(2026, 6, 7, 7),
           ),
@@ -66,10 +68,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 全日: 安静 54 ・ 最高 90。
-      expect(find.text('安静 54 ・ 最高 90'), findsOneWidget);
+      // 全日(暦日): 当日 日中の 90 のみ。
+      expect(find.text('安静 90 ・ 最高 90'), findsOneWidget);
 
-      // 睡眠中トグル → 睡眠中(54)のみ。
+      // 睡眠中: 翌朝 2時の 54 (日跨ぎでも欠落しない)。
       await tester.tap(find.text('睡眠中'));
       await tester.pumpAndSettle();
       expect(find.text('安静 54 ・ 最高 54'), findsOneWidget);
@@ -77,7 +79,13 @@ void main() {
 
     testWidgets('睡眠期間が無ければトグルは出ない', (tester) async {
       await tester.pumpWidget(
-        wrap(HeartRateChart(points: [hr(DateTime(2026, 6, 6, 12), 70)])),
+        wrap(
+          HeartRateChart(
+            points: [hr(DateTime(2026, 6, 6, 12), 70)],
+            dayStart: DateTime(2026, 6, 6),
+            dayEnd: DateTime(2026, 6, 7),
+          ),
+        ),
       );
       await tester.pumpAndSettle();
       expect(find.text('睡眠中'), findsNothing);

@@ -38,6 +38,22 @@ void main() {
       expect(h.hourly[0], 100);
     });
 
+    test('日跨ぎレコードは当日にかかった分を按分して計上する (P1-2)', () {
+      // 23:30(前日)→00:30(当日) の 100 歩。当日分は半分 (00:00-00:30)。
+      final h = StepsHourly.forDay([
+        StepsRecordModel(
+          uuid: 'cross',
+          startTime: DateTime(2026, 6, 5, 23, 30),
+          endTime: DateTime(2026, 6, 6, 0, 30),
+          count: 100,
+          sourcePackage: 'pkg',
+        ),
+      ], day);
+
+      expect(h.hourly[0], 50);
+      expect(h.total, 50);
+    });
+
     test('peak は最大時間帯、空は isEmpty', () {
       expect(StepsHourly.forDay(const [], day).isEmpty, isTrue);
       expect(StepsHourly.forDay(const [], day).peak, 1);

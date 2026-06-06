@@ -40,15 +40,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   Widget build(BuildContext context) {
     final DateTime date = ref.watch(selectedDateProvider);
     final List<SleepSegment> segments = ref.watch(sleepSegmentsProvider(date));
-    final DateRange dayRange = DateRange(
-      date,
-      date.add(const Duration(days: 1)),
-    );
+    final DateTime dayEnd = date.add(const Duration(days: 1));
+    final DateRange dayRange = DateRange(date, dayEnd);
     final List<StepsRecordModel> stepsRecords = ref.watch(
       stepsProvider(dayRange),
     );
+    // 心拍は睡眠が暦日をまたぐ (noon〜翌noon) ため、翌正午までを取得して
+    // 「睡眠中」フィルタで翌朝分が欠落しないようにする (#38)。
     final List<HeartRateRecordModel> hrPoints = ref.watch(
-      heartRateProvider(dayRange),
+      heartRateProvider(DateRange(date, date.add(const Duration(hours: 36)))),
     );
     final SyncState sync = ref.watch(syncNotifierProvider);
     final SleepSummary summary = SleepSummary.fromSegments(segments);
@@ -88,6 +88,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 const SizedBox(height: 16),
                 HeartRateChart(
                   points: hrPoints,
+                  dayStart: date,
+                  dayEnd: dayEnd,
                   sleepStart: sleepStart,
                   sleepEnd: sleepEnd,
                 ),

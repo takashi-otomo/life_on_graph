@@ -4,4 +4,14 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!--
+      デバッグビルド専用の Health Connect 書き込み権限。
+      テスト用ダミーデータ投入 (tool/health_seeder.dart) のためにのみ使用する。
+      本番 (release) ビルドにはマージされず、製品アプリは READ 権限のみを申請する
+      (データ最小化原則を維持)。
+    -->
+    <uses-permission android:name="android.permission.health.WRITE_SLEEP"/>
+    <uses-permission android:name="android.permission.health.WRITE_STEPS"/>
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE"/>
 </manifest>

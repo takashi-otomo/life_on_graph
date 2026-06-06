@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4338CA"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <circle cx="850" cy="90" r="210" fill="#FFFFFF" fill-opacity="0.07"/>
+  <circle cx="940" cy="400" r="160" fill="#FFFFFF" fill-opacity="0.05"/>
+  <g font-family="Helvetica, Arial, sans-serif">
+    <text x="64" y="210" fill="#FFFFFF" font-size="66" font-weight="bold">Life On Graph</text>
+    <text x="66" y="266" fill="#E0E7FF" font-size="27" font-weight="600">睡眠・歩数・心拍を、端末内だけで可視化。</text>
+    <text x="66" y="306" fill="#C7D2FE" font-size="19">クラウド送信なし ／ AES-256 ローカル暗号化</text>
+  </g>
+  <path d="M70,400 L150,400 L182,400 L210,360 L246,470 L284,330 L312,400 L380,400 L420,372 L470,372"
+        fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <g>
+    <rect x="744" y="150" width="200" height="200" rx="46" fill="url(#badge)"/>
+    <path d="M774,260 L812,260 L824,260 L836,234 L850,304 L864,210 L878,260 L902,260 L920,242 L940,242"
+          fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="940" cy="242" r="11" fill="#F43F5E"/>
+  </g>
+</svg>

@@ -29,4 +29,10 @@ class EncryptionKeyProvider {
     await _keyStore.write(keyAlias, base64UrlEncode(generated));
     return Uint8List.fromList(generated);
   }
+
+  /// 保存済みの鍵エントリを削除する。
+  ///
+  /// 鍵不整合からの復旧で、破損した鍵を破棄して次回 [getOrCreateKey] で新規生成
+  /// させるために用いる。
+  Future<void> resetKey() => _keyStore.delete(keyAlias);
 }

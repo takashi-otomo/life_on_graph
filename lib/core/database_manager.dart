@@ -39,6 +39,18 @@ class DatabaseManager {
   bool _initialized = false;
   Future<void>? _initFuture;
 
+  /// 直近の初期化で鍵不整合からの復旧 (鍵再生成 + 暗号化ボックス破棄) を行ったか。
+  ///
+  /// `true` の場合、暗号化データは破棄されており Health Connect からの再同期が必要。
+  bool recoveredFromKeyFailure = false;
+
+  /// 暗号化ボックス名の一覧 (復旧時の一括破棄に用いる)。
+  static const List<String> encryptedBoxNames = <String>[
+    sleepBoxName,
+    stepsBoxName,
+    heartRateBoxName,
+  ];
+
   /// 暗号化された睡眠レコードボックス。
   Box<SleepRecordModel> get sleepBox => _sleepBox;
 
@@ -72,6 +84,7 @@ class DatabaseManager {
   }
 
   Future<void> _doInitialize({String? path, SecureKeyStore? keyStore}) async {
+    recoveredFromKeyFailure = false;
     if (path != null) {
       Hive.init(path);
     } else {
@@ -80,7 +93,24 @@ class DatabaseManager {
 
     _registerAdapters();
 
+    // 平文メタデータは鍵に依存しないため先に開く。
+    _metadataBox = await Hive.openBox<dynamic>(metadataBoxName);
+
     final provider = EncryptionKeyProvider(keyStore ?? FlutterSecureKeyStore());
+    try {
+      await _openEncryptedBoxes(provider);
+    } catch (_) {
+      // 鍵不整合 (Auto Backup 復元で Keystore 材料が欠落し復号に失敗する等) で
+      // 起動時クラッシュを起こさないよう、鍵を再生成し暗号化ボックスを破棄して
+      // 再構築する。破棄したデータは Health Connect から再同期して復旧する。
+      await _recoverFromKeyFailure(provider);
+    }
+
+    _initialized = true;
+  }
+
+  /// 暗号鍵を取得し、3 つの暗号化ボックスを開く。
+  Future<void> _openEncryptedBoxes(EncryptionKeyProvider provider) async {
     final encryptionKey = await provider.getOrCreateKey();
     final cipher = HiveAesCipher(encryptionKey);
 
@@ -96,9 +126,22 @@ class DatabaseManager {
       heartRateBoxName,
       encryptionCipher: cipher,
     );
-    _metadataBox = await Hive.openBox<dynamic>(metadataBoxName);
+  }
 
-    _initialized = true;
+  /// 鍵不整合からの復旧: 鍵を再生成し暗号化ボックスを破棄して再構築する。
+  ///
+  /// 3 ボックスは同一鍵を共有するため、失敗は鍵取得時点 (= ボックス open 前) に
+  /// 起きる。よって破棄前に open 済みボックスを閉じる必要はない。
+  Future<void> _recoverFromKeyFailure(EncryptionKeyProvider provider) async {
+    await provider.resetKey();
+    for (final name in encryptedBoxNames) {
+      await Hive.deleteBoxFromDisk(name);
+    }
+    // 同期メタデータをクリアし、次回同期で 30 日バックフィルを走らせる。
+    await _metadataBox.clear();
+
+    await _openEncryptedBoxes(provider);
+    recoveredFromKeyFailure = true;
   }
 
   /// 全ボックスを閉じる (主にテストのクリーンアップ用)。

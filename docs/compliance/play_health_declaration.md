@@ -33,12 +33,14 @@ Play Console「ヘルスの申告 (Health Apps Declaration)」へ登録する内
 - `READ_HEALTH_DATA_IN_BACKGROUND`(本フェーズ対象外。後続 #48 / #49 で検討時に Prominent Disclosure と併せて再申告)。
 - 体重・血糖値・呼吸数など睡眠/歩数/心拍以外のデータ種別。
 
+> **マニフェストとの関係**: AndroidManifest には上記4つの Health Connect 権限に加えて、標準ランタイム権限 `android.permission.ACTIVITY_RECOGNITION`(身体活動アクセス, #58)が宣言されている。これは Health Connect の「ヘルスの申告」対象ではなく、通常のアプリ権限として扱う(Play のデータセーフティ/権限説明で別途扱う)。したがって「ヘルス申告の権限一覧」= Health Connect 4 権限、「マニフェストの全権限」= 4 権限 + ACTIVITY_RECOGNITION、という対応になる(矛盾なし)。詳細は [データ最小化レビュー](data_minimization_review.md)。
+
 ## 受け入れ基準の対応
 
 - [x] Sleep management / Activity and fitness の両カテゴリを選択(本書 §1)
 - [x] READ_SLEEP / READ_STEPS / READ_HEART_RATE / READ_HEALTH_DATA_HISTORY すべてに用途説明(本書 §2)
 - [x] 睡眠・歩数・心拍以外の健康権限を含めない(本書 §4)
-- [x] 申告の権限一覧が AndroidManifest (#9) の宣言と一致(#45 レビューと整合)
-- [x] 利用目的がプライバシーポリシー (#43) と整合(端末内可視化・非送信)
+- [x] 申告の Health Connect 権限一覧が AndroidManifest の HC 宣言と一致。標準権限 ACTIVITY_RECOGNITION の扱いも明記(上記注記 / #45 レビューと整合)
+- [x] 利用目的がプライバシーポリシー (#43) と整合(端末内可視化・非送信・アプリ内削除「設定→すべてのデータを削除」を反映済み)
 
 > 注: 本書は Play Console 入力原稿。実際の登録(Console 操作)と公開審査提出は開発者が公開作業時に実施する。

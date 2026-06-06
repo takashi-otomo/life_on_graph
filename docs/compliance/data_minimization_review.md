@@ -13,9 +13,11 @@
 | `android.permission.health.READ_STEPS` | Health Connect READ | FR-3(歩数) | 時間帯別歩数グラフ・合計表示 |
 | `android.permission.health.READ_HEART_RATE` | Health Connect READ | FR-5 / FR-6(心拍) | 心拍折れ線・安静/最高、睡眠中心拍 |
 | `android.permission.health.READ_HEALTH_DATA_HISTORY` | Health Connect READ | FR-1(初回バックフィル) | 初回同期で 30 日以前を遡るための一時利用(無ければ過去30日に制限) |
-| `android.permission.ACTIVITY_RECOGNITION` | Android ランタイム権限 | FR-3(歩数) | 端末の歩数カウントに必須(#58 で追加)。Health Connect 権限ではない標準権限 |
+| `android.permission.ACTIVITY_RECOGNITION` | Android ランタイム権限 | FR-3(歩数) | 歩数(身体活動)へのアクセスに用いる標準ランタイム権限(#58 で追加・実行時要求)。Health Connect 権限ではない |
 
-> **補足**: `ACTIVITY_RECOGNITION` は Issue #45 起票時(健康READ4件想定)より後の #58 で追加した標準ランタイム権限。歩数取得に必須であり、用途が明確なため最小権限の範囲内。Play ヘルス申告 (#44) では Health Connect 権限(上記4件)を申告し、本権限は通常のアプリ権限として扱う。
+> **補足**: `ACTIVITY_RECOGNITION` は Issue #45 起票時(健康READ4件想定)より後の #58 で追加した標準ランタイム権限。Health Connect からの歩数 READ 自体は `READ_STEPS` で宣言されるため、本権限は **Health Connect が必須とするもの**ではない(身体活動アクセスの一般的要件として実行時要求している)。Play ヘルス申告 (#44) では Health Connect 権限(上記4件)を申告し、本権限は通常のアプリ権限として扱う。
+>
+> ⚠ **再確認事項(さらなる最小化)**: Health Connect 経由の歩数 READ のみで `ACTIVITY_RECOGNITION` が実際に不要であれば、データ最小化の観点から削除を検討する(実機での歩数取得検証 #11 と併せて確認し、不要なら除去)。
 
 ## 2. 不要権限が無いことの確認
 

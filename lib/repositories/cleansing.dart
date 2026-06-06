@@ -4,7 +4,7 @@ import '../models/sleep_segment.dart';
 /// 睡眠セグメントのクレンジングパイプライン (純粋関数群, 設計doc 9 章)。
 ///
 /// 読み出し時に以下の順で適用する:
-/// 1. [allocateBySourcePriority] — ソース優先順位で単一ソース化
+/// 1. [allocateBySourcePriority] — ソース優先順位で重複区間のみ解決
 /// 2. [clipSegmentsToDay] — 表示枠への境界クリッピング
 /// 3. [mergeOverlaps] — オーバーラップ解消 (長いセグメント優先)
 /// 4. [mergeAdjacentSameStage] — 隣接同一ステージ結合
@@ -13,10 +13,11 @@ import '../models/sleep_segment.dart';
 
 /// 第1段: ソース優先順位によるアロケーション (T-401)。
 ///
-/// [trustedSources] の優先順位 (先頭ほど高優先) に従い、入力に含まれるソースのうち
-/// 最上位のもの **だけ** を残して単一ソース化する。リストに無いソースは最下位扱いと
-/// し、信頼ソースが 1 つでも存在すればそれらは除外される。逆に信頼外ソースしか無い
-/// 場合は、唯一存在するソースを採用してデータ消失を避ける (フェイルオープン)。
+/// ソース衝突は **同一時間帯のみ** で解決する。信頼ソースが 1 つでも存在する場合は
+/// 信頼外ソースを除外し (設計doc 9 章 / DoD)、残った信頼ソース間では重複した区間に
+/// ついてのみ上位ソースを優先する。非重複の下位ソース区間は保持し、データ消失を防ぐ。
+/// 信頼外ソースしか無い場合は全件を採用し (フェイルオープン)、重複区間のみ名前昇順で
+/// 決定的に解決する。同一ソース内の重複は本段では解消せず第3段 [mergeOverlaps] に委ねる。
 List<SleepSegment> allocateBySourcePriority(
   List<SleepSegment> segments, {
   List<String> trustedSources = AppConstants.trustedSleepSources,
@@ -28,16 +29,49 @@ List<SleepSegment> allocateBySourcePriority(
     return i >= 0 ? i : trustedSources.length;
   }
 
-  // 入力に存在するソースのうち最上位を決定的に選ぶ (同順位は名前昇順で一意化)。
-  final Set<String> sources = segments.map((s) => s.sourcePackage).toSet();
-  final String best = sources.reduce((a, b) {
-    final int ra = rank(a);
-    final int rb = rank(b);
-    if (ra != rb) return ra < rb ? a : b;
-    return a.compareTo(b) <= 0 ? a : b;
-  });
+  // 信頼ソースが存在すれば信頼外を除外。無ければ全件採用 (フェイルオープン)。
+  final bool hasTrusted = segments.any(
+    (s) => trustedSources.contains(s.sourcePackage),
+  );
+  final List<SleepSegment> candidates = hasTrusted
+      ? segments.where((s) => trustedSources.contains(s.sourcePackage)).toList()
+      : List<SleepSegment>.of(segments);
 
-  return segments.where((s) => s.sourcePackage == best).toList();
+  // ソース単位に束ね、優先順位 (rank → 名前昇順) で処理する。
+  final Map<String, List<SleepSegment>> bySource =
+      <String, List<SleepSegment>>{};
+  for (final SleepSegment s in candidates) {
+    (bySource[s.sourcePackage] ??= <SleepSegment>[]).add(s);
+  }
+  final List<String> sources = bySource.keys.toList()
+    ..sort((a, b) {
+      final int r = rank(a) - rank(b);
+      return r != 0 ? r : a.compareTo(b);
+    });
+
+  final List<SleepSegment> result = <SleepSegment>[];
+  // 上位ソースが確定した区間 (これに重なる下位ソース区間のみを譲らせる)。
+  final List<_Interval> claimed = <_Interval>[];
+  for (final String src in sources) {
+    final List<SleepSegment> kept = <SleepSegment>[];
+    for (final SleepSegment seg in bySource[src]!) {
+      List<_Interval> pieces = <_Interval>[
+        _Interval(seg.startTime, seg.endTime),
+      ];
+      for (final _Interval c in claimed) {
+        pieces = pieces.expand((p) => p.subtract(c.start, c.end)).toList();
+      }
+      for (final _Interval p in pieces) {
+        kept.add(seg.copyWith(startTime: p.start, endTime: p.end));
+      }
+    }
+    result.addAll(kept);
+    // 同一ソース内の重複は第3段に委ねるため、ソース処理後に一括で claimed へ加える。
+    claimed.addAll(kept.map((s) => _Interval(s.startTime, s.endTime)));
+  }
+
+  result.sort((a, b) => a.startTime.compareTo(b.startTime));
+  return result;
 }
 
 /// 第2段: 表示枠 `[start, end]` への境界クリッピング (T-402)。

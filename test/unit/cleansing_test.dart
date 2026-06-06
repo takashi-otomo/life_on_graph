@@ -58,6 +58,49 @@ void main() {
       final input = [seg(0, 60, source: fitbit), seg(0, 60, source: shealth)];
       expect(allocateBySourcePriority(input), allocateBySourcePriority(input));
     });
+
+    test('非重複の下位信頼ソース区間は保持される (overlap単位で解決)', () {
+      // shealth 0-30, fitbit 60-90 は時間的に重ならない → 両方残る
+      final result = allocateBySourcePriority([
+        seg(0, 30, source: shealth),
+        seg(60, 90, source: fitbit),
+      ]);
+      expect(result.length, 2);
+      expect(result.map((s) => s.sourcePackage).toSet(), {shealth, fitbit});
+    });
+
+    test('重複区間のみ上位ソースが優先され、下位は非重複部分を残す', () {
+      // shealth 0-60, fitbit 40-90 → 重複 40-60 は shealth 優先、fitbit は 60-90 を残す
+      final result = allocateBySourcePriority([
+        seg(0, 60, source: shealth),
+        seg(40, 90, source: fitbit),
+      ]);
+      final sh = result.firstWhere((s) => s.sourcePackage == shealth);
+      final fb = result.firstWhere((s) => s.sourcePackage == fitbit);
+      expect(sh.startTime, _noon);
+      expect(sh.endTime, _noon.add(const Duration(minutes: 60)));
+      expect(fb.startTime, _noon.add(const Duration(minutes: 60)));
+      expect(fb.endTime, _noon.add(const Duration(minutes: 90)));
+    });
+
+    test('信頼外のみの入力では非重複データが両ソースとも保持される (fail-open)', () {
+      const unknown2 = 'com.another.app';
+      final result = allocateBySourcePriority([
+        seg(0, 30, source: unknown),
+        seg(60, 90, source: unknown2),
+      ]);
+      expect(result.length, 2);
+      expect(result.map((s) => s.sourcePackage).toSet(), {unknown, unknown2});
+    });
+
+    test('同一ソース内の重複は本段で解消せず後段に委ねる', () {
+      // 同一 shealth の重複 0-60 / 30-90 はここでは両方残る (mergeOverlaps が後で解消)
+      final result = allocateBySourcePriority([
+        seg(0, 60, source: shealth),
+        seg(30, 90, source: shealth),
+      ]);
+      expect(result.length, 2);
+    });
   });
 
   group('T-402 clipSegmentsToDay', () {
@@ -258,8 +301,8 @@ void main() {
         ),
         // shealth: 隣接 deep (+40分〜+50分, ギャップ0) → 結合対象
         seg(40, 50, stage: 'deep', source: shealth),
-        // 低優先 fitbit の重複データ → 第1段で除外される
-        seg(0, 120, stage: 'rem', source: fitbit),
+        // 低優先 fitbit が shealth の確定区間に完全重複 → 第1段で除外される
+        seg(0, 50, stage: 'rem', source: fitbit),
       ];
 
       final result = runSleepCleansingPipeline(
@@ -268,7 +311,7 @@ void main() {
         end: end,
       );
 
-      // fitbit は除外され shealth のみ。境界クリップで開始は正午。隣接 deep は結合。
+      // fitbit は完全重複で除外され shealth のみ。境界クリップで開始は正午。隣接 deep は結合。
       expect(result.every((s) => s.sourcePackage == shealth), isTrue);
       expect(result.length, 1);
       expect(result.single.stageType, 'deep');

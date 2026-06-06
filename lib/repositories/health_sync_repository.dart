@@ -257,7 +257,10 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     // 表示枠は正午〜翌正午の 24 時間 (設計doc 9 章)。
     final DateTime start = DateTime(day.year, day.month, day.day, 12);
     final DateTime end = start.add(const Duration(days: 1));
+    // ソース優先順位が別日のレコードに影響されないよう、表示枠と交差するレコードに
+    // 事前フィルタしてからパイプラインへ渡す (cross-day のデータ消失を防止)。
     final List<SleepSegment> segments = _db.sleepBox.values
+        .where((r) => r.endTime.isAfter(start) && r.startTime.isBefore(end))
         .map(SleepSegment.fromRecord)
         .toList();
     return runSleepCleansingPipeline(segments, start: start, end: end);

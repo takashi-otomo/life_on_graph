@@ -565,5 +565,35 @@ void main() {
         isEmpty,
       );
     });
+
+    test('別日の上位ソースが当日窓の下位ソースデータを消さない (cross-day prefilter)', () async {
+      final day = DateTime(2026, 6, 5);
+      final noon = DateTime(2026, 6, 5, 12);
+      // 別日 (6/4 深夜) の Samsung レコード — 当日窓と交差しない
+      final otherDay = SleepRecordModel(
+        uuid: 'o1',
+        startTime: DateTime(2026, 6, 4, 2),
+        endTime: DateTime(2026, 6, 4, 3),
+        stageType: 'deep',
+        sourcePackage: shealth, // 上位
+      );
+      // 当日窓内の Fitbit (下位) レコード — 別日の Samsung に消されてはならない
+      final fitbit = SleepRecordModel(
+        uuid: 'f1',
+        startTime: noon.add(const Duration(hours: 10)),
+        endTime: noon.add(const Duration(hours: 11)),
+        stageType: 'light',
+        sourcePackage: 'com.fitbit.FitbitMobile',
+      );
+      await db.sleepBox.put(otherDay.hiveKey, otherDay);
+      await db.sleepBox.put(fitbit.hiveKey, fitbit);
+
+      final result = repo(
+        FakeHealthClient(),
+      ).getCleanedSleepSegmentsForDay(day);
+
+      expect(result.length, 1);
+      expect(result.single.sourcePackage, 'com.fitbit.FitbitMobile');
+    });
   });
 }

@@ -100,6 +100,56 @@ void main() {
 
       expect(repo.syncCalls, 1);
     });
+
+    test(
+      'sync は configure / requestPermissions / ensureHistory を前置する (P1-b)',
+      () async {
+        final repo = FakeHealthSyncRepository();
+        final container = makeContainer(repo);
+
+        await container.read(syncNotifierProvider.notifier).sync();
+
+        expect(repo.configureCalled, isTrue);
+        expect(repo.requestPermissionsCalled, isTrue);
+        expect(repo.ensureHistoryCalled, isTrue);
+      },
+    );
+
+    test('権限拒否時は SyncError(権限例外) となり sync は呼ばれない (P1-b)', () async {
+      final repo = FakeHealthSyncRepository(permissionsGranted: false);
+      final container = makeContainer(repo);
+
+      await container.read(syncNotifierProvider.notifier).sync();
+
+      final state = container.read(syncNotifierProvider);
+      expect(state, isA<SyncError>());
+      expect((state as SyncError).error, isA<SyncPermissionDeniedException>());
+      expect(repo.syncCalls, 0);
+    });
+
+    test('一部種別失敗時は SyncPartial に遷移し失敗種別を保持する (P1-a)', () async {
+      final repo = FakeHealthSyncRepository(failedTypesOnSync: {'steps'});
+      final container = makeContainer(repo);
+
+      await container.read(syncNotifierProvider.notifier).sync();
+
+      final state = container.read(syncNotifierProvider);
+      expect(state, isA<SyncPartial>());
+      expect((state as SyncPartial).failedTypes, contains('steps'));
+    });
+
+    test('syncing 中は dataRevision が増えず、完了後に一度だけ増える (P1-c)', () async {
+      final container = makeContainer(FakeHealthSyncRepository());
+      expect(container.read(dataRevisionProvider), 0);
+
+      final future = container.read(syncNotifierProvider.notifier).sync();
+      // syncing 中は再評価トリガが増えない (ローカル再走査を起こさない)。
+      expect(container.read(syncNotifierProvider), isA<SyncInProgress>());
+      expect(container.read(dataRevisionProvider), 0);
+
+      await future;
+      expect(container.read(dataRevisionProvider), 1);
+    });
   });
 
   group('T-503 派生プロバイダ', () {

@@ -31,7 +31,7 @@ final sleepSegmentsProvider = Provider.family<List<SleepSegment>, DateTime>((
   ref,
   date,
 ) {
-  ref.watch(syncNotifierProvider);
+  ref.watch(dataRevisionProvider);
   return ref
       .watch(healthSyncRepositoryProvider)
       .getCleanedSleepSegmentsForDay(date);
@@ -42,7 +42,7 @@ final stepsProvider = Provider.family<List<StepsRecordModel>, DateRange>((
   ref,
   range,
 ) {
-  ref.watch(syncNotifierProvider);
+  ref.watch(dataRevisionProvider);
   return ref
       .watch(healthSyncRepositoryProvider)
       .getStepsForRange(range.start, range.end);
@@ -51,7 +51,7 @@ final stepsProvider = Provider.family<List<StepsRecordModel>, DateRange>((
 /// 指定期間の心拍時系列 (T-503)。クロスデータ統合の時間境界フィルタにも用いる。
 final heartRateProvider =
     Provider.family<List<HeartRateRecordModel>, DateRange>((ref, range) {
-      ref.watch(syncNotifierProvider);
+      ref.watch(dataRevisionProvider);
       return ref
           .watch(healthSyncRepositoryProvider)
           .getHeartRateForRange(range.start, range.end);

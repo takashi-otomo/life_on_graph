@@ -56,6 +56,20 @@ void main() {
     expect(find.text('同期に失敗しました。表示中のデータはローカル保存分です。'), findsOneWidget);
   });
 
+  testWidgets('一部種別失敗 (SyncPartial) でもフォールバックバナーを表示する', (tester) async {
+    final repo = FakeHealthSyncRepository(
+      sleep: [seg()],
+      failedTypesOnSync: {'steps'},
+    );
+
+    await tester.pumpWidget(app(repo));
+    await tester.pumpAndSettle();
+
+    // 成功扱いで隠さず、フォールバックを表示する (P1-a)。
+    expect(find.text('同期に失敗しました。表示中のデータはローカル保存分です。'), findsOneWidget);
+    expect(find.text('睡眠セグメント'), findsOneWidget);
+  });
+
   testWidgets('同期中 (syncing) でも既存データ表示はブロックされない', (tester) async {
     final repo = FakeHealthSyncRepository(sleep: [seg()]);
 

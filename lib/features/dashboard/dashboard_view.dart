@@ -64,7 +64,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          if (sync is SyncError) _SyncErrorBanner(error: sync.error),
+          if (sync is SyncError || sync is SyncPartial)
+            const _SyncErrorBanner(),
           _MetricTile(
             icon: Icons.bedtime,
             label: '睡眠セグメント',
@@ -86,11 +87,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 }
 
-/// 同期エラー時のフォールバック表示 (未導入 / 未許可 / クエリ制限の導線, 設計doc 12 章)。
+/// 同期エラー・部分失敗時のフォールバック表示 (未導入 / 未許可 / クエリ制限, 設計doc 12 章)。
 class _SyncErrorBanner extends StatelessWidget {
-  const _SyncErrorBanner({required this.error});
-
-  final Object error;
+  const _SyncErrorBanner();
 
   @override
   Widget build(BuildContext context) {

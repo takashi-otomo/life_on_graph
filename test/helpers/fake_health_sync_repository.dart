@@ -12,10 +12,13 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     List<StepsRecordModel>? steps,
     List<HeartRateRecordModel>? heartRate,
     this.throwOnSync = false,
+    this.permissionsGranted = true,
+    Set<String>? failedTypesOnSync,
     this.onSync,
   }) : sleep = sleep ?? <SleepSegment>[],
        steps = steps ?? <StepsRecordModel>[],
-       heartRate = heartRate ?? <HeartRateRecordModel>[];
+       heartRate = heartRate ?? <HeartRateRecordModel>[],
+       failedTypesOnSync = failedTypesOnSync ?? <String>{};
 
   /// 読み出しで返す睡眠セグメント (同期後に差し替えてリアクティブ更新を再現)。
   List<SleepSegment> sleep;
@@ -25,11 +28,19 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   /// `sync()` で例外を投げるか。
   bool throwOnSync;
 
+  /// `requestPermissions()` の許可結果。
+  bool permissionsGranted;
+
+  /// `sync()` の結果に載せる失敗種別 (部分失敗の再現)。
+  Set<String> failedTypesOnSync;
+
   /// `sync()` 成功直前に呼ばれるフック (新データ到着のシミュレーションに使う)。
   void Function()? onSync;
 
   int syncCalls = 0;
   bool configureCalled = false;
+  bool requestPermissionsCalled = false;
+  bool ensureHistoryCalled = false;
 
   @override
   Future<void> configure() async {
@@ -37,10 +48,16 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   }
 
   @override
-  Future<bool> requestPermissions() async => true;
+  Future<bool> requestPermissions() async {
+    requestPermissionsCalled = true;
+    return permissionsGranted;
+  }
 
   @override
-  Future<bool> ensureHistoryPermission() async => true;
+  Future<bool> ensureHistoryPermission() async {
+    ensureHistoryCalled = true;
+    return true;
+  }
 
   @override
   SyncWindow computeSyncWindow(DateTime now) =>
@@ -60,7 +77,7 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
         end: end,
       ),
       savedCounts: const <String, int>{},
-      failedTypes: const <String>{},
+      failedTypes: failedTypesOnSync,
     );
   }
 

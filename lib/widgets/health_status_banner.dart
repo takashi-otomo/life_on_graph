@@ -12,15 +12,45 @@ import '../providers/sync_notifier.dart';
 /// (正常 / 同期中 / 同期成功) ときは何も描画しない。空データ (該当日にレコード無し)
 /// は各カードの空状態に委ねるため、本バナーはアプリ全体の状態のみを扱う。
 ///
-/// ローカルファースト方針のため、導入状態の解決前 (loading) は「利用可能」とみなし
-/// バナーを出さない (既存ローカルデータの描画をブロックしない)。
-class HealthStatusBanner extends ConsumerWidget {
+/// ローカルファースト方針のため、導入状態の解決前 (初回 loading) はバナーを一切
+/// 出さない (既存ローカルデータの描画をブロックしない / 失敗バナーの誤表示も防ぐ)。
+/// インストール導線後・アプリ復帰時に導入状態を再チェックする。
+class HealthStatusBanner extends ConsumerStatefulWidget {
   const HealthStatusBanner({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bool available =
-        ref.watch(healthConnectAvailableProvider).asData?.value ?? true;
+  ConsumerState<HealthStatusBanner> createState() => _HealthStatusBannerState();
+}
+
+class _HealthStatusBannerState extends ConsumerState<HealthStatusBanner> {
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    // Play ストアから復帰した際などに導入状態を再評価する。
+    _lifecycle = AppLifecycleListener(
+      onResume: () => ref.invalidate(healthConnectAvailableProvider),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AsyncValue<bool> availability = ref.watch(
+      healthConnectAvailableProvider,
+    );
+    // 初回解決前 (値未取得の loading) はローカルファースト契約によりバナーを
+    // 出さない。再評価中 (前値あり) は前値で判定を続ける。
+    if (availability.isLoading && !availability.hasValue) {
+      return const SizedBox.shrink();
+    }
+    final bool available = availability.asData?.value ?? true;
     final SyncState sync = ref.watch(syncNotifierProvider);
 
     // 優先順位1: Health Connect 未導入。
@@ -31,8 +61,11 @@ class HealthStatusBanner extends ConsumerWidget {
         title: 'Health Connect が必要です',
         message: '睡眠・歩数・心拍を取得するには Health Connect の導入が必要です。',
         actionLabel: 'インストール',
-        onAction: () =>
-            ref.read(healthSyncRepositoryProvider).installHealthConnect(),
+        onAction: () async {
+          await ref.read(healthSyncRepositoryProvider).installHealthConnect();
+          // 導線後に再チェック (復帰時にも onResume で再評価される)。
+          ref.invalidate(healthConnectAvailableProvider);
+        },
       );
     }
 

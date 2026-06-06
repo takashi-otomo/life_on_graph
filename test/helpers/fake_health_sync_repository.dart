@@ -120,8 +120,14 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   /// [installHealthConnect] の呼び出し回数。
   int installCount = 0;
 
+  /// 設定すると `isHealthConnectAvailable()` がこの完了を待つ (loading 維持)。
+  Completer<void>? availabilityGate;
+
   @override
-  Future<bool> isHealthConnectAvailable() async => healthConnectAvailable;
+  Future<bool> isHealthConnectAvailable() async {
+    if (availabilityGate != null) await availabilityGate!.future;
+    return healthConnectAvailable;
+  }
 
   @override
   Future<void> installHealthConnect() async => installCount++;

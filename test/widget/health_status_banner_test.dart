@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +80,39 @@ void main() {
 
     expect(find.text('同期に失敗しました'), findsOneWidget);
     expect(find.text('再試行'), findsOneWidget);
+  });
+
+  testWidgets('#42 導入状態の解決前 (loading) はエラーでもバナーを出さない (P1)', (tester) async {
+    // 導入チェックを保留したまま、同期は失敗させる。
+    final repo = FakeHealthSyncRepository(throwOnSync: true)
+      ..availabilityGate = Completer<void>();
+    late WidgetRef ref;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, r, _) {
+                ref = r;
+                return const HealthStatusBanner();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await ref.read(syncNotifierProvider.notifier).sync();
+    await tester.pump(); // 導入チェック未解決のまま
+
+    // loading 中はローカルファースト契約によりバナーを出さない。
+    expect(find.text('同期に失敗しました'), findsNothing);
+
+    // 後始末: 導入チェックを解決。
+    repo.availabilityGate!.complete();
+    await tester.pumpAndSettle();
+    // 解決後は同期失敗バナーが出る。
+    expect(find.text('同期に失敗しました'), findsOneWidget);
   });
 
   testWidgets('#42 正常時はバナーを表示しない', (tester) async {

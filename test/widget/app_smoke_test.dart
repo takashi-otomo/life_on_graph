@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,6 +11,24 @@ import 'package:life_on_graph/providers/repository_providers.dart';
 import '../helpers/fake_health_sync_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  // 起動インテント取得 (#54) の MethodChannel をモックし、通常起動 (null) を返す。
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dev.otomo.life_on_graph/launch'),
+          (MethodCall call) async => null,
+        );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dev.otomo.life_on_graph/launch'),
+          null,
+        );
+  });
+
   group('LifeOnGraphApp スモークテスト', () {
     Widget app() => ProviderScope(
       overrides: [

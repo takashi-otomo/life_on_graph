@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.20.2
   # 歩数取得に必要な ACTIVITY_RECOGNITION ランタイム権限 (dangerous) の要求に使用。
   permission_handler: ^12.0.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

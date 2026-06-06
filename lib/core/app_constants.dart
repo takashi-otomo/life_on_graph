@@ -8,6 +8,16 @@ class AppConstants {
   /// アプリの略称。
   static const String appShortName = 'LOG';
 
+  /// アプリの表示バージョン (pubspec の version と一致させる)。
+  static const String appVersion = '1.0.0';
+
+  /// プライバシーポリシーの公開 URL (#43, GitHub Pages)。
+  static const String privacyPolicyUrl =
+      'https://takashi-otomo.github.io/life_on_graph/privacy-policy.html';
+
+  /// お問い合わせ先メールアドレス。
+  static const String contactEmail = 'tekinananika@gmail.com';
+
   /// 初回同期で遡るバックフィル日数 (設計doc 8 章)。
   ///
   /// Health Connect は既定で権限付与時点から 30 日以内の読み取りに制限される。

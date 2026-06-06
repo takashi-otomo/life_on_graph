@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:life_on_graph/models/heart_rate_record_model.dart';
 import 'package:life_on_graph/models/sleep_segment.dart';
 import 'package:life_on_graph/models/steps_record_model.dart';
@@ -37,10 +39,17 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   /// `sync()` 成功直前に呼ばれるフック (新データ到着のシミュレーションに使う)。
   void Function()? onSync;
 
+  /// 設定すると `sync()` がこの完了を待つ (SyncInProgress を保持させる)。
+  Completer<void>? syncGate;
+
   /// `ensureActivityRecognitionPermission()` の許可結果。
   bool activityRecognitionGranted = true;
 
+  /// `lastSyncTime` の返り値 (テストで差し替え可能)。
+  DateTime? lastSync;
+
   int syncCalls = 0;
+  int clearAllCalls = 0;
   bool configureCalled = false;
   bool requestPermissionsCalled = false;
   bool ensureHistoryCalled = false;
@@ -79,6 +88,7 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     if (throwOnSync) {
       throw StateError('fake sync failure');
     }
+    if (syncGate != null) await syncGate!.future;
     onSync?.call();
     final DateTime end = now ?? DateTime(2026, 6, 6, 12);
     return SyncOutcome(
@@ -103,4 +113,16 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     DateTime start,
     DateTime end,
   ) => heartRate;
+
+  @override
+  DateTime? get lastSyncTime => lastSync;
+
+  @override
+  Future<void> clearAllData() async {
+    clearAllCalls++;
+    sleep = <SleepSegment>[];
+    steps = <StepsRecordModel>[];
+    heartRate = <HeartRateRecordModel>[];
+    lastSync = null;
+  }
 }

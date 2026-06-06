@@ -99,6 +99,15 @@ abstract interface class HealthSyncRepository {
 
   /// `[start, end]` と交差する心拍レコードを開始昇順で返す (M5 派生Provider 用)。
   List<HeartRateRecordModel> getHeartRateForRange(DateTime start, DateTime end);
+
+  /// 最終同期時刻 (未同期なら `null`)。設定画面で表示する (#69)。
+  DateTime? get lastSyncTime;
+
+  /// ローカルに保存した全ヘルスデータと同期メタデータを消去する (#69 / #64)。
+  ///
+  /// 暗号化ボックス (睡眠・歩数・心拍) を空にし `last_sync_time` を削除する。
+  /// 次回同期は初回バックフィルとして再取得される。
+  Future<void> clearAllData();
 }
 
 /// [HealthSyncRepository] の本番実装。
@@ -229,6 +238,20 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   /// `app_sync_metadata` から最終同期時刻 (ミリ秒) を読み出す (未設定は 0)。
   int _lastSyncMs() =>
       (_db.metadataBox.get(lastSyncTimeKey, defaultValue: 0) as int?) ?? 0;
+
+  @override
+  DateTime? get lastSyncTime {
+    final int ms = _lastSyncMs();
+    return ms <= 0 ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  @override
+  Future<void> clearAllData() async {
+    await _db.sleepBox.clear();
+    await _db.stepsBox.clear();
+    await _db.heartRateBox.clear();
+    await _db.metadataBox.delete(lastSyncTimeKey);
+  }
 
   @override
   Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {

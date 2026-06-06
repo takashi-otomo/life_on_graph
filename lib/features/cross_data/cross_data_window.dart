@@ -23,6 +23,19 @@ class CrossDataWindow {
     return CrossDataWindow(start: start, end: end);
   }
 
+  /// 睡眠の最終地点を右端とし、そこから遡る 24 時間を窓とする (#39)。
+  ///
+  /// 睡眠だけを軸にすると日中の歩数が窓外になり表示されないため、起床時刻
+  /// (睡眠終点) を最大とした 24 時間で日中の活動〜夜間の睡眠までを俯瞰させる。
+  static CrossDataWindow? trailing24h(List<SleepSegment> segments) {
+    final CrossDataWindow? base = fromSegments(segments);
+    if (base == null) return null;
+    return CrossDataWindow(
+      start: base.end.subtract(const Duration(hours: 24)),
+      end: base.end,
+    );
+  }
+
   /// 窓の長さ。
   Duration get duration => end.difference(start);
 

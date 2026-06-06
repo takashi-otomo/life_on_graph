@@ -7,14 +7,25 @@ import '../../../models/steps_record_model.dart';
 import '../../../widgets/app_card.dart';
 import '../cross_data_window.dart';
 
-/// クロスデータ統合ビュー (#39): 睡眠ステージ・心拍・歩数を睡眠セッションの
+// レーン縦割りの共有定数 (左ラベル列と painter で一致させる)。
+const double _kChartHeight = 200;
+const double _kAxisH = 22;
+const double _kHrFrac = 0.45;
+const double _kSleepFrac = 0.20;
+const double _kStepsFrac = 0.35;
+const double _kLabelW = 36;
+// 1 時間あたりの横幅 (横スクロールの密度)。
+const double _kPxPerHour = 54;
+
+/// クロスデータ統合ビュー (#39): 睡眠・心拍・歩数を **睡眠終点を右端とした24時間**の
 /// 共通時間軸で表示する。
 ///
-/// 3 種を **縦に分離したレーン** (心拍 / 睡眠 / 歩数) に描き、共通の時刻軸 (X) で
-/// 整列させる。背景に睡眠ステージを敷いて他レイヤを重ねると「歩行中なのに睡眠中」の
-/// ように誤読されるため、各データを独立トラックに分けて時間軸だけを共有する。
+/// 睡眠だけを軸にすると日中の歩数が窓外になるため、起床時刻 (睡眠終点) を最大とした
+/// 24 時間で日中の活動〜夜間の睡眠までを俯瞰させる。3 種は **縦に分離したレーン**
+/// (心拍 / 睡眠 / 歩数) に描き、共通の時刻軸 (X) で整列させる (歩行が睡眠中に
+/// 重なって誤読されるのを防ぐ)。横スクロールで時間帯の詳細を確認できる。
 ///
-/// いずれか1種が欠損しても残データで描画する。睡眠が無ければ統合の時間軸を作れない
+/// いずれか1種が欠損しても残データで描画する。睡眠が無ければ時間軸の基準を作れない
 /// ため空状態を表示する。
 class CrossDataChart extends StatelessWidget {
   const CrossDataChart({
@@ -30,7 +41,7 @@ class CrossDataChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final CrossDataWindow? window = CrossDataWindow.fromSegments(segments);
+    final CrossDataWindow? window = CrossDataWindow.trailing24h(segments);
 
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -42,19 +53,21 @@ class CrossDataChart extends StatelessWidget {
             children: <Widget>[
               Icon(Icons.insights, size: 18, color: AppColors.accent),
               SizedBox(width: 8),
-              Text(
-                '統合ビュー (睡眠×心拍×歩数)',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  '統合ビュー (睡眠×心拍×歩数)',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           const Text(
-            '同じ時間軸で各データを別レーンに表示します',
+            '起床時刻までの24時間。横スクロールで確認できます',
             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
           ),
           const SizedBox(height: 14),
@@ -69,17 +82,11 @@ class CrossDataChart extends StatelessWidget {
               ),
             )
           else ...<Widget>[
-            SizedBox(
-              height: 190,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: _CrossDataPainter(
-                  window: window,
-                  segments: segments,
-                  heartRate: heartRate,
-                  steps: steps,
-                ),
-              ),
+            _Chart(
+              window: window,
+              segments: segments,
+              heartRate: heartRate,
+              steps: steps,
             ),
             const SizedBox(height: 12),
             const _Legend(),
@@ -88,6 +95,82 @@ class CrossDataChart extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Chart extends StatelessWidget {
+  const _Chart({
+    required this.window,
+    required this.segments,
+    required this.heartRate,
+    required this.steps,
+  });
+
+  final CrossDataWindow window;
+  final List<SleepSegment> segments;
+  final List<HeartRateRecordModel> heartRate;
+  final List<StepsRecordModel> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    final double hours = window.duration.inMinutes / 60.0;
+    final double contentW = (hours * _kPxPerHour).clamp(320.0, 4000.0);
+    const double usable = _kChartHeight - _kAxisH;
+
+    return SizedBox(
+      height: _kChartHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // 固定の左ラベル列 (スクロールしない)。
+          SizedBox(
+            width: _kLabelW,
+            height: _kChartHeight,
+            child: Column(
+              children: <Widget>[
+                _laneLabel('心拍', AppColors.heart, usable * _kHrFrac),
+                _laneLabel('睡眠', AppColors.sleepDeep, usable * _kSleepFrac),
+                _laneLabel('歩数', AppColors.steps, usable * _kStepsFrac),
+                const SizedBox(height: _kAxisH),
+              ],
+            ),
+          ),
+          // スクロールするプロット領域。
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: contentW,
+                height: _kChartHeight,
+                child: CustomPaint(
+                  painter: _CrossDataPainter(
+                    window: window,
+                    segments: segments,
+                    heartRate: heartRate,
+                    steps: steps,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _laneLabel(String text, Color color, double height) => SizedBox(
+    height: height,
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    ),
+  );
 }
 
 class _CrossDataPainter extends CustomPainter {
@@ -103,34 +186,24 @@ class _CrossDataPainter extends CustomPainter {
   final List<HeartRateRecordModel> heartRate;
   final List<StepsRecordModel> steps;
 
-  // レーン名ラベル用の左ガター幅。
-  static const double _leftPad = 32;
-  // 時刻軸ラベル用の下マージン。
-  static const double _bottomAxis = 18;
-
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
-    final double h = size.height;
-    final double chartLeft = _leftPad;
-    final double chartW = w - _leftPad;
-    final double usable = h - _bottomAxis;
-    double x(DateTime t) => chartLeft + chartW * window.fractionOf(t);
+    final double usable = size.height - _kAxisH;
+    double x(DateTime t) => w * window.fractionOf(t);
 
-    // 3 レーンの縦割り (心拍 45% / 睡眠 20% / 歩数 35%)。
     final double hrTop = 0;
-    final double hrH = usable * 0.45;
+    final double hrH = usable * _kHrFrac;
     final double sleepTop = hrH;
-    final double sleepH = usable * 0.20;
+    final double sleepH = usable * _kSleepFrac;
     final double stepsTop = sleepTop + sleepH;
     final double stepsBottom = usable;
 
-    _paintLaneLabels(canvas, hrTop, sleepTop, stepsTop, hrH, sleepH);
-    _paintSeparators(canvas, w, sleepTop, stepsTop);
+    _paintSeparators(canvas, w, sleepTop, stepsTop, usable);
     _paintSleepRibbon(canvas, x, sleepTop, sleepH);
     _paintSteps(canvas, x, stepsTop, stepsBottom);
     _paintHeartRate(canvas, x, hrTop, hrH);
-    _paintTimeAxis(canvas, x, w, usable);
+    _paintTimeAxis(canvas, x, usable);
   }
 
   void _paintSeparators(
@@ -138,30 +211,14 @@ class _CrossDataPainter extends CustomPainter {
     double w,
     double sleepTop,
     double stepsTop,
+    double usable,
   ) {
     final Paint sep = Paint()
       ..color = AppColors.divider.withValues(alpha: 0.6)
       ..strokeWidth = 1;
-    canvas.drawLine(Offset(_leftPad, sleepTop), Offset(w, sleepTop), sep);
-    canvas.drawLine(Offset(_leftPad, stepsTop), Offset(w, stepsTop), sep);
-  }
-
-  void _paintLaneLabels(
-    Canvas canvas,
-    double hrTop,
-    double sleepTop,
-    double stepsTop,
-    double hrH,
-    double sleepH,
-  ) {
-    _text(canvas, '心拍', Offset(0, hrTop + hrH / 2 - 6), AppColors.heart);
-    _text(
-      canvas,
-      '睡眠',
-      Offset(0, sleepTop + sleepH / 2 - 6),
-      AppColors.sleepDeep,
-    );
-    _text(canvas, '歩数', Offset(0, stepsTop + 4), AppColors.steps);
+    canvas.drawLine(Offset(0, sleepTop), Offset(w, sleepTop), sep);
+    canvas.drawLine(Offset(0, stepsTop), Offset(w, stepsTop), sep);
+    canvas.drawLine(Offset(0, usable), Offset(w, usable), sep);
   }
 
   void _paintSleepRibbon(
@@ -296,18 +353,36 @@ class _CrossDataPainter extends CustomPainter {
   void _paintTimeAxis(
     Canvas canvas,
     double Function(DateTime) x,
-    double w,
     double usable,
   ) {
     String hm(DateTime t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    final DateTime mid = window.start.add(
-      Duration(milliseconds: window.duration.inMilliseconds ~/ 2),
+    // 3 時間ごとの目盛り (最初の3の倍数時から窓終端まで)。
+    final Paint tick = Paint()
+      ..color = AppColors.divider.withValues(alpha: 0.5)
+      ..strokeWidth = 1;
+    DateTime t = DateTime(
+      window.start.year,
+      window.start.month,
+      window.start.day,
+      window.start.hour - (window.start.hour % 3) + 3,
     );
-    final double y = usable + 3;
-    _text(canvas, hm(window.start), Offset(_leftPad, y), AppColors.textMuted);
-    _text(canvas, hm(mid), Offset(w / 2 - 16, y), AppColors.textMuted);
-    _text(canvas, hm(window.end), Offset(w - 34, y), AppColors.textMuted);
+    final double yLabel = usable + 4;
+    while (!t.isAfter(window.end)) {
+      if (!t.isBefore(window.start)) {
+        final double px = x(t);
+        canvas.drawLine(Offset(px, 0), Offset(px, usable), tick);
+        _text(canvas, hm(t), Offset(px - 14, yLabel), AppColors.textMuted);
+      }
+      t = t.add(const Duration(hours: 3));
+    }
+    // 右端 (起床時刻) を強調。
+    _text(
+      canvas,
+      hm(window.end),
+      Offset(x(window.end) - 30, yLabel),
+      AppColors.accent,
+    );
   }
 
   void _text(Canvas canvas, String s, Offset at, Color color) {

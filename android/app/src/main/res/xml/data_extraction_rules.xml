@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12 以上 (android:dataExtractionRules) のバックアップ/転送除外ルール。
+  flutter_secure_storage の SharedPreferences を Cloud Backup・端末間転送の双方から
+  除外し、鍵不整合による起動時クラッシュ/データ消失を防ぐ (#56)。
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    </device-transfer>
+</data-extraction-rules>

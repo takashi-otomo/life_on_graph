@@ -10,6 +10,12 @@ abstract interface class SecureKeyStore {
 
   /// [key] に [value] を保存する。
   Future<void> write(String key, String value);
+
+  /// [key] のエントリを削除する (存在しない場合も成功扱い)。
+  ///
+  /// 鍵不整合 (Auto Backup 復元で Keystore 材料が欠落した等) からの復旧で、
+  /// 破損エントリを除去して再生成するために用いる。
+  Future<void> delete(String key);
 }
 
 /// `flutter_secure_storage` を用いた [SecureKeyStore] の本番実装。
@@ -25,4 +31,7 @@ class FlutterSecureKeyStore implements SecureKeyStore {
   @override
   Future<void> write(String key, String value) =>
       _storage.write(key: key, value: value);
+
+  @override
+  Future<void> delete(String key) => _storage.delete(key: key);
 }

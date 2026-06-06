@@ -39,6 +39,18 @@ class DatabaseManager {
   bool _initialized = false;
   Future<void>? _initFuture;
 
+  /// 直近の初期化で鍵不整合からの復旧 (鍵再生成 + 暗号化ボックス破棄) を行ったか。
+  ///
+  /// `true` の場合、暗号化データは破棄されており Health Connect からの再同期が必要。
+  bool recoveredFromKeyFailure = false;
+
+  /// 暗号化ボックス名の一覧 (復旧時の一括破棄に用いる)。
+  static const List<String> encryptedBoxNames = <String>[
+    sleepBoxName,
+    stepsBoxName,
+    heartRateBoxName,
+  ];
+
   /// 暗号化された睡眠レコードボックス。
   Box<SleepRecordModel> get sleepBox => _sleepBox;
 
@@ -72,6 +84,7 @@ class DatabaseManager {
   }
 
   Future<void> _doInitialize({String? path, SecureKeyStore? keyStore}) async {
+    recoveredFromKeyFailure = false;
     if (path != null) {
       Hive.init(path);
     } else {
@@ -80,10 +93,30 @@ class DatabaseManager {
 
     _registerAdapters();
 
-    final provider = EncryptionKeyProvider(keyStore ?? FlutterSecureKeyStore());
-    final encryptionKey = await provider.getOrCreateKey();
-    final cipher = HiveAesCipher(encryptionKey);
+    // 平文メタデータは鍵に依存しないため先に開く。
+    _metadataBox = await Hive.openBox<dynamic>(metadataBoxName);
 
+    final provider = EncryptionKeyProvider(keyStore ?? FlutterSecureKeyStore());
+
+    // 復旧対象は **鍵の取得/復号失敗のみ** に限定する。Auto Backup 復元で Keystore
+    // 材料が欠落すると secure storage の unwrap (read) や base64 復号で失敗するため、
+    // その例外を捕捉して鍵再生成で復旧する (#56)。ボックス open のディスク I/O・
+    // ロック・アダプタ不整合などは復旧不能/一時障害であり、データを破棄せず上位へ
+    // 伝播させる (誤った破壊的復旧を防ぐ)。
+    HiveAesCipher cipher;
+    try {
+      cipher = HiveAesCipher(await provider.getOrCreateKey());
+    } catch (_) {
+      cipher = await _recoverKey(provider);
+      recoveredFromKeyFailure = true;
+    }
+
+    await _openEncryptedBoxes(cipher);
+    _initialized = true;
+  }
+
+  /// 指定 [cipher] で 3 つの暗号化ボックスを開く (open 失敗は上位へ伝播)。
+  Future<void> _openEncryptedBoxes(HiveAesCipher cipher) async {
     _sleepBox = await Hive.openBox<SleepRecordModel>(
       sleepBoxName,
       encryptionCipher: cipher,
@@ -96,9 +129,19 @@ class DatabaseManager {
       heartRateBoxName,
       encryptionCipher: cipher,
     );
-    _metadataBox = await Hive.openBox<dynamic>(metadataBoxName);
+  }
 
-    _initialized = true;
+  /// 鍵不整合からの復旧: 破損鍵を破棄して再生成し、暗号化ボックスを破棄する。
+  ///
+  /// 破棄した暗号化データは Health Connect から再同期して復旧するため、同期メタデータ
+  /// もクリアして次回 30 日バックフィルを走らせる。再生成した鍵の cipher を返す。
+  Future<HiveAesCipher> _recoverKey(EncryptionKeyProvider provider) async {
+    await provider.resetKey();
+    for (final name in encryptedBoxNames) {
+      await Hive.deleteBoxFromDisk(name);
+    }
+    await _metadataBox.clear();
+    return HiveAesCipher(await provider.getOrCreateKey());
   }
 
   /// 全ボックスを閉じる (主にテストのクリーンアップ用)。

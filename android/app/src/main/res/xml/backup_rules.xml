@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 以下 (android:fullBackupContent) のバックアップ除外ルール。
+
+  flutter_secure_storage の暗号鍵は Android Keystore でラップされて
+  SharedPreferences (FlutterSecureStorage) に保存される。Auto Backup で
+  SharedPreferences のみが復元され Keystore 材料が復元されないと、復号に失敗して
+  起動時クラッシュ/データ消失を招く (#56)。これを防ぐため当該 prefs をバックアップ
+  対象から除外する。Hive の暗号化データは Health Connect から再同期可能なため
+  バックアップ不要。
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+</full-backup-content>

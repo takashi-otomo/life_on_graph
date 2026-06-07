@@ -257,10 +257,16 @@ class _CalendarSheetState extends State<_CalendarSheet> {
     return GestureDetector(
       onTap: () {
         final DateTime now = DateTime.now();
-        Navigator.pop(
-          context,
-          _isMonth ? DateTime(now.year, now.month) : _d(now),
-        );
+        // last より後 (日跨ぎ等で now が last を超えた場合) は last にクランプする。
+        if (_isMonth) {
+          final DateTime nowM = DateTime(now.year, now.month);
+          final DateTime lastM = DateTime(widget.last.year, widget.last.month);
+          Navigator.pop(context, nowM.isAfter(lastM) ? lastM : nowM);
+        } else {
+          final DateTime nowD = _d(now);
+          final DateTime lastD = _d(widget.last);
+          Navigator.pop(context, nowD.isAfter(lastD) ? lastD : nowD);
+        }
       },
       child: Container(
         height: 44,

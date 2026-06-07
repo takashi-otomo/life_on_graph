@@ -149,6 +149,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   /// `app_sync_metadata` 上の最終同期時刻キー (ミリ秒エポック)。
   static const String lastSyncTimeKey = 'last_sync_time';
 
+  /// Health Connect の変更追跡トークンのキー (#64 削除のローカル反映用)。
+  static const String changesTokenKey = 'changes_token';
+
   /// 保存対象とする睡眠ステージタイプ。
   ///
   /// `SLEEP_SESSION` は全体エンベロープであり、ステージ単位に正規化する本設計では
@@ -268,6 +271,14 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   @override
   Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {
     final DateTime end = now ?? DateTime.now();
+
+    // #64: 先にリモート削除をローカルへ反映する。トークン期限切れ時はローカルを消去し
+    // last_sync をリセットするため、ウィンドウ算出はこの後に行う。
+    await _applyRemoteDeletions();
+    // 差分極小スキップやアップグレード (last_sync 有・トークン無) でも削除追跡を始め
+    // られるよう、フェッチ前にトークンを確立する。
+    await _ensureChangesToken();
+
     final SyncWindow window = computeSyncWindow(end);
 
     // T-305: 前回同期からの差分が極小ならクエリをスキップ (初回・強制時は対象外)。
@@ -314,6 +325,80 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     }
 
     return SyncOutcome(window: window, savedCounts: saved, failedTypes: failed);
+  }
+
+  String? _changesToken() => _db.metadataBox.get(changesTokenKey) as String?;
+
+  /// Health Connect 側で削除されたレコードをローカル DB へ反映する (#64)。
+  ///
+  /// 変更トークンが未確立なら何もしない (次回 [_ensureChangesToken] が確立)。トークン
+  /// 期限切れ時はローカルを消去し `last_sync_time` / トークンをリセットして、同一同期内の
+  /// フル再取得で整合させる。失敗は同期全体を止めない (best-effort)。
+  Future<void> _applyRemoteDeletions() async {
+    try {
+      final String? token = _changesToken();
+      if (token == null || token.isEmpty) return;
+
+      final Set<String> deleted = <String>{};
+      String current = token;
+      bool drained = false;
+      for (int page = 0; page < 200; page++) {
+        final HealthChangesResult? res = await _health.getChanges(current);
+        if (res == null) return; // 取得失敗時はトークンを据え置き次回再試行。
+        if (res.expired) {
+          await _db.sleepBox.clear();
+          await _db.stepsBox.clear();
+          await _db.heartRateBox.clear();
+          await _db.metadataBox.delete(lastSyncTimeKey);
+          await _db.metadataBox.delete(changesTokenKey);
+          return;
+        }
+        deleted.addAll(res.deletedUuids);
+        current = res.nextToken;
+        if (!res.hasMore) {
+          drained = true;
+          break;
+        }
+      }
+      if (deleted.isNotEmpty) await _deleteByUuids(deleted);
+      // 全ページを消化できた時のみトークンを前進させる (取りこぼし防止)。未消化なら
+      // 据え置き、次回同期で続きから再処理する (削除は冪等)。
+      if (drained) await _db.metadataBox.put(changesTokenKey, current);
+    } catch (_) {
+      // 削除反映の失敗は同期(取得・保存)を阻害しない。
+    }
+  }
+
+  /// 変更トークンが未確立なら取得して保存する (#64)。
+  Future<void> _ensureChangesToken() async {
+    try {
+      if (_changesToken() != null) return;
+      final String? token = await _health.getChangesToken(targetTypes);
+      if (token != null && token.isNotEmpty) {
+        await _db.metadataBox.put(changesTokenKey, token);
+      }
+    } catch (_) {
+      // トークン取得失敗時は次回同期で再試行する。
+    }
+  }
+
+  /// 指定 UUID のレコードを全ボックスから削除する (#64)。
+  ///
+  /// 各ボックスのキーは `"<uuid>:..."` 形式のため、UUID プレフィックスで一致削除する。
+  Future<void> _deleteByUuids(Set<String> uuids) async {
+    if (uuids.isEmpty) return;
+    for (final dynamic box in <dynamic>[
+      _db.sleepBox,
+      _db.stepsBox,
+      _db.heartRateBox,
+    ]) {
+      final List<dynamic> toDelete = (box.keys as Iterable)
+          .where(
+            (k) => k is String && uuids.any((String u) => k.startsWith('$u:')),
+          )
+          .toList();
+      if (toDelete.isNotEmpty) await box.deleteAll(toDelete);
+    }
   }
 
   @override

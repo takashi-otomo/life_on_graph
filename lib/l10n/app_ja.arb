@@ -96,5 +96,6 @@
   "rationaleSecurity": "取得したデータは AES-256 で暗号化し端末内にのみ保存します。クラウド送信・第三者提供は行いません。",
   "readPolicy": "プライバシーポリシーを読む",
   "openPolicyBrowser": "ブラウザで公開版を開く",
-  "openApp": "アプリを開く"
+  "openApp": "アプリを開く",
+  "weekShort": "{n}週"
 }

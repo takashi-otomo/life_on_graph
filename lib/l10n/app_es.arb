@@ -96,5 +96,6 @@
   "rationaleSecurity": "Los datos obtenidos se cifran con AES-256 y se almacenan solo en este dispositivo. Sin subida a la nube ni intercambio con terceros.",
   "readPolicy": "Leer la política de privacidad",
   "openPolicyBrowser": "Abrir la versión publicada en el navegador",
-  "openApp": "Abrir la aplicación"
+  "openApp": "Abrir la aplicación",
+  "weekShort": "Sem {n}"
 }

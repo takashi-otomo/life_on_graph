@@ -639,6 +639,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open app'**
   String get openApp;
+
+  /// No description provided for @weekShort.
+  ///
+  /// In en, this message translates to:
+  /// **'W{n}'**
+  String weekShort(int n);
 }
 
 class _AppLocalizationsDelegate

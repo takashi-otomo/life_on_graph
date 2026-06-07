@@ -102,5 +102,7 @@
   "rationaleSecurity": "Fetched data is encrypted with AES-256 and stored only on this device. No cloud upload or third-party sharing.",
   "readPolicy": "Read privacy policy",
   "openPolicyBrowser": "Open published version in browser",
-  "openApp": "Open app"
+  "openApp": "Open app",
+  "weekShort": "W{n}",
+  "@weekShort": { "placeholders": { "n": { "type": "int" } } }
 }

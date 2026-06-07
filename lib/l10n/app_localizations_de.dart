@@ -302,4 +302,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get openApp => 'App öffnen';
+
+  @override
+  String weekShort(int n) {
+    return 'W$n';
+  }
 }

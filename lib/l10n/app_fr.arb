@@ -96,5 +96,6 @@
   "rationaleSecurity": "Les données récupérées sont chiffrées en AES-256 et stockées uniquement sur cet appareil. Aucun envoi vers le cloud ni partage avec des tiers.",
   "readPolicy": "Lire la politique de confidentialité",
   "openPolicyBrowser": "Ouvrir la version publiée dans le navigateur",
-  "openApp": "Ouvrir l'application"
+  "openApp": "Ouvrir l'application",
+  "weekShort": "S{n}"
 }

@@ -303,4 +303,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get openApp => 'Ouvrir l\'application';
+
+  @override
+  String weekShort(int n) {
+    return 'S$n';
+  }
 }

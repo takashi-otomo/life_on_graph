@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_on_graph/core/database_manager.dart';
 import 'package:life_on_graph/features/app_shell.dart';
+import 'package:life_on_graph/features/summary/period_summary.dart';
+import 'package:life_on_graph/features/summary/widgets/trend_bar_chart.dart';
 import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/providers/locale_provider.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
@@ -49,6 +51,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Accueil'), findsOneWidget);
       expect(find.text('Paramètres'), findsOneWidget);
+    });
+  });
+
+  group('#97 月表示の週ラベルがロケール整形される', () {
+    Widget chart(Locale locale) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
+      home: Scaffold(
+        body: SizedBox(
+          width: 320,
+          height: 200,
+          child: TrendBarChart(
+            title: 'T',
+            icon: Icons.bedtime,
+            color: const Color(0xFF000000),
+            bars: const <TrendBar>[
+              TrendBar(label: '1週', sleepHours: 5, steps: 0, weekIndex: 0),
+              TrendBar(label: '2週', sleepHours: 6, steps: 0, weekIndex: 1),
+            ],
+            value: (b) => b.sleepHours,
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('日本語は「N週」', (tester) async {
+      await tester.pumpWidget(chart(const Locale('ja')));
+      await tester.pumpAndSettle();
+      expect(find.text('1週'), findsOneWidget);
+      expect(find.text('2週'), findsOneWidget);
+    });
+
+    testWidgets('英語は「WN」', (tester) async {
+      await tester.pumpWidget(chart(const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(find.text('W1'), findsOneWidget);
+      expect(find.text('W2'), findsOneWidget);
     });
   });
 

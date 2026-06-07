@@ -71,11 +71,11 @@ scripts/run_app.sh <serial>
   クリーンなストアで投入すること(クリーン時はフェイルオープンでシードが表示される)。
   なお複数ソース衝突時の優先順位選別自体は
   [`test/unit/cleansing_test.dart`](../test/unit/cleansing_test.dart) で検証済み。
-- **再投入時は LOG のローカルデータも消去すること**: シーダーは安定した `clientRecordId` で
-  書き込むため Health Connect 側は冪等(上書き)。ただし **LOG 側の Hive は削除反映が未実装**
-  ([#64](https://github.com/takashi-otomo/life_on_graph/issues/64))のため、過去に同期済みの
-  古いレコードが残り新旧が混在しうる。再投入後は LOG のアプリデータを消去してから初回
-  バックフィルし直すこと:
+- **再投入時は LOG のローカルデータも消去推奨**: シーダーは安定した `clientRecordId` で
+  書き込むため Health Connect 側は冪等(上書き)。HC 側で削除したレコードは次回同期で
+  LOG からも除去される([#64](https://github.com/takashi-otomo/life_on_graph/issues/64) 実装済み)。
+  ただし投入内容を作り変える(時刻やキーが変わる)場合は古いレコードが残り混在しうるため、
+  クリーンに作り直すには LOG のアプリデータを消去してから初回バックフィルするのが確実:
   `adb shell pm clear dev.otomo.life_on_graph`(または設定→ストレージ→消去)。
 - **過去2か月の全件取得には履歴権限が必要**: LOG の初回バックフィルは履歴権限なしだと
   過去30日に制限される。LOG 起動時の権限ダイアログで「過去データへのアクセス」も許可すると

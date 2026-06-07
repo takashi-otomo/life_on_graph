@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_constants.dart';
@@ -24,6 +26,12 @@ final ThemeData _appTheme = ThemeData(
 /// ローカル DB (Hive) を初期化し、ローカルファーストな描画に備える。
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // E2E (Maestro, #75) でセマンティクスを露出させるため debug/profile で常時有効化。
+  // release は Flutter が a11y サービス接続時にオンデマンドで有効化するため、
+  // 非 a11y ユーザーへの常時計算コストを避けてここでは強制しない。
+  if (!kReleaseMode) {
+    SemanticsBinding.instance.ensureSemantics();
+  }
 
   final String? action = await LaunchIntent.action();
   if (LaunchIntent.isRationale(action)) {

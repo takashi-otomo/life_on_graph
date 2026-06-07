@@ -1,0 +1,20 @@
+appId: dev.otomo.life_on_graph
+name: タブ遷移 (ホーム/サマリー/設定)
+---
+- launchApp
+- tapOn:
+    text: "すべて許可|許可|Allow all|Allow|While using the app|アプリの使用時のみ"
+    optional: true
+- extendedWaitUntil:
+    visible: "ホーム"
+    timeout: 60000
+- tapOn:
+    id: "tab_summary"
+- assertVisible: "平均睡眠"
+- tapOn:
+    id: "tab_settings"
+- assertVisible: "データ同期"
+- tapOn:
+    id: "tab_home"
+# ホーム専用要素で判定 (設定の副文言「睡眠・歩数・心拍」との誤一致を避ける)。
+- assertVisible: "睡眠ステージ"

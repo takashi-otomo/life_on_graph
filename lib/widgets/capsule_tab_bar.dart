@@ -4,10 +4,17 @@ import '../core/app_colors.dart';
 
 /// カプセル型ボトムタブの 1 項目。
 class CapsuleTabItem {
-  const CapsuleTabItem({required this.icon, required this.label});
+  const CapsuleTabItem({
+    required this.icon,
+    required this.label,
+    this.identifier,
+  });
 
   final IconData icon;
   final String label;
+
+  /// アクセシビリティ識別子 (E2E テストで安定して指定するため, #75)。
+  final String? identifier;
 }
 
 /// フローティングのカプセル型ボトムナビゲーション (#66, デザイン準拠)。
@@ -73,28 +80,34 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color color = selected ? AppColors.accent : AppColors.textMuted;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accentSoft : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(item.icon, size: 22, color: color),
-            const SizedBox(height: 3),
-            Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
+    return Semantics(
+      identifier: item.identifier,
+      button: true,
+      selected: selected,
+      label: item.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accentSoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(item.icon, size: 22, color: color),
+              const SizedBox(height: 3),
+              Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -351,4 +351,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbFinish => 'Start';
+
+  @override
+  String get tutSkip => 'Skip';
+
+  @override
+  String get tutDone => 'Done';
+
+  @override
+  String get tutDateTitle => 'Tap the date';
+
+  @override
+  String get tutDateBody =>
+      'Tap the date label to jump to a specific day, week or month in the calendar. Days with data show a dot.';
+
+  @override
+  String get tutCardsTitle => 'Your daily data';
+
+  @override
+  String get tutCardsBody =>
+      'Sleep stages, steps and heart rate for the selected day, plus an integrated view on a shared timeline.';
+
+  @override
+  String get tutTabsTitle => 'Switch screens';
+
+  @override
+  String get tutTabsBody =>
+      'Switch between Home (daily detail), Summary (day/week/month trends) and Settings.';
 }

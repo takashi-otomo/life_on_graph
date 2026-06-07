@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/nav_provider.dart';
+import '../providers/tutorial_provider.dart';
 import '../widgets/capsule_tab_bar.dart';
 import 'dashboard/dashboard_view.dart';
 import 'settings/settings_view.dart';
 import 'summary/summary_view.dart';
+import 'tutorial/tutorial_keys.dart';
+import 'tutorial/tutorial_overlay.dart';
 
 /// アプリのルートスキャフォールド (#66)。
 ///
@@ -37,7 +40,8 @@ class AppShell extends ConsumerWidget {
         identifier: 'tab_settings',
       ),
     ];
-    return Scaffold(
+    final bool showTutorial = !ref.watch(tutorialCompletedProvider);
+    final Widget scaffold = Scaffold(
       extendBody: true,
       backgroundColor: AppColors.background,
       body: IndexedStack(
@@ -48,11 +52,22 @@ class AppShell extends ConsumerWidget {
           SettingsView(),
         ],
       ),
-      bottomNavigationBar: CapsuleTabBar(
-        items: tabs,
-        currentIndex: index,
-        onTap: (i) => ref.read(navTabProvider.notifier).select(i),
+      bottomNavigationBar: KeyedSubtree(
+        key: TutorialKeys.tabBar,
+        child: CapsuleTabBar(
+          items: tabs,
+          currentIndex: index,
+          onTap: (i) => ref.read(navTabProvider.notifier).select(i),
+        ),
       ),
+    );
+    if (!showTutorial) return scaffold;
+    // 初回チュートリアル: ホームタブを前提にスポットライト表示する (#109)。
+    return Stack(
+      children: <Widget>[
+        scaffold,
+        Positioned.fill(child: TutorialOverlay(onFinish: () {})),
+      ],
     );
   }
 }

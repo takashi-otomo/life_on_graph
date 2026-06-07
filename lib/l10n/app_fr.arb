@@ -103,5 +103,13 @@
   "onbSyncing": "Synchronisation de vos données…",
   "onbDoneTitle": "Tout est prêt",
   "onbDoneBody": "Vos données sont prêtes. Découvrez vos tendances sur l'écran d'accueil.",
-  "onbFinish": "Démarrer"
+  "onbFinish": "Démarrer",
+  "tutSkip": "Passer",
+  "tutDone": "Terminé",
+  "tutDateTitle": "Appuyez sur la date",
+  "tutDateBody": "Appuyez sur la date pour aller à un jour, une semaine ou un mois précis dans le calendrier. Les jours avec données affichent un point.",
+  "tutCardsTitle": "Vos données du jour",
+  "tutCardsBody": "Phases de sommeil, pas et fréquence cardiaque du jour sélectionné, avec une vue intégrée sur un axe temporel commun.",
+  "tutTabsTitle": "Changer d'écran",
+  "tutTabsBody": "Basculez entre Accueil (détail du jour), Résumé (tendances jour/semaine/mois) et Paramètres."
 }

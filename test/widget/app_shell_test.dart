@@ -7,8 +7,14 @@ import 'package:life_on_graph/features/settings/settings_view.dart';
 import 'package:life_on_graph/features/summary/summary_view.dart';
 import 'package:life_on_graph/features/dashboard/dashboard_view.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
+import 'package:life_on_graph/providers/tutorial_provider.dart';
 
 import '../helpers/fake_health_sync_repository.dart';
+
+class _TutorialDoneNotifier extends TutorialCompletedNotifier {
+  @override
+  bool build() => true;
+}
 
 void main() {
   Widget app() => ProviderScope(
@@ -16,6 +22,7 @@ void main() {
       healthSyncRepositoryProvider.overrideWithValue(
         FakeHealthSyncRepository(),
       ),
+      tutorialCompletedProvider.overrideWith(_TutorialDoneNotifier.new),
     ],
     child: const MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,

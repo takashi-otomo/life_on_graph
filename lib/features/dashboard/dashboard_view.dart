@@ -10,6 +10,7 @@ import '../../providers/onboarding_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
 import '../../widgets/health_status_banner.dart';
+import '../tutorial/tutorial_keys.dart';
 import '../cross_data/widgets/cross_data_chart.dart';
 import '../heart_rate/widgets/heart_rate_chart.dart';
 import '../sleep/sleep_summary.dart';
@@ -87,13 +88,19 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           children: <Widget>[
             if (sync is SyncInProgress)
               const LinearProgressIndicator(minHeight: 3),
-            const DateNavHeader(),
+            KeyedSubtree(
+              key: TutorialKeys.dateNav,
+              child: const DateNavHeader(),
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                 children: <Widget>[
                   const HealthStatusBanner(),
-                  SleepSummaryCard(summary: summary),
+                  KeyedSubtree(
+                    key: TutorialKeys.cards,
+                    child: SleepSummaryCard(summary: summary),
+                  ),
                   const SizedBox(height: 16),
                   SleepStageTimeline(segments: segments),
                   const SizedBox(height: 16),

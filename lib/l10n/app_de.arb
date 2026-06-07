@@ -103,5 +103,13 @@
   "onbSyncing": "Deine Daten werden synchronisiert…",
   "onbDoneTitle": "Alles bereit",
   "onbDoneBody": "Deine Daten sind bereit. Entdecke deine Trends auf dem Startbildschirm.",
-  "onbFinish": "Starten"
+  "onbFinish": "Starten",
+  "tutSkip": "Überspringen",
+  "tutDone": "Fertig",
+  "tutDateTitle": "Auf das Datum tippen",
+  "tutDateBody": "Tippe auf das Datum, um im Kalender zu einem bestimmten Tag, einer Woche oder einem Monat zu springen. Tage mit Daten zeigen einen Punkt.",
+  "tutCardsTitle": "Deine Tagesdaten",
+  "tutCardsBody": "Schlafphasen, Schritte und Herzfrequenz des gewählten Tages sowie eine integrierte Ansicht auf gemeinsamer Zeitachse.",
+  "tutTabsTitle": "Bildschirme wechseln",
+  "tutTabsBody": "Wechsle zwischen Start (Tagesdetail), Übersicht (Trends Tag/Woche/Monat) und Einstellungen."
 }

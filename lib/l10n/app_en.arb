@@ -120,5 +120,14 @@
   "onbSyncing": "Syncing your data…",
   "onbDoneTitle": "You're all set",
   "onbDoneBody": "Your data is ready. Explore your trends on the home screen.",
-  "onbFinish": "Start"
+  "onbFinish": "Start",
+
+  "tutSkip": "Skip",
+  "tutDone": "Done",
+  "tutDateTitle": "Tap the date",
+  "tutDateBody": "Tap the date label to jump to a specific day, week or month in the calendar. Days with data show a dot.",
+  "tutCardsTitle": "Your daily data",
+  "tutCardsBody": "Sleep stages, steps and heart rate for the selected day, plus an integrated view on a shared timeline.",
+  "tutTabsTitle": "Switch screens",
+  "tutTabsBody": "Switch between Home (daily detail), Summary (day/week/month trends) and Settings."
 }

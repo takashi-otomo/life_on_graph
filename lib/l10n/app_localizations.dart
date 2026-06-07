@@ -729,6 +729,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get onbFinish;
+
+  /// No description provided for @tutSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tutSkip;
+
+  /// No description provided for @tutDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get tutDone;
+
+  /// No description provided for @tutDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the date'**
+  String get tutDateTitle;
+
+  /// No description provided for @tutDateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the date label to jump to a specific day, week or month in the calendar. Days with data show a dot.'**
+  String get tutDateBody;
+
+  /// No description provided for @tutCardsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your daily data'**
+  String get tutCardsTitle;
+
+  /// No description provided for @tutCardsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep stages, steps and heart rate for the selected day, plus an integrated view on a shared timeline.'**
+  String get tutCardsBody;
+
+  /// No description provided for @tutTabsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch screens'**
+  String get tutTabsTitle;
+
+  /// No description provided for @tutTabsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between Home (daily detail), Summary (day/week/month trends) and Settings.'**
+  String get tutTabsBody;
 }
 
 class _AppLocalizationsDelegate

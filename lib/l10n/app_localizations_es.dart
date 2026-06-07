@@ -351,4 +351,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbFinish => 'Empezar';
+
+  @override
+  String get tutSkip => 'Saltar';
+
+  @override
+  String get tutDone => 'Listo';
+
+  @override
+  String get tutDateTitle => 'Toca la fecha';
+
+  @override
+  String get tutDateBody =>
+      'Toca la fecha para ir a un día, semana o mes concreto en el calendario. Los días con datos muestran un punto.';
+
+  @override
+  String get tutCardsTitle => 'Tus datos del día';
+
+  @override
+  String get tutCardsBody =>
+      'Fases del sueño, pasos y frecuencia cardíaca del día seleccionado, además de una vista integrada en un eje de tiempo común.';
+
+  @override
+  String get tutTabsTitle => 'Cambiar de pantalla';
+
+  @override
+  String get tutTabsBody =>
+      'Cambia entre Inicio (detalle del día), Resumen (tendencias día/semana/mes) y Ajustes.';
 }

@@ -103,5 +103,13 @@
   "onbSyncing": "Sincronizando seus dados…",
   "onbDoneTitle": "Tudo pronto",
   "onbDoneBody": "Seus dados estão prontos. Veja suas tendências na tela inicial.",
-  "onbFinish": "Iniciar"
+  "onbFinish": "Iniciar",
+  "tutSkip": "Pular",
+  "tutDone": "Concluir",
+  "tutDateTitle": "Toque na data",
+  "tutDateBody": "Toque na data para ir a um dia, semana ou mês específico no calendário. Dias com dados mostram um ponto.",
+  "tutCardsTitle": "Seus dados do dia",
+  "tutCardsBody": "Fases do sono, passos e frequência cardíaca do dia selecionado, além de uma visão integrada no mesmo eixo de tempo.",
+  "tutTabsTitle": "Alternar telas",
+  "tutTabsBody": "Alterne entre Início (detalhe do dia), Resumo (tendências dia/semana/mês) e Configurações."
 }

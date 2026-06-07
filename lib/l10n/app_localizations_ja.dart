@@ -340,4 +340,29 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get onbFinish => 'はじめる';
+
+  @override
+  String get tutSkip => 'スキップ';
+
+  @override
+  String get tutDone => '完了';
+
+  @override
+  String get tutDateTitle => '日付をタップ';
+
+  @override
+  String get tutDateBody =>
+      '日付ラベルをタップすると、カレンダーで特定の日付・週・月へジャンプできます。データのある日にはドットが付きます。';
+
+  @override
+  String get tutCardsTitle => 'その日のデータ';
+
+  @override
+  String get tutCardsBody => '選択した日の睡眠ステージ・歩数・心拍に加え、同じ時間軸で見る統合ビューを表示します。';
+
+  @override
+  String get tutTabsTitle => '画面を切り替え';
+
+  @override
+  String get tutTabsBody => 'ホーム(その日の詳細)・サマリー(日/週/月のトレンド)・設定 をタブで切り替えられます。';
 }

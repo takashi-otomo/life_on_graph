@@ -10,9 +10,15 @@ import 'package:life_on_graph/features/summary/widgets/trend_bar_chart.dart';
 import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/providers/locale_provider.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
+import 'package:life_on_graph/providers/tutorial_provider.dart';
 
 import '../helpers/fake_health_sync_repository.dart';
 import '../helpers/fake_secure_key_store.dart';
+
+class _TutorialDoneNotifier extends TutorialCompletedNotifier {
+  @override
+  bool build() => true;
+}
 
 void main() {
   Widget app(Locale locale) => ProviderScope(
@@ -20,6 +26,7 @@ void main() {
       healthSyncRepositoryProvider.overrideWithValue(
         FakeHealthSyncRepository(),
       ),
+      tutorialCompletedProvider.overrideWith(_TutorialDoneNotifier.new),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,

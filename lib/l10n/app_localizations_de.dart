@@ -354,4 +354,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onbFinish => 'Starten';
+
+  @override
+  String get tutSkip => 'Überspringen';
+
+  @override
+  String get tutDone => 'Fertig';
+
+  @override
+  String get tutDateTitle => 'Auf das Datum tippen';
+
+  @override
+  String get tutDateBody =>
+      'Tippe auf das Datum, um im Kalender zu einem bestimmten Tag, einer Woche oder einem Monat zu springen. Tage mit Daten zeigen einen Punkt.';
+
+  @override
+  String get tutCardsTitle => 'Deine Tagesdaten';
+
+  @override
+  String get tutCardsBody =>
+      'Schlafphasen, Schritte und Herzfrequenz des gewählten Tages sowie eine integrierte Ansicht auf gemeinsamer Zeitachse.';
+
+  @override
+  String get tutTabsTitle => 'Bildschirme wechseln';
+
+  @override
+  String get tutTabsBody =>
+      'Wechsle zwischen Start (Tagesdetail), Übersicht (Trends Tag/Woche/Monat) und Einstellungen.';
 }

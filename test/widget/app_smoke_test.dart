@@ -10,6 +10,7 @@ import 'package:life_on_graph/main.dart';
 import 'package:life_on_graph/providers/locale_provider.dart';
 import 'package:life_on_graph/providers/onboarding_provider.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
+import 'package:life_on_graph/providers/tutorial_provider.dart';
 
 import '../helpers/fake_health_sync_repository.dart';
 
@@ -21,6 +22,12 @@ class _JaLocaleNotifier extends LocaleNotifier {
 
 /// 初期設定済み (ウィザードを出さない) ノーティファイア。
 class _OnboardedNotifier extends OnboardingNotifier {
+  @override
+  bool build() => true;
+}
+
+/// チュートリアル完了済み (オーバーレイを出さない) ノーティファイア。
+class _TutorialDoneNotifier extends TutorialCompletedNotifier {
   @override
   bool build() => true;
 }
@@ -57,6 +64,7 @@ void main() {
         ),
         localeProvider.overrideWith(_JaLocaleNotifier.new),
         onboardingCompletedProvider.overrideWith(_OnboardedNotifier.new),
+        tutorialCompletedProvider.overrideWith(_TutorialDoneNotifier.new),
       ],
       child: LifeOnGraphApp(ready: Future<void>.value()),
     );

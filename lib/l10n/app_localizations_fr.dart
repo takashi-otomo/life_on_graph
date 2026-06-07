@@ -314,4 +314,45 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jumpThisMonth => 'Aller à ce mois';
+
+  @override
+  String onbWelcomeTitle(String app) {
+    return 'Bienvenue dans $app';
+  }
+
+  @override
+  String get onbWelcomeBody =>
+      'Visualisez votre sommeil, vos pas et votre fréquence cardiaque entièrement sur votre appareil. Aucune donnée n\'est envoyée à l\'extérieur.';
+
+  @override
+  String get onbStart => 'Commencer';
+
+  @override
+  String get onbNext => 'Suivant';
+
+  @override
+  String get onbLangBody =>
+      'Nous suivons la langue de votre appareil. Vous pouvez la changer à tout moment dans les paramètres.';
+
+  @override
+  String get onbPermTitle => 'Connecter Health Connect';
+
+  @override
+  String get onbConnect => 'Connecter et synchroniser';
+
+  @override
+  String get onbSkipSetup => 'Configurer plus tard';
+
+  @override
+  String get onbSyncing => 'Synchronisation de vos données…';
+
+  @override
+  String get onbDoneTitle => 'Tout est prêt';
+
+  @override
+  String get onbDoneBody =>
+      'Vos données sont prêtes. Découvrez vos tendances sur l\'écran d\'accueil.';
+
+  @override
+  String get onbFinish => 'Démarrer';
 }

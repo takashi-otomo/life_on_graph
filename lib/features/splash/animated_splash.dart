@@ -11,19 +11,24 @@ class AnimatedSplash extends StatefulWidget {
     super.key,
     required this.onAnimationEnd,
     this.duration = const Duration(milliseconds: 700),
+    this.elaborate = false,
   });
 
   /// アニメーション完了時に呼ばれる。
   final VoidCallback onAnimationEnd;
   final Duration duration;
 
+  /// 初回起動向けの丁寧な演出 (ロゴのハートビート + リビールを前半に寄せて余韻)。
+  final bool elaborate;
+
   @override
   State<AnimatedSplash> createState() => _AnimatedSplashState();
 }
 
 class _AnimatedSplashState extends State<AnimatedSplash>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _controller;
+  AnimationController? _beat;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   late final Animation<double> _pulse;
@@ -33,6 +38,8 @@ class _AnimatedSplashState extends State<AnimatedSplash>
   @override
   void initState() {
     super.initState();
+    // elaborate ではリビールを前半 (〜60%) に寄せ、後半を余韻 (ハートビート) にする。
+    final bool e = widget.elaborate;
     _controller = AnimationController(vsync: this, duration: widget.duration)
       ..addStatusListener((AnimationStatus status) {
         if (status == AnimationStatus.completed) widget.onAnimationEnd();
@@ -40,30 +47,51 @@ class _AnimatedSplashState extends State<AnimatedSplash>
     _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
+        curve: Interval(0.0, e ? 0.2 : 0.55, curve: Curves.easeOutBack),
       ),
     );
     _logoOpacity = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.4),
+      curve: Interval(0.0, e ? 0.15 : 0.4),
     );
     _pulse = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.1, 0.65, curve: Curves.easeInOut),
+      curve: Interval(e ? 0.05 : 0.1, e ? 0.42 : 0.65, curve: Curves.easeInOut),
     );
     _abbr = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.35, 0.75, curve: Curves.easeOut),
+      curve: Interval(e ? 0.26 : 0.35, e ? 0.46 : 0.75, curve: Curves.easeOut),
     );
     _name = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+      curve: Interval(e ? 0.44 : 0.6, e ? 0.64 : 1.0, curve: Curves.easeOut),
     );
+    if (e) {
+      _beat = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1100),
+      )..repeat();
+    }
     _controller.forward();
+  }
+
+  /// ハートビート (lub-dub) の 0..1 強度。[t] は拍周期 0..1。
+  double _heartbeat(double t) {
+    if (t < 0.10) {
+      return Curves.easeOut.transform(t / 0.10);
+    } else if (t < 0.20) {
+      return 1 - Curves.easeIn.transform((t - 0.10) / 0.10) * 0.5;
+    } else if (t < 0.30) {
+      return 0.5 + Curves.easeOut.transform((t - 0.20) / 0.10) * 0.5;
+    } else if (t < 0.45) {
+      return 1 - Curves.easeIn.transform((t - 0.30) / 0.15);
+    }
+    return 0;
   }
 
   @override
   void dispose() {
+    _beat?.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -74,18 +102,24 @@ class _AnimatedSplashState extends State<AnimatedSplash>
       backgroundColor: AppColors.background,
       body: Center(
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: _beat == null
+              ? _controller
+              : Listenable.merge(<Listenable>[_controller, _beat!]),
           builder: (BuildContext context, Widget? child) {
+            // リビール完了後にハートビートを効かせる (elaborate のみ)。
+            final double beatScale = (_beat != null && _controller.value > 0.6)
+                ? 1 + 0.05 * _heartbeat(_beat!.value)
+                : 1.0;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Opacity(
                   opacity: _logoOpacity.value.clamp(0.0, 1.0),
                   child: Transform.scale(
-                    scale: _logoScale.value,
+                    scale: _logoScale.value * beatScale,
                     child: SizedBox(
-                      width: 96,
-                      height: 96,
+                      width: widget.elaborate ? 120 : 96,
+                      height: widget.elaborate ? 120 : 96,
                       child: CustomPaint(
                         painter: _SplashLogoPainter(_pulse.value),
                       ),

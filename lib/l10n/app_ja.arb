@@ -99,5 +99,18 @@
   "openApp": "アプリを開く",
   "weekShort": "{n}週",
   "jumpToday": "今日へ",
-  "jumpThisMonth": "今月へ"
+  "jumpThisMonth": "今月へ",
+
+  "onbWelcomeTitle": "{app} へようこそ",
+  "onbWelcomeBody": "睡眠・歩数・心拍を、端末内だけで可視化します。データを外部に送信することはありません。",
+  "onbStart": "始める",
+  "onbNext": "次へ",
+  "onbLangBody": "端末の言語設定に従います。いつでも設定から変更できます。",
+  "onbPermTitle": "Health Connect と連携",
+  "onbConnect": "連携して同期",
+  "onbSkipSetup": "あとで設定する",
+  "onbSyncing": "データを同期しています…",
+  "onbDoneTitle": "準備完了",
+  "onbDoneBody": "データの準備ができました。ホーム画面でトレンドを確認しましょう。",
+  "onbFinish": "はじめる"
 }

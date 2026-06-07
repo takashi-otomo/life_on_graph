@@ -4,14 +4,17 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/app_colors.dart';
 import 'core/app_constants.dart';
 import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
+import 'features/onboarding/onboarding_wizard.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
 import 'providers/locale_provider.dart';
+import 'providers/onboarding_provider.dart';
 import 'providers/repository_providers.dart';
 import 'providers/sync_notifier.dart';
 
@@ -123,9 +126,12 @@ class _SplashGate extends ConsumerStatefulWidget {
 }
 
 class _SplashGateState extends ConsumerState<_SplashGate> {
+  /// 初回起動か。DB 準備 + フラグ確定まで null。
+  bool? _firstLaunch;
   bool _animationDone = false;
-  bool _bootDone = false;
+  bool _syncDone = false;
   bool _bootFailed = false;
+  bool _onboardingDone = false;
 
   @override
   void initState() {
@@ -140,22 +146,50 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
       if (mounted) setState(() => _bootFailed = true);
       return; // 初期化失敗時は本画面へ遷移しない (codex P1)。
     }
-    // DB 初期化完了後に保存済み言語を再読込する。localeProvider は DB 準備前に
-    // 一度評価され null (端末設定) になっているため (codex P1)。
+    // DB 初期化完了後に保存済み言語/初回設定フラグを再読込する (DB 準備前は既定値)。
     ref.invalidate(localeProvider);
-    // 初回同期 (差分更新) を完了させてからホームへ進む。失敗は表示を妨げない。
+    ref.invalidate(onboardingCompletedProvider);
+    final bool first = !ref.read(onboardingCompletedProvider);
+    if (mounted) setState(() => _firstLaunch = first);
+    // 初回起動はウィザードへ (同期はウィザード内で実行)。スプラッシュでは差分同期しない。
+    if (first) return;
+    // 設定済み: 初回同期 (差分更新) を完了させてからホームへ進む。失敗は表示を妨げない。
     try {
       await ref.read(syncNotifierProvider.notifier).sync();
     } catch (_) {
       // 同期失敗時も保存済みローカルデータで描画する (状態別UI がフォールバック表示)。
     }
-    if (mounted) setState(() => _bootDone = true);
+    if (mounted) setState(() => _syncDone = true);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_bootFailed) return const _BootErrorView();
-    if (_animationDone && _bootDone) return const AppShell();
+
+    // DB 準備前は端末スプラッシュと同じ背景色で待機 (ごく短時間)。
+    if (_firstLaunch == null) {
+      return const Scaffold(backgroundColor: AppColors.background);
+    }
+
+    // 初回起動: 約5秒の丁寧なアニメーション → 設定ウィザード。差分同期はしない。
+    if (_firstLaunch!) {
+      if (_onboardingDone) return const AppShell();
+      if (_animationDone) {
+        return OnboardingWizard(
+          onFinish: () => setState(() => _onboardingDone = true),
+        );
+      }
+      return AnimatedSplash(
+        elaborate: true,
+        duration: const Duration(seconds: 5),
+        onAnimationEnd: () {
+          if (mounted) setState(() => _animationDone = true);
+        },
+      );
+    }
+
+    // 通常起動: 短いスプラッシュ + 差分同期 → ホーム。
+    if (_animationDone && _syncDone) return const AppShell();
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
@@ -164,8 +198,7 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
             if (mounted) setState(() => _animationDone = true);
           },
         ),
-        // アニメ完了後も同期待ちの間は進捗を示す。
-        if (_animationDone && !_bootDone)
+        if (_animationDone && !_syncDone)
           const Positioned(
             left: 0,
             right: 0,

@@ -2,6 +2,13 @@ appId: dev.otomo.life_on_graph
 name: Smoke - 起動とボトムタブ
 ---
 - launchApp
+# 初回起動時の Health Connect / 身体活動の権限ダイアログが出たら許可する(任意)。
+- tapOn:
+    text: "すべて許可|許可|Allow all|Allow|While using the app|アプリの使用時のみ"
+    optional: true
+- tapOn:
+    text: "許可|Allow|While using the app|アプリの使用時のみ"
+    optional: true
 # デバッグビルドのコールドスタートが遅いため描画を待つ。
 - extendedWaitUntil:
     visible: "ホーム"

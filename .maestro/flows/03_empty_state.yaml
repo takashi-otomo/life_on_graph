@@ -1,7 +1,12 @@
 appId: dev.otomo.life_on_graph
-name: 空状態 (当日データ無し)
+name: 空状態 (データ無し)
 ---
-- launchApp
+# clearState でローカルデータを消し、空状態を決定的に検証する。
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "すべて許可|許可|Allow all|Allow|While using the app|アプリの使用時のみ"
+    optional: true
 - extendedWaitUntil:
     visible: "ホーム"
     timeout: 60000

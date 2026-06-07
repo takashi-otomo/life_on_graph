@@ -1,31 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../providers/selected_date_provider.dart';
 
 /// 日付ナビゲーション (前日 / 翌日 / 今日表示) (#41)。
 class DateNavHeader extends ConsumerWidget {
   const DateNavHeader({super.key});
 
-  static const List<String> _weekdays = <String>[
-    '月',
-    '火',
-    '水',
-    '木',
-    '金',
-    '土',
-    '日',
-  ];
-
-  static String formatDate(DateTime d) =>
-      '${d.month}月${d.day}日 (${_weekdays[d.weekday - 1]})';
+  /// ロケールに応じた日付表記 ("6月7日(土)" / "Sat, Jun 7" 等)。
+  static String formatDate(DateTime d, String localeName) =>
+      DateFormat.MMMEd(localeName).format(d);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final DateTime date = ref.watch(selectedDateProvider);
     final SelectedDateNotifier nav = ref.read(selectedDateProvider.notifier);
     final bool isToday = nav.isToday;
+    final AppLocalizations l = AppLocalizations.of(context);
+    final String localeName = Localizations.localeOf(context).toString();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -35,13 +30,13 @@ class DateNavHeader extends ConsumerWidget {
           _CircleButton(
             icon: Icons.chevron_left,
             onTap: nav.previous,
-            tooltip: '前日',
+            tooltip: l.prevDay,
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                formatDate(date),
+                formatDate(date, localeName),
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -49,9 +44,9 @@ class DateNavHeader extends ConsumerWidget {
                 ),
               ),
               if (isToday)
-                const Text(
-                  '今日',
-                  style: TextStyle(
+                Text(
+                  l.today,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.accentText,
@@ -62,7 +57,7 @@ class DateNavHeader extends ConsumerWidget {
           _CircleButton(
             icon: Icons.chevron_right,
             onTap: isToday ? null : nav.next,
-            tooltip: '翌日',
+            tooltip: l.nextDay,
           ),
         ],
       ),

@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/rationale/policy_view.dart';
 import 'package:life_on_graph/features/rationale/rationale_view.dart';
 
 void main() {
   testWidgets('#54 データ種別(履歴含む)と用途・ポリシー導線を表示する', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: RationaleView()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: Locale('ja'),
+        home: RationaleView(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('ヘルスデータの利用について'), findsOneWidget);
@@ -20,7 +28,14 @@ void main() {
   });
 
   testWidgets('#54 ポリシーをアプリ内 (PolicyView) で表示する', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: RationaleView()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: Locale('ja'),
+        home: RationaleView(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('プライバシーポリシーを読む'));
@@ -40,7 +55,12 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(home: RationaleView(onContinue: () => tapped++)),
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ja'),
+        home: RationaleView(onContinue: () => tapped++),
+      ),
     );
     await tester.pumpAndSettle();
 

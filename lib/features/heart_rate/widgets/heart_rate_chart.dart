@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/heart_rate_record_model.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/segmented_toggle.dart';
@@ -60,6 +61,7 @@ class _HeartRateChartState extends State<HeartRateChart> {
   Widget build(BuildContext context) {
     final List<HeartRateRecordModel> points = _visiblePoints;
     final HeartRateStats stats = HeartRateStats.from(points);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     return AppCard(
       child: Column(
@@ -74,9 +76,9 @@ class _HeartRateChartState extends State<HeartRateChart> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      '心拍',
-                      style: TextStyle(
+                    Text(
+                      l.heartRate,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
@@ -91,7 +93,7 @@ class _HeartRateChartState extends State<HeartRateChart> {
                           children: <Widget>[
                             // 直近の心拍を主表示 (デザイン準拠)。
                             Text(
-                              '${stats.current} bpm',
+                              l.bpmValue(stats.current!),
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -101,7 +103,7 @@ class _HeartRateChartState extends State<HeartRateChart> {
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
-                                '安静 ${stats.resting} ・ 最高 ${stats.max}',
+                                '${l.resting} ${stats.resting} · ${l.max} ${stats.max}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
@@ -117,7 +119,7 @@ class _HeartRateChartState extends State<HeartRateChart> {
               ),
               if (_canFilterSleep)
                 SegmentedToggle(
-                  segments: const <String>['全日', '睡眠中'],
+                  segments: <String>[l.allDay, l.duringSleep],
                   selectedIndex: _filterIndex,
                   onChanged: (i) => setState(() => _filterIndex = i),
                 ),
@@ -125,12 +127,12 @@ class _HeartRateChartState extends State<HeartRateChart> {
           ),
           const SizedBox(height: 14),
           if (points.isEmpty)
-            const SizedBox(
+            SizedBox(
               height: 100,
               child: Center(
                 child: Text(
-                  '心拍データがありません',
-                  style: TextStyle(
+                  l.noHeartRateData,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),

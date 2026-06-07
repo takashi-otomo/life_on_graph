@@ -2,13 +2,16 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/app_constants.dart';
+import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
+import 'providers/locale_provider.dart';
 import 'providers/repository_providers.dart';
 import 'providers/sync_notifier.dart';
 
@@ -34,6 +37,8 @@ void main() async {
   if (!kReleaseMode) {
     SemanticsBinding.instance.ensureSemantics();
   }
+  // 各ロケールの日付整形 (DateFormat) 用データを初期化する (#94)。
+  await initializeDateFormatting();
 
   final String? action = await LaunchIntent.action();
   if (LaunchIntent.isRationale(action)) {
@@ -53,17 +58,17 @@ void main() async {
 }
 
 /// Life On Graph (LOG) アプリのルートウィジェット(通常起動)。
-class LifeOnGraphApp extends StatefulWidget {
+class LifeOnGraphApp extends ConsumerStatefulWidget {
   const LifeOnGraphApp({super.key, required this.ready});
 
   /// ローカル DB 初期化の完了 Future。
   final Future<void> ready;
 
   @override
-  State<LifeOnGraphApp> createState() => _LifeOnGraphAppState();
+  ConsumerState<LifeOnGraphApp> createState() => _LifeOnGraphAppState();
 }
 
-class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
+class _LifeOnGraphAppState extends ConsumerState<LifeOnGraphApp> {
   @override
   void initState() {
     super.initState();
@@ -78,11 +83,16 @@ class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
 
   @override
   Widget build(BuildContext context) {
+    // null のときは端末の言語設定に従う (#94)。
+    final Locale? locale = ref.watch(localeProvider);
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
       theme: _appTheme,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: _SplashGate(ready: widget.ready),
     );
   }
@@ -207,6 +217,8 @@ class _RationaleAppState extends State<RationaleApp> {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: _appTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: db != null
           ? ProviderScope(
               overrides: [databaseManagerProvider.overrideWithValue(db)],

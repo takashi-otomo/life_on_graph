@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/nav_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/summary_providers.dart';
@@ -60,25 +62,26 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
     });
   }
 
-  String _periodLabel() {
+  String _periodLabel(String localeName) {
     switch (_period) {
       case SummaryPeriod.day:
-        return DateNavHeader.formatDate(_anchor);
+        return DateNavHeader.formatDate(_anchor, localeName);
       case SummaryPeriod.week:
         final DateTime start = _anchor.subtract(
           Duration(days: _anchor.weekday - 1),
         );
         final DateTime end = start.add(const Duration(days: 6));
-        return '${start.month}月${start.day}日 - ${end.month}月${end.day}日';
+        final DateFormat md = DateFormat.MMMd(localeName);
+        return '${md.format(start)} – ${md.format(end)}';
       case SummaryPeriod.month:
-        return '${_anchor.year}年 ${_anchor.month}月';
+        return DateFormat.yMMMM(localeName).format(_anchor);
     }
   }
 
-  String _deltaLabelPrefix() => switch (_period) {
-    SummaryPeriod.day => '前日比',
-    SummaryPeriod.week => '先週比',
-    SummaryPeriod.month => '先月比',
+  String _deltaLabelPrefix(AppLocalizations l) => switch (_period) {
+    SummaryPeriod.day => l.deltaDay,
+    SummaryPeriod.week => l.deltaWeek,
+    SummaryPeriod.month => l.deltaMonth,
   };
 
   @override
@@ -86,7 +89,8 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
     final PeriodSummary s = ref.watch(
       periodSummaryProvider(SummaryQuery(_period, _anchor)),
     );
-    final String dp = _deltaLabelPrefix();
+    final AppLocalizations l = AppLocalizations.of(context);
+    final String dp = _deltaLabelPrefix(l);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -95,9 +99,9 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
           children: <Widget>[
-            const Text(
-              'サマリー',
-              style: TextStyle(
+            Text(
+              l.summaryTitle,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
@@ -105,7 +109,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
             ),
             const SizedBox(height: 14),
             SegmentedToggle(
-              segments: const <String>['日', '週', '月'],
+              segments: <String>[l.periodDay, l.periodWeek, l.periodMonth],
               selectedIndex: _period.index,
               expand: true,
               onChanged: (i) => setState(() {
@@ -115,7 +119,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
             ),
             const SizedBox(height: 14),
             _PeriodNav(
-              label: _periodLabel(),
+              label: _periodLabel(Localizations.localeOf(context).toString()),
               onPrev: () => _shift(-1),
               onNext: _atLatest ? null : () => _shift(1),
             ),
@@ -133,7 +137,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
               const SizedBox(height: 12),
             ],
             TrendBarChart(
-              title: '睡眠時間',
+              title: l.sleepDuration,
               icon: Icons.bedtime,
               color: AppColors.sleepLight,
               bars: s.bars,
@@ -141,7 +145,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
             ),
             const SizedBox(height: 12),
             TrendBarChart(
-              title: '歩数',
+              title: l.steps,
               icon: Icons.directions_walk,
               color: AppColors.steps,
               bars: s.bars,
@@ -162,6 +166,7 @@ class _MetricGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     final int? sleepD = summary.sleepDeltaMinutes;
     final int? stepD = summary.stepsDeltaPercent;
     final int? hrD = summary.hrDelta;
@@ -170,21 +175,23 @@ class _MetricGrid extends StatelessWidget {
       MetricCard(
         icon: Icons.bedtime,
         iconColor: AppColors.sleepDeep,
-        label: '平均睡眠',
+        label: l.avgSleep,
         value: summary.avgSleep == Duration.zero
             ? '—'
-            : formatHm(summary.avgSleep),
+            : formatHm(summary.avgSleep, l),
         trend: _trend(sleepD),
         trendLabel: sleepD == null
             ? null
-            : '$deltaPrefix ${sleepD >= 0 ? '+' : ''}$sleepD分',
+            : '$deltaPrefix ${sleepD >= 0 ? '+' : ''}$sleepD',
         trendPositive: (sleepD == null || sleepD == 0) ? null : sleepD > 0,
       ),
       MetricCard(
         icon: Icons.directions_walk,
         iconColor: AppColors.steps,
-        label: '平均歩数',
-        value: summary.avgSteps == 0 ? '—' : '${_fmt(summary.avgSteps)} 歩',
+        label: l.avgSteps,
+        value: summary.avgSteps == 0
+            ? '—'
+            : l.stepsValue(_fmt(summary.avgSteps)),
         trend: _trend(stepD),
         trendLabel: stepD == null
             ? null
@@ -194,8 +201,8 @@ class _MetricGrid extends StatelessWidget {
       MetricCard(
         icon: Icons.favorite,
         iconColor: AppColors.heart,
-        label: '平均心拍',
-        value: summary.avgHr == null ? '—' : '${summary.avgHr} bpm',
+        label: l.avgHeartRate,
+        value: summary.avgHr == null ? '—' : l.bpmValue(summary.avgHr!),
         trend: _trend(hrD),
         trendLabel: hrD == null
             ? null
@@ -206,8 +213,8 @@ class _MetricGrid extends StatelessWidget {
       MetricCard(
         icon: Icons.monitor_heart,
         iconColor: AppColors.heart,
-        label: '安静時心拍',
-        value: summary.restingHr == null ? '—' : '${summary.restingHr} bpm',
+        label: l.restingHeartRate,
+        value: summary.restingHr == null ? '—' : l.bpmValue(summary.restingHr!),
       ),
     ];
 
@@ -297,16 +304,16 @@ class _DetailCta extends StatelessWidget {
           color: AppColors.accent,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Row(
               children: <Widget>[
-                Icon(Icons.dashboard, size: 18, color: Colors.white),
-                SizedBox(width: 10),
+                const Icon(Icons.dashboard, size: 18, color: Colors.white),
+                const SizedBox(width: 10),
                 Text(
-                  '今日の詳細を見る',
-                  style: TextStyle(
+                  AppLocalizations.of(context).viewTodayDetail,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -314,7 +321,7 @@ class _DetailCta extends StatelessWidget {
                 ),
               ],
             ),
-            Icon(Icons.chevron_right, size: 20, color: Colors.white),
+            const Icon(Icons.chevron_right, size: 20, color: Colors.white),
           ],
         ),
       ),

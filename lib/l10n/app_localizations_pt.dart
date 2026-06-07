@@ -1,0 +1,262 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Portuguese (`pt`).
+class AppLocalizationsPt extends AppLocalizations {
+  AppLocalizationsPt([String locale = 'pt']) : super(locale);
+
+  @override
+  String get tabHome => 'Início';
+
+  @override
+  String get tabSummary => 'Resumo';
+
+  @override
+  String get tabSettings => 'Configurações';
+
+  @override
+  String get today => 'Hoje';
+
+  @override
+  String get sleep => 'Sono';
+
+  @override
+  String get steps => 'Passos';
+
+  @override
+  String get heartRate => 'Frequência cardíaca';
+
+  @override
+  String get sleepStages => 'Fases do sono';
+
+  @override
+  String get noSleepDataForDay => 'Sem dados de sono neste dia';
+
+  @override
+  String get noSleepData => 'Sem dados de sono';
+
+  @override
+  String get noStepsDataForDay => 'Sem dados de passos neste dia';
+
+  @override
+  String get noHeartRateData => 'Sem dados de frequência cardíaca';
+
+  @override
+  String stepsValue(String count) {
+    return '$count passos';
+  }
+
+  @override
+  String bpmValue(int value) {
+    return '$value bpm';
+  }
+
+  @override
+  String get resting => 'Repouso';
+
+  @override
+  String get max => 'Máx';
+
+  @override
+  String get allDay => 'Dia todo';
+
+  @override
+  String get duringSleep => 'Durante o sono';
+
+  @override
+  String get stageDeep => 'Profundo';
+
+  @override
+  String get stageLight => 'Leve';
+
+  @override
+  String get stageRem => 'REM';
+
+  @override
+  String get stageAwake => 'Acordado';
+
+  @override
+  String get stageUnknown => 'Desconhecido';
+
+  @override
+  String get summaryTitle => 'Resumo';
+
+  @override
+  String get periodDay => 'Dia';
+
+  @override
+  String get periodWeek => 'Semana';
+
+  @override
+  String get periodMonth => 'Mês';
+
+  @override
+  String get avgSleep => 'Sono méd.';
+
+  @override
+  String get avgSteps => 'Passos méd.';
+
+  @override
+  String get avgHeartRate => 'FC média';
+
+  @override
+  String get restingHeartRate => 'FC em repouso';
+
+  @override
+  String get deltaDay => 'vs. ontem';
+
+  @override
+  String get deltaWeek => 'vs. semana passada';
+
+  @override
+  String get deltaMonth => 'vs. mês passado';
+
+  @override
+  String get viewTodayDetail => 'Ver detalhes de hoje';
+
+  @override
+  String get sleepDuration => 'Duração do sono';
+
+  @override
+  String get summaryHint =>
+      'Cada dado em uma faixa separada no mesmo eixo de tempo';
+
+  @override
+  String get settingsTitle => 'Configurações';
+
+  @override
+  String get sectionDataSync => 'Sincronização';
+
+  @override
+  String get syncNow => 'Sincronizar agora';
+
+  @override
+  String get syncing => 'Sincronizando…';
+
+  @override
+  String get notSynced => 'Não sincronizado';
+
+  @override
+  String lastSynced(String time) {
+    return 'Última sincronização: $time';
+  }
+
+  @override
+  String get healthConnectLink => 'Health Connect';
+
+  @override
+  String get healthConnectLinkSubtitle =>
+      'Lê sono, passos e frequência cardíaca (somente leitura)';
+
+  @override
+  String get sectionPrivacy => 'Privacidade e segurança';
+
+  @override
+  String get privacyPolicy => 'Política de privacidade';
+
+  @override
+  String get deleteAllData => 'Excluir todos os dados';
+
+  @override
+  String get deleteAllDataSubtitle =>
+      'Apagar sono, passos e frequência cardíaca armazenados neste dispositivo';
+
+  @override
+  String get cannotDeleteWhileSyncing =>
+      'Não é possível excluir durante a sincronização';
+
+  @override
+  String get sectionInfo => 'Informações';
+
+  @override
+  String get version => 'Versão';
+
+  @override
+  String get openSourceLicenses => 'Licenças de código aberto';
+
+  @override
+  String get contact => 'Contato';
+
+  @override
+  String get deleteDialogTitle => 'Excluir todos os dados';
+
+  @override
+  String get deleteDialogContent =>
+      'Isso exclui permanentemente os dados de sono, passos e frequência cardíaca armazenados neste dispositivo. Não pode ser desfeito.\n\n(Os dados no Health Connect não são excluídos; serão obtidos novamente na próxima sincronização.)';
+
+  @override
+  String get cancel => 'Cancelar';
+
+  @override
+  String get delete => 'Excluir';
+
+  @override
+  String get deletedSnack => 'Dados locais excluídos';
+
+  @override
+  String get deleteAbortedSyncing =>
+      'Exclusão cancelada porque há uma sincronização em andamento';
+
+  @override
+  String get statusUnavailableTitle => 'O Health Connect é necessário';
+
+  @override
+  String get statusUnavailableMessage =>
+      'O Health Connect precisa estar instalado para ler sono, passos e frequência cardíaca.';
+
+  @override
+  String get install => 'Instalar';
+
+  @override
+  String get statusPermissionTitle => 'Acesso aos dados de saúde necessário';
+
+  @override
+  String get statusPermissionMessage =>
+      'A permissão de leitura no Health Connect é necessária para exibir sono, passos e frequência cardíaca.';
+
+  @override
+  String get allow => 'Permitir';
+
+  @override
+  String get statusSyncFailedTitle => 'Falha na sincronização';
+
+  @override
+  String get statusSyncFailedMessage => 'Exibindo dados salvos localmente.';
+
+  @override
+  String get retry => 'Tentar novamente';
+
+  @override
+  String durationHm(int h, int m) {
+    return '${h}h ${m}min';
+  }
+
+  @override
+  String durationMin(int m) {
+    return '${m}min';
+  }
+
+  @override
+  String get prevDay => 'Dia anterior';
+
+  @override
+  String get nextDay => 'Próximo dia';
+
+  @override
+  String get crossTitle => 'Visão integrada (sono × FC × passos)';
+
+  @override
+  String get crossSubtitle => '24h até acordar. Role na horizontal.';
+
+  @override
+  String get crossEmpty => 'Sem dados de sono; visão integrada indisponível';
+
+  @override
+  String get language => 'Idioma';
+
+  @override
+  String get languageSystem => 'Padrão do sistema';
+}

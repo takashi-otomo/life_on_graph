@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/app_constants.dart';
+import '../../l10n/app_localizations.dart';
+import '../../providers/locale_provider.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/sync_notifier.dart';
 
@@ -18,10 +20,13 @@ class SettingsView extends ConsumerWidget {
     final DateTime? lastSync = ref
         .watch(healthSyncRepositoryProvider)
         .lastSyncTime;
+    final AppLocalizations l = AppLocalizations.of(context);
+    final Locale? locale = ref.watch(localeProvider);
 
     final String syncSubtitle = switch (sync) {
-      SyncInProgress() => '同期中…',
-      _ => lastSync == null ? '未同期' : '最終同期: ${_fmtDateTime(lastSync)}',
+      SyncInProgress() => l.syncing,
+      _ =>
+        lastSync == null ? l.notSynced : l.lastSynced(_fmtDateTime(lastSync)),
     };
 
     return Scaffold(
@@ -31,9 +36,9 @@ class SettingsView extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
           children: <Widget>[
-            const Text(
-              '設定',
-              style: TextStyle(
+            Text(
+              l.settingsTitle,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
@@ -41,13 +46,13 @@ class SettingsView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            const _SectionHeader('データ同期'),
+            _SectionHeader(l.sectionDataSync),
             _SettingsCard(
               children: <Widget>[
                 _SettingsTile(
                   icon: Icons.sync,
                   iconColor: AppColors.accent,
-                  title: '今すぐ同期',
+                  title: l.syncNow,
                   subtitle: syncSubtitle,
                   trailing: sync is SyncInProgress
                       ? const SizedBox(
@@ -66,22 +71,22 @@ class SettingsView extends ConsumerWidget {
                             .sync(force: true),
                 ),
                 const _Divider(),
-                const _SettingsTile(
+                _SettingsTile(
                   icon: Icons.health_and_safety,
                   iconColor: AppColors.positive,
-                  title: 'Health Connect 連携',
-                  subtitle: '睡眠・歩数・心拍を読み取り (READ のみ)',
+                  title: l.healthConnectLink,
+                  subtitle: l.healthConnectLinkSubtitle,
                 ),
               ],
             ),
 
-            const _SectionHeader('プライバシーとセキュリティ'),
+            _SectionHeader(l.sectionPrivacy),
             _SettingsCard(
               children: <Widget>[
                 _SettingsTile(
                   icon: Icons.privacy_tip,
                   iconColor: AppColors.accent,
-                  title: 'プライバシーポリシー',
+                  title: l.privacyPolicy,
                   trailing: const Icon(
                     Icons.open_in_new,
                     size: 18,
@@ -93,10 +98,10 @@ class SettingsView extends ConsumerWidget {
                 _SettingsTile(
                   icon: Icons.delete_forever,
                   iconColor: AppColors.danger,
-                  title: 'すべてのデータを削除',
+                  title: l.deleteAllData,
                   subtitle: sync is SyncInProgress
-                      ? '同期中は削除できません'
-                      : '端末内の睡眠・歩数・心拍データを消去',
+                      ? l.cannotDeleteWhileSyncing
+                      : l.deleteAllDataSubtitle,
                   titleColor: AppColors.danger,
                   // 同期中の削除は実行中の sync が直後に再保存しうるため抑止する。
                   onTap: sync is SyncInProgress
@@ -106,14 +111,26 @@ class SettingsView extends ConsumerWidget {
               ],
             ),
 
-            const _SectionHeader('情報'),
+            _SectionHeader(l.sectionInfo),
             _SettingsCard(
               children: <Widget>[
-                const _SettingsTile(
+                _SettingsTile(
+                  icon: Icons.translate,
+                  iconColor: AppColors.accent,
+                  title: l.language,
+                  subtitle: _languageLabel(locale, l),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.divider,
+                  ),
+                  onTap: () => _pickLanguage(context, ref, l, locale),
+                ),
+                const _Divider(),
+                _SettingsTile(
                   icon: Icons.info_outline,
                   iconColor: AppColors.textSecondary,
-                  title: 'バージョン',
-                  trailing: Text(
+                  title: l.version,
+                  trailing: const Text(
                     AppConstants.appVersion,
                     style: TextStyle(
                       fontSize: 14,
@@ -125,7 +142,7 @@ class SettingsView extends ConsumerWidget {
                 _SettingsTile(
                   icon: Icons.description_outlined,
                   iconColor: AppColors.textSecondary,
-                  title: 'オープンソースライセンス',
+                  title: l.openSourceLicenses,
                   trailing: const Icon(
                     Icons.chevron_right,
                     color: AppColors.divider,
@@ -140,7 +157,7 @@ class SettingsView extends ConsumerWidget {
                 _SettingsTile(
                   icon: Icons.mail_outline,
                   iconColor: AppColors.textSecondary,
-                  title: 'お問い合わせ',
+                  title: l.contact,
                   subtitle: AppConstants.contactEmail,
                   onTap: () => _openUrl('mailto:${AppConstants.contactEmail}'),
                 ),
@@ -152,6 +169,64 @@ class SettingsView extends ConsumerWidget {
     );
   }
 
+  /// 選択中の言語名 (自言語表記)。`null` は端末設定に従う。
+  static String _languageLabel(Locale? locale, AppLocalizations l) {
+    if (locale == null) return l.languageSystem;
+    return _autonym(locale.languageCode);
+  }
+
+  /// 言語コード → 自言語表記 (翻訳しない)。
+  static String _autonym(String code) => switch (code) {
+    'ja' => '日本語',
+    'en' => 'English',
+    'fr' => 'Français',
+    'de' => 'Deutsch',
+    'pt' => 'Português',
+    'es' => 'Español',
+    _ => code,
+  };
+
+  /// 言語選択シートを表示し、選択結果を [localeProvider] へ反映する (#94)。
+  Future<void> _pickLanguage(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+    Locale? current,
+  ) async {
+    // null = 端末設定に従う + 対応言語。
+    final List<Locale?> options = <Locale?>[
+      null,
+      ...AppLocalizations.supportedLocales,
+    ];
+    // '__system__' = 端末設定に従う / それ以外は言語コード。null = シートを閉じただけ。
+    const String systemSentinel = '__system__';
+    final String? selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final Locale? opt in options)
+              ListTile(
+                title: Text(_languageLabel(opt, l)),
+                trailing: opt?.languageCode == current?.languageCode
+                    ? const Icon(Icons.check, color: AppColors.accent)
+                    : null,
+                onTap: () => Navigator.pop(
+                  ctx,
+                  opt == null ? systemSentinel : opt.languageCode,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null) return; // シートを閉じただけ。
+    final Locale? next = selected == systemSentinel ? null : Locale(selected);
+    await ref.read(localeProvider.notifier).setLocale(next);
+  }
+
   static Future<void> _openUrl(String url) async {
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -160,24 +235,21 @@ class SettingsView extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final AppLocalizations l = AppLocalizations.of(context);
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('すべてのデータを削除'),
-        content: const Text(
-          '端末内に保存した睡眠・歩数・心拍データをすべて削除します。'
-          'この操作は取り消せません。\n\n'
-          '(Health Connect 側のデータは削除されません。次回同期で再取得されます。)',
-        ),
+        title: Text(l.deleteDialogTitle),
+        content: Text(l.deleteDialogContent),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            child: const Text('削除する'),
+            child: Text(l.delete),
           ),
         ],
       ),
@@ -189,7 +261,7 @@ class SettingsView extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('同期中のため削除を中止しました')));
+        ).showSnackBar(SnackBar(content: Text(l.deleteAbortedSyncing)));
       }
       return;
     }
@@ -200,7 +272,7 @@ class SettingsView extends ConsumerWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('ローカルデータを削除しました')));
+      ).showSnackBar(SnackBar(content: Text(l.deletedSnack)));
     }
   }
 

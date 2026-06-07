@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/core/app_colors.dart';
 import 'package:life_on_graph/widgets/capsule_tab_bar.dart';
 import 'package:life_on_graph/widgets/metric_card.dart';
 import 'package:life_on_graph/widgets/segmented_toggle.dart';
 
 Widget wrap(Widget child) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ja'),
   home: Scaffold(body: Center(child: child)),
 );
 

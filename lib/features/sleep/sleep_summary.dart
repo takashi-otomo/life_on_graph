@@ -1,3 +1,4 @@
+import '../../l10n/app_localizations.dart';
 import '../../models/sleep_segment.dart';
 
 /// ステージ種別を表示用の正準キーへ正規化する (#35)。
@@ -45,10 +46,10 @@ class SleepSummary {
   }
 }
 
-/// [Duration] を「7時間12分」形式へ整形する (#35)。
-String formatHm(Duration d) {
+/// [Duration] をロケールに応じた「7時間12分 / 7h 12m」形式へ整形する (#35 / #94)。
+String formatHm(Duration d, AppLocalizations l) {
   final int h = d.inHours;
   final int m = d.inMinutes % 60;
-  if (h == 0) return '$m分';
-  return '$h時間 $m分';
+  if (h == 0) return l.durationMin(m);
+  return l.durationHm(h, m);
 }

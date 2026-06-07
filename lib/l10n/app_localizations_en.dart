@@ -259,4 +259,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSystem => 'System default';
+
+  @override
+  String get rationaleTitle => 'About health data use';
+
+  @override
+  String rationaleIntro(String app) {
+    return '$app reads the following from Health Connect and uses it only to draw charts on this device. No data is ever sent externally.';
+  }
+
+  @override
+  String get rationaleSleepDesc =>
+      'Read to visualize sleep stages (deep / light / REM / awake).';
+
+  @override
+  String get rationaleStepsDesc =>
+      'Read to visualize steps by time of day and daily / weekly / monthly.';
+
+  @override
+  String get rationaleHeartDesc =>
+      'Read to visualize heart rate, resting / max, and heart rate during sleep.';
+
+  @override
+  String get rationaleHistoryTitle => 'Past data (history)';
+
+  @override
+  String get rationaleHistoryDesc =>
+      'On first launch, data older than the past 30 days is fetched once to show past trends. No continuous background collection is performed.';
+
+  @override
+  String get rationaleSecurity =>
+      'Fetched data is encrypted with AES-256 and stored only on this device. No cloud upload or third-party sharing.';
+
+  @override
+  String get readPolicy => 'Read privacy policy';
+
+  @override
+  String get openPolicyBrowser => 'Open published version in browser';
+
+  @override
+  String get openApp => 'Open app';
 }

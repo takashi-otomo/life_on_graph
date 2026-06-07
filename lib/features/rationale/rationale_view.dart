@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/app_constants.dart';
+import '../../l10n/app_localizations.dart';
 import 'policy_view.dart';
 
 /// 権限根拠 / プライバシーポリシー画面 (#54)。
@@ -16,32 +17,32 @@ class RationaleView extends StatelessWidget {
   /// 「アプリを開く」導線。null の場合はボタンを表示しない。
   final VoidCallback? onContinue;
 
-  static const List<({IconData icon, Color color, String title, String desc})>
-  _items = <({IconData icon, Color color, String title, String desc})>[
+  static List<({IconData icon, Color color, String title, String desc})> _items(
+    AppLocalizations l,
+  ) => <({IconData icon, Color color, String title, String desc})>[
     (
       icon: Icons.bedtime,
       color: AppColors.sleepDeep,
-      title: '睡眠',
-      desc: '睡眠ステージ(深い/浅い/レム/覚醒)を可視化するために読み取ります。',
+      title: l.sleep,
+      desc: l.rationaleSleepDesc,
     ),
     (
       icon: Icons.directions_walk,
       color: AppColors.steps,
-      title: '歩数',
-      desc: '時間帯別・日次/週次/月次の歩数を可視化するために読み取ります。',
+      title: l.steps,
+      desc: l.rationaleStepsDesc,
     ),
     (
       icon: Icons.favorite,
       color: AppColors.heart,
-      title: '心拍',
-      desc: '心拍数・安静時/最高値・睡眠中心拍を可視化するために読み取ります。',
+      title: l.heartRate,
+      desc: l.rationaleHeartDesc,
     ),
     (
       icon: Icons.history,
       color: AppColors.accent,
-      title: '過去データ(履歴)',
-      desc:
-          '初回起動時に過去30日より前のデータを遡って取得し、過去のトレンドを表示するための一時的な利用です。継続的なバックグラウンド取得は行いません。',
+      title: l.rationaleHistoryTitle,
+      desc: l.rationaleHistoryDesc,
     ),
   ];
 
@@ -54,6 +55,7 @@ class RationaleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -63,26 +65,25 @@ class RationaleView extends StatelessWidget {
             const SizedBox(height: 8),
             const Icon(Icons.privacy_tip, size: 44, color: AppColors.accent),
             const SizedBox(height: 12),
-            const Text(
-              'ヘルスデータの利用について',
-              style: TextStyle(
+            Text(
+              l.rationaleTitle,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              '${AppConstants.appName} は、以下のデータを Health Connect から読み取り、'
-              '端末内でのグラフ表示にのみ使用します。データを外部へ送信することはありません。',
-              style: TextStyle(
+            Text(
+              l.rationaleIntro(AppConstants.appName),
+              style: const TextStyle(
                 fontSize: 14,
                 height: 1.5,
                 color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 20),
-            for (final item in _items) ...<Widget>[
+            for (final item in _items(l)) ...<Widget>[
               _RationaleItem(
                 icon: item.icon,
                 color: item.color,
@@ -98,15 +99,14 @@ class RationaleView extends StatelessWidget {
                 color: AppColors.positive.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: <Widget>[
-                  Icon(Icons.lock, size: 18, color: AppColors.positive),
-                  SizedBox(width: 10),
+                  const Icon(Icons.lock, size: 18, color: AppColors.positive),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '取得したデータは AES-256 で暗号化し端末内にのみ保存します。'
-                      'クラウド送信・第三者提供は行いません。',
-                      style: TextStyle(
+                      l.rationaleSecurity,
+                      style: const TextStyle(
                         fontSize: 12.5,
                         height: 1.4,
                         color: AppColors.textSecondary,
@@ -124,17 +124,17 @@ class RationaleView extends StatelessWidget {
                 MaterialPageRoute<void>(builder: (_) => const PolicyView()),
               ),
               icon: const Icon(Icons.description_outlined, size: 18),
-              label: const Text('プライバシーポリシーを読む'),
+              label: Text(l.readPolicy),
             ),
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: _openPolicy,
               icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('ブラウザで公開版を開く'),
+              label: Text(l.openPolicyBrowser),
             ),
             if (onContinue != null) ...<Widget>[
               const SizedBox(height: 12),
-              FilledButton(onPressed: onContinue, child: const Text('アプリを開く')),
+              FilledButton(onPressed: onContinue, child: Text(l.openApp)),
             ],
           ],
         ),

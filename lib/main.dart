@@ -24,6 +24,17 @@ final ThemeData _appTheme = ThemeData(
   useMaterial3: true,
 );
 
+/// 未対応の端末言語は英語へフォールバックする (#94)。
+///
+/// 既定の解決では `supportedLocales` の先頭 (生成順でドイツ語) に落ちてしまうため、
+/// 言語コードが一致しない場合は明示的に英語を返す。
+Locale _resolveLocale(Locale? deviceLocale, Iterable<Locale> supported) {
+  for (final Locale s in supported) {
+    if (s.languageCode == deviceLocale?.languageCode) return s;
+  }
+  return const Locale('en');
+}
+
 /// アプリのエントリポイント。
 ///
 /// Health Connect の権限根拠/権限使用状況から起動された場合は、暗号化 DB の
@@ -93,6 +104,7 @@ class _LifeOnGraphAppState extends ConsumerState<LifeOnGraphApp> {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: _resolveLocale,
       home: _SplashGate(ready: widget.ready),
     );
   }
@@ -128,6 +140,9 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
       if (mounted) setState(() => _bootFailed = true);
       return; // 初期化失敗時は本画面へ遷移しない (codex P1)。
     }
+    // DB 初期化完了後に保存済み言語を再読込する。localeProvider は DB 準備前に
+    // 一度評価され null (端末設定) になっているため (codex P1)。
+    ref.invalidate(localeProvider);
     // 初回同期 (差分更新) を完了させてからホームへ進む。失敗は表示を妨げない。
     try {
       await ref.read(syncNotifierProvider.notifier).sync();
@@ -213,18 +228,35 @@ class _RationaleAppState extends State<RationaleApp> {
   @override
   Widget build(BuildContext context) {
     final DatabaseManager? db = _db;
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: _appTheme,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: db != null
-          ? ProviderScope(
-              overrides: [databaseManagerProvider.overrideWithValue(db)],
-              child: const AppShell(),
-            )
-          : RationaleView(onContinue: _loading ? null : () => _openApp()),
+    // DB 未初期化 (根拠表示中) は端末設定の言語で表示する。
+    if (db == null) {
+      return MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: _appTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localeResolutionCallback: _resolveLocale,
+        home: RationaleView(onContinue: _loading ? null : () => _openApp()),
+      );
+    }
+    // アプリを開いた後は保存済み言語 (localeProvider) を反映する (#94)。
+    return ProviderScope(
+      overrides: [databaseManagerProvider.overrideWithValue(db)],
+      child: Consumer(
+        builder: (BuildContext context, WidgetRef ref, Widget? _) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: _appTheme,
+            locale: ref.watch(localeProvider),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localeResolutionCallback: _resolveLocale,
+            home: const AppShell(),
+          );
+        },
+      ),
     );
   }
 }

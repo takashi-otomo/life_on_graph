@@ -84,5 +84,17 @@
   "crossEmpty": "Aucune donnée de sommeil : vue intégrée indisponible",
 
   "language": "Langue",
-  "languageSystem": "Paramètre système"
+  "languageSystem": "Paramètre système",
+
+  "rationaleTitle": "À propos de l'utilisation des données de santé",
+  "rationaleIntro": "{app} lit les données suivantes depuis Health Connect et les utilise uniquement pour afficher des graphiques sur cet appareil. Aucune donnée n'est envoyée à l'extérieur.",
+  "rationaleSleepDesc": "Lu pour visualiser les phases de sommeil (profond / léger / paradoxal / éveillé).",
+  "rationaleStepsDesc": "Lu pour visualiser les pas par heure et par jour / semaine / mois.",
+  "rationaleHeartDesc": "Lu pour visualiser la fréquence cardiaque, au repos / maximale, et pendant le sommeil.",
+  "rationaleHistoryTitle": "Données passées (historique)",
+  "rationaleHistoryDesc": "Au premier lancement, les données antérieures aux 30 derniers jours sont récupérées une fois pour afficher les tendances passées. Aucune collecte continue en arrière-plan n'est effectuée.",
+  "rationaleSecurity": "Les données récupérées sont chiffrées en AES-256 et stockées uniquement sur cet appareil. Aucun envoi vers le cloud ni partage avec des tiers.",
+  "readPolicy": "Lire la politique de confidentialité",
+  "openPolicyBrowser": "Ouvrir la version publiée dans le navigateur",
+  "openApp": "Ouvrir l'application"
 }

@@ -262,4 +262,44 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get languageSystem => 'Systemstandard';
+
+  @override
+  String get rationaleTitle => 'Über die Nutzung von Gesundheitsdaten';
+
+  @override
+  String rationaleIntro(String app) {
+    return '$app liest die folgenden Daten aus Health Connect und verwendet sie nur, um Diagramme auf diesem Gerät anzuzeigen. Es werden keine Daten extern gesendet.';
+  }
+
+  @override
+  String get rationaleSleepDesc =>
+      'Wird gelesen, um Schlafphasen (Tief / Leicht / REM / Wach) darzustellen.';
+
+  @override
+  String get rationaleStepsDesc =>
+      'Wird gelesen, um Schritte nach Tageszeit und täglich / wöchentlich / monatlich darzustellen.';
+
+  @override
+  String get rationaleHeartDesc =>
+      'Wird gelesen, um Herzfrequenz, Ruhe-/Maximalwert und Herzfrequenz im Schlaf darzustellen.';
+
+  @override
+  String get rationaleHistoryTitle => 'Vergangene Daten (Verlauf)';
+
+  @override
+  String get rationaleHistoryDesc =>
+      'Beim ersten Start werden Daten, die älter als die letzten 30 Tage sind, einmalig abgerufen, um vergangene Trends anzuzeigen. Es erfolgt keine fortlaufende Hintergrunderfassung.';
+
+  @override
+  String get rationaleSecurity =>
+      'Abgerufene Daten werden mit AES-256 verschlüsselt und nur auf diesem Gerät gespeichert. Kein Cloud-Upload und keine Weitergabe an Dritte.';
+
+  @override
+  String get readPolicy => 'Datenschutzerklärung lesen';
+
+  @override
+  String get openPolicyBrowser => 'Veröffentlichte Version im Browser öffnen';
+
+  @override
+  String get openApp => 'App öffnen';
 }

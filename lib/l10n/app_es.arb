@@ -84,5 +84,17 @@
   "crossEmpty": "Sin datos de sueño; vista integrada no disponible",
 
   "language": "Idioma",
-  "languageSystem": "Predeterminado del sistema"
+  "languageSystem": "Predeterminado del sistema",
+
+  "rationaleTitle": "Sobre el uso de datos de salud",
+  "rationaleIntro": "{app} lee los siguientes datos de Health Connect y los usa solo para mostrar gráficos en este dispositivo. Ningún dato se envía al exterior.",
+  "rationaleSleepDesc": "Se lee para visualizar las fases del sueño (profundo / ligero / REM / despierto).",
+  "rationaleStepsDesc": "Se lee para visualizar los pasos por franja horaria y por día / semana / mes.",
+  "rationaleHeartDesc": "Se lee para visualizar la frecuencia cardíaca, en reposo / máxima y durante el sueño.",
+  "rationaleHistoryTitle": "Datos anteriores (historial)",
+  "rationaleHistoryDesc": "En el primer inicio, los datos anteriores a los últimos 30 días se obtienen una vez para mostrar tendencias pasadas. No se realiza recopilación continua en segundo plano.",
+  "rationaleSecurity": "Los datos obtenidos se cifran con AES-256 y se almacenan solo en este dispositivo. Sin subida a la nube ni intercambio con terceros.",
+  "readPolicy": "Leer la política de privacidad",
+  "openPolicyBrowser": "Abrir la versión publicada en el navegador",
+  "openApp": "Abrir la aplicación"
 }

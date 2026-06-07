@@ -84,5 +84,17 @@
   "crossEmpty": "Keine Schlafdaten – integrierte Ansicht nicht verfügbar",
 
   "language": "Sprache",
-  "languageSystem": "Systemstandard"
+  "languageSystem": "Systemstandard",
+
+  "rationaleTitle": "Über die Nutzung von Gesundheitsdaten",
+  "rationaleIntro": "{app} liest die folgenden Daten aus Health Connect und verwendet sie nur, um Diagramme auf diesem Gerät anzuzeigen. Es werden keine Daten extern gesendet.",
+  "rationaleSleepDesc": "Wird gelesen, um Schlafphasen (Tief / Leicht / REM / Wach) darzustellen.",
+  "rationaleStepsDesc": "Wird gelesen, um Schritte nach Tageszeit und täglich / wöchentlich / monatlich darzustellen.",
+  "rationaleHeartDesc": "Wird gelesen, um Herzfrequenz, Ruhe-/Maximalwert und Herzfrequenz im Schlaf darzustellen.",
+  "rationaleHistoryTitle": "Vergangene Daten (Verlauf)",
+  "rationaleHistoryDesc": "Beim ersten Start werden Daten, die älter als die letzten 30 Tage sind, einmalig abgerufen, um vergangene Trends anzuzeigen. Es erfolgt keine fortlaufende Hintergrunderfassung.",
+  "rationaleSecurity": "Abgerufene Daten werden mit AES-256 verschlüsselt und nur auf diesem Gerät gespeichert. Kein Cloud-Upload und keine Weitergabe an Dritte.",
+  "readPolicy": "Datenschutzerklärung lesen",
+  "openPolicyBrowser": "Veröffentlichte Version im Browser öffnen",
+  "openApp": "App öffnen"
 }

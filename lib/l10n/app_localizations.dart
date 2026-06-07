@@ -573,6 +573,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System default'**
   String get languageSystem;
+
+  /// No description provided for @rationaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About health data use'**
+  String get rationaleTitle;
+
+  /// No description provided for @rationaleIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} reads the following from Health Connect and uses it only to draw charts on this device. No data is ever sent externally.'**
+  String rationaleIntro(String app);
+
+  /// No description provided for @rationaleSleepDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Read to visualize sleep stages (deep / light / REM / awake).'**
+  String get rationaleSleepDesc;
+
+  /// No description provided for @rationaleStepsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Read to visualize steps by time of day and daily / weekly / monthly.'**
+  String get rationaleStepsDesc;
+
+  /// No description provided for @rationaleHeartDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Read to visualize heart rate, resting / max, and heart rate during sleep.'**
+  String get rationaleHeartDesc;
+
+  /// No description provided for @rationaleHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Past data (history)'**
+  String get rationaleHistoryTitle;
+
+  /// No description provided for @rationaleHistoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'On first launch, data older than the past 30 days is fetched once to show past trends. No continuous background collection is performed.'**
+  String get rationaleHistoryDesc;
+
+  /// No description provided for @rationaleSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetched data is encrypted with AES-256 and stored only on this device. No cloud upload or third-party sharing.'**
+  String get rationaleSecurity;
+
+  /// No description provided for @readPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Read privacy policy'**
+  String get readPolicy;
+
+  /// No description provided for @openPolicyBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open published version in browser'**
+  String get openPolicyBrowser;
+
+  /// No description provided for @openApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app'**
+  String get openApp;
 }
 
 class _AppLocalizationsDelegate

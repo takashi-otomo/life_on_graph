@@ -254,4 +254,41 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get languageSystem => '端末の設定に従う';
+
+  @override
+  String get rationaleTitle => 'ヘルスデータの利用について';
+
+  @override
+  String rationaleIntro(String app) {
+    return '$app は、以下のデータを Health Connect から読み取り、端末内でのグラフ表示にのみ使用します。データを外部へ送信することはありません。';
+  }
+
+  @override
+  String get rationaleSleepDesc => '睡眠ステージ(深い/浅い/レム/覚醒)を可視化するために読み取ります。';
+
+  @override
+  String get rationaleStepsDesc => '時間帯別・日次/週次/月次の歩数を可視化するために読み取ります。';
+
+  @override
+  String get rationaleHeartDesc => '心拍数・安静時/最高値・睡眠中心拍を可視化するために読み取ります。';
+
+  @override
+  String get rationaleHistoryTitle => '過去データ(履歴)';
+
+  @override
+  String get rationaleHistoryDesc =>
+      '初回起動時に過去30日より前のデータを遡って取得し、過去のトレンドを表示するための一時的な利用です。継続的なバックグラウンド取得は行いません。';
+
+  @override
+  String get rationaleSecurity =>
+      '取得したデータは AES-256 で暗号化し端末内にのみ保存します。クラウド送信・第三者提供は行いません。';
+
+  @override
+  String get readPolicy => 'プライバシーポリシーを読む';
+
+  @override
+  String get openPolicyBrowser => 'ブラウザで公開版を開く';
+
+  @override
+  String get openApp => 'アプリを開く';
 }

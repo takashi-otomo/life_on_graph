@@ -304,4 +304,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String weekShort(int n) {
     return 'Sem $n';
   }
+
+  @override
+  String get jumpToday => 'Ir para hoje';
+
+  @override
+  String get jumpThisMonth => 'Ir para este mês';
 }

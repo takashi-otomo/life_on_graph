@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/app_colors.dart';
 import '../../l10n/app_localizations.dart';
+import '../calendar/calendar_picker.dart';
 import '../../providers/nav_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/summary_providers.dart';
@@ -80,6 +81,21 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
     }
   }
 
+  Future<void> _pickAnchor() async {
+    final CalendarMode mode = switch (_period) {
+      SummaryPeriod.day => CalendarMode.day,
+      SummaryPeriod.week => CalendarMode.week,
+      SummaryPeriod.month => CalendarMode.month,
+    };
+    final DateTime? picked = await showCalendarPicker(
+      context,
+      mode: mode,
+      initial: _anchor,
+      last: _today(),
+    );
+    if (picked != null) setState(() => _anchor = picked);
+  }
+
   String _deltaLabelPrefix(AppLocalizations l) => switch (_period) {
     SummaryPeriod.day => l.deltaDay,
     SummaryPeriod.week => l.deltaWeek,
@@ -124,6 +140,7 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
               label: _periodLabel(Localizations.localeOf(context).toString()),
               onPrev: () => _shift(-1),
               onNext: _atLatest ? null : () => _shift(1),
+              onTapLabel: _pickAnchor,
             ),
             const SizedBox(height: 16),
             const HealthStatusBanner(),
@@ -257,11 +274,17 @@ class _MetricGrid extends StatelessWidget {
 }
 
 class _PeriodNav extends StatelessWidget {
-  const _PeriodNav({required this.label, this.onPrev, this.onNext});
+  const _PeriodNav({
+    required this.label,
+    this.onPrev,
+    this.onNext,
+    this.onTapLabel,
+  });
 
   final String label;
   final VoidCallback? onPrev;
   final VoidCallback? onNext;
+  final VoidCallback? onTapLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -273,12 +296,27 @@ class _PeriodNav extends StatelessWidget {
           icon: const Icon(Icons.chevron_left),
           color: AppColors.textSecondary,
         ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTapLabel,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.expand_more,
+                size: 16,
+                color: AppColors.textSecondary,
+              ),
+            ],
           ),
         ),
         IconButton(

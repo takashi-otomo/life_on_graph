@@ -308,4 +308,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String weekShort(int n) {
     return 'S$n';
   }
+
+  @override
+  String get jumpToday => 'Aller à aujourd\'hui';
+
+  @override
+  String get jumpThisMonth => 'Aller à ce mois';
 }

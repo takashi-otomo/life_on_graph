@@ -106,5 +106,19 @@
   "weekShort": "W{n}",
   "@weekShort": { "placeholders": { "n": { "type": "int" } } },
   "jumpToday": "Go to today",
-  "jumpThisMonth": "Go to this month"
+  "jumpThisMonth": "Go to this month",
+
+  "onbWelcomeTitle": "Welcome to {app}",
+  "@onbWelcomeTitle": { "placeholders": { "app": { "type": "String" } } },
+  "onbWelcomeBody": "Visualize your sleep, steps and heart rate entirely on your device. No data is sent externally.",
+  "onbStart": "Get started",
+  "onbNext": "Next",
+  "onbLangBody": "We follow your device language. You can change it anytime in Settings.",
+  "onbPermTitle": "Connect Health Connect",
+  "onbConnect": "Connect & sync",
+  "onbSkipSetup": "Set up later",
+  "onbSyncing": "Syncing your data…",
+  "onbDoneTitle": "You're all set",
+  "onbDoneBody": "Your data is ready. Explore your trends on the home screen.",
+  "onbFinish": "Start"
 }

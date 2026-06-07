@@ -8,6 +8,7 @@ import 'package:life_on_graph/core/app_constants.dart';
 import 'package:life_on_graph/features/dashboard/dashboard_view.dart';
 import 'package:life_on_graph/main.dart';
 import 'package:life_on_graph/providers/locale_provider.dart';
+import 'package:life_on_graph/providers/onboarding_provider.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
 
 import '../helpers/fake_health_sync_repository.dart';
@@ -16,6 +17,12 @@ import '../helpers/fake_health_sync_repository.dart';
 class _JaLocaleNotifier extends LocaleNotifier {
   @override
   Locale? build() => const Locale('ja');
+}
+
+/// 初期設定済み (ウィザードを出さない) ノーティファイア。
+class _OnboardedNotifier extends OnboardingNotifier {
+  @override
+  bool build() => true;
 }
 
 void main() {
@@ -49,6 +56,7 @@ void main() {
           FakeHealthSyncRepository(),
         ),
         localeProvider.overrideWith(_JaLocaleNotifier.new),
+        onboardingCompletedProvider.overrideWith(_OnboardedNotifier.new),
       ],
       child: LifeOnGraphApp(ready: Future<void>.value()),
     );

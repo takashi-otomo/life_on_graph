@@ -302,4 +302,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get jumpThisMonth => '今月へ';
+
+  @override
+  String onbWelcomeTitle(String app) {
+    return '$app へようこそ';
+  }
+
+  @override
+  String get onbWelcomeBody => '睡眠・歩数・心拍を、端末内だけで可視化します。データを外部に送信することはありません。';
+
+  @override
+  String get onbStart => '始める';
+
+  @override
+  String get onbNext => '次へ';
+
+  @override
+  String get onbLangBody => '端末の言語設定に従います。いつでも設定から変更できます。';
+
+  @override
+  String get onbPermTitle => 'Health Connect と連携';
+
+  @override
+  String get onbConnect => '連携して同期';
+
+  @override
+  String get onbSkipSetup => 'あとで設定する';
+
+  @override
+  String get onbSyncing => 'データを同期しています…';
+
+  @override
+  String get onbDoneTitle => '準備完了';
+
+  @override
+  String get onbDoneBody => 'データの準備ができました。ホーム画面でトレンドを確認しましょう。';
+
+  @override
+  String get onbFinish => 'はじめる';
 }

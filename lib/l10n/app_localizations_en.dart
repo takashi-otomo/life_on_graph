@@ -310,4 +310,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jumpThisMonth => 'Go to this month';
+
+  @override
+  String onbWelcomeTitle(String app) {
+    return 'Welcome to $app';
+  }
+
+  @override
+  String get onbWelcomeBody =>
+      'Visualize your sleep, steps and heart rate entirely on your device. No data is sent externally.';
+
+  @override
+  String get onbStart => 'Get started';
+
+  @override
+  String get onbNext => 'Next';
+
+  @override
+  String get onbLangBody =>
+      'We follow your device language. You can change it anytime in Settings.';
+
+  @override
+  String get onbPermTitle => 'Connect Health Connect';
+
+  @override
+  String get onbConnect => 'Connect & sync';
+
+  @override
+  String get onbSkipSetup => 'Set up later';
+
+  @override
+  String get onbSyncing => 'Syncing your data…';
+
+  @override
+  String get onbDoneTitle => 'You\'re all set';
+
+  @override
+  String get onbDoneBody =>
+      'Your data is ready. Explore your trends on the home screen.';
+
+  @override
+  String get onbFinish => 'Start';
 }

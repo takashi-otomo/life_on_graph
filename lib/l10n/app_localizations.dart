@@ -657,6 +657,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to this month'**
   String get jumpThisMonth;
+
+  /// No description provided for @onbWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to {app}'**
+  String onbWelcomeTitle(String app);
+
+  /// No description provided for @onbWelcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Visualize your sleep, steps and heart rate entirely on your device. No data is sent externally.'**
+  String get onbWelcomeBody;
+
+  /// No description provided for @onbStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onbStart;
+
+  /// No description provided for @onbNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onbNext;
+
+  /// No description provided for @onbLangBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We follow your device language. You can change it anytime in Settings.'**
+  String get onbLangBody;
+
+  /// No description provided for @onbPermTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Health Connect'**
+  String get onbPermTitle;
+
+  /// No description provided for @onbConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect & sync'**
+  String get onbConnect;
+
+  /// No description provided for @onbSkipSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up later'**
+  String get onbSkipSetup;
+
+  /// No description provided for @onbSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing your data…'**
+  String get onbSyncing;
+
+  /// No description provided for @onbDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all set'**
+  String get onbDoneTitle;
+
+  /// No description provided for @onbDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data is ready. Explore your trends on the home screen.'**
+  String get onbDoneBody;
+
+  /// No description provided for @onbFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get onbFinish;
 }
 
 class _AppLocalizationsDelegate

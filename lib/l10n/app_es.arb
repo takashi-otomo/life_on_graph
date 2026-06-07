@@ -4,7 +4,6 @@
   "tabSummary": "Resumen",
   "tabSettings": "Ajustes",
   "today": "Hoy",
-
   "sleep": "Sueño",
   "steps": "Pasos",
   "heartRate": "Frecuencia cardíaca",
@@ -19,13 +18,11 @@
   "max": "Máx",
   "allDay": "Todo el día",
   "duringSleep": "Durante el sueño",
-
   "stageDeep": "Profundo",
   "stageLight": "Ligero",
   "stageRem": "REM",
   "stageAwake": "Despierto",
   "stageUnknown": "Desconocido",
-
   "summaryTitle": "Resumen",
   "periodDay": "Día",
   "periodWeek": "Semana",
@@ -40,7 +37,6 @@
   "viewTodayDetail": "Ver detalle de hoy",
   "sleepDuration": "Duración del sueño",
   "summaryHint": "Cada dato en su propia franja sobre un eje de tiempo común",
-
   "settingsTitle": "Ajustes",
   "sectionDataSync": "Sincronización",
   "syncNow": "Sincronizar ahora",
@@ -64,7 +60,6 @@
   "delete": "Eliminar",
   "deletedSnack": "Datos locales eliminados",
   "deleteAbortedSyncing": "Eliminación cancelada porque hay una sincronización en curso",
-
   "statusUnavailableTitle": "Se requiere Health Connect",
   "statusUnavailableMessage": "Health Connect debe estar instalado para leer el sueño, los pasos y la frecuencia cardíaca.",
   "install": "Instalar",
@@ -74,7 +69,6 @@
   "statusSyncFailedTitle": "Error de sincronización",
   "statusSyncFailedMessage": "Mostrando datos guardados localmente.",
   "retry": "Reintentar",
-
   "durationHm": "{h} h {m} min",
   "durationMin": "{m} min",
   "prevDay": "Día anterior",
@@ -82,10 +76,8 @@
   "crossTitle": "Vista integrada (sueño × FC × pasos)",
   "crossSubtitle": "24 h hasta despertar. Desplázate en horizontal.",
   "crossEmpty": "Sin datos de sueño; vista integrada no disponible",
-
   "language": "Idioma",
   "languageSystem": "Predeterminado del sistema",
-
   "rationaleTitle": "Sobre el uso de datos de salud",
   "rationaleIntro": "{app} lee los siguientes datos de Health Connect y los usa solo para mostrar gráficos en este dispositivo. Ningún dato se envía al exterior.",
   "rationaleSleepDesc": "Se lee para visualizar las fases del sueño (profundo / ligero / REM / despierto).",
@@ -99,5 +91,17 @@
   "openApp": "Abrir la aplicación",
   "weekShort": "Sem {n}",
   "jumpToday": "Ir a hoy",
-  "jumpThisMonth": "Ir a este mes"
+  "jumpThisMonth": "Ir a este mes",
+  "onbWelcomeTitle": "Te damos la bienvenida a {app}",
+  "onbWelcomeBody": "Visualiza tu sueño, pasos y frecuencia cardíaca totalmente en tu dispositivo. Ningún dato se envía al exterior.",
+  "onbStart": "Empezar",
+  "onbNext": "Siguiente",
+  "onbLangBody": "Seguimos el idioma de tu dispositivo. Puedes cambiarlo cuando quieras en Ajustes.",
+  "onbPermTitle": "Conectar Health Connect",
+  "onbConnect": "Conectar y sincronizar",
+  "onbSkipSetup": "Configurar más tarde",
+  "onbSyncing": "Sincronizando tus datos…",
+  "onbDoneTitle": "Todo listo",
+  "onbDoneBody": "Tus datos están listos. Explora tus tendencias en la pantalla de inicio.",
+  "onbFinish": "Empezar"
 }

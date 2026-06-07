@@ -4,7 +4,6 @@
   "tabSummary": "Résumé",
   "tabSettings": "Paramètres",
   "today": "Aujourd'hui",
-
   "sleep": "Sommeil",
   "steps": "Pas",
   "heartRate": "Fréquence cardiaque",
@@ -19,13 +18,11 @@
   "max": "Max",
   "allDay": "Journée",
   "duringSleep": "Pendant le sommeil",
-
   "stageDeep": "Profond",
   "stageLight": "Léger",
   "stageRem": "Paradoxal",
   "stageAwake": "Éveillé",
   "stageUnknown": "Inconnu",
-
   "summaryTitle": "Résumé",
   "periodDay": "Jour",
   "periodWeek": "Semaine",
@@ -40,7 +37,6 @@
   "viewTodayDetail": "Voir le détail du jour",
   "sleepDuration": "Durée de sommeil",
   "summaryHint": "Chaque donnée sur sa propre piste, axe temporel commun",
-
   "settingsTitle": "Paramètres",
   "sectionDataSync": "Synchronisation",
   "syncNow": "Synchroniser",
@@ -64,7 +60,6 @@
   "delete": "Supprimer",
   "deletedSnack": "Données locales supprimées",
   "deleteAbortedSyncing": "Suppression annulée car une synchronisation est en cours",
-
   "statusUnavailableTitle": "Health Connect est requis",
   "statusUnavailableMessage": "Health Connect doit être installé pour lire le sommeil, les pas et la fréquence cardiaque.",
   "install": "Installer",
@@ -74,7 +69,6 @@
   "statusSyncFailedTitle": "Échec de la synchronisation",
   "statusSyncFailedMessage": "Affichage des données enregistrées localement.",
   "retry": "Réessayer",
-
   "durationHm": "{h} h {m} min",
   "durationMin": "{m} min",
   "prevDay": "Jour précédent",
@@ -82,10 +76,8 @@
   "crossTitle": "Vue intégrée (sommeil × FC × pas)",
   "crossSubtitle": "24 h jusqu'au réveil. Défilez horizontalement.",
   "crossEmpty": "Aucune donnée de sommeil : vue intégrée indisponible",
-
   "language": "Langue",
   "languageSystem": "Paramètre système",
-
   "rationaleTitle": "À propos de l'utilisation des données de santé",
   "rationaleIntro": "{app} lit les données suivantes depuis Health Connect et les utilise uniquement pour afficher des graphiques sur cet appareil. Aucune donnée n'est envoyée à l'extérieur.",
   "rationaleSleepDesc": "Lu pour visualiser les phases de sommeil (profond / léger / paradoxal / éveillé).",
@@ -99,5 +91,17 @@
   "openApp": "Ouvrir l'application",
   "weekShort": "S{n}",
   "jumpToday": "Aller à aujourd'hui",
-  "jumpThisMonth": "Aller à ce mois"
+  "jumpThisMonth": "Aller à ce mois",
+  "onbWelcomeTitle": "Bienvenue dans {app}",
+  "onbWelcomeBody": "Visualisez votre sommeil, vos pas et votre fréquence cardiaque entièrement sur votre appareil. Aucune donnée n'est envoyée à l'extérieur.",
+  "onbStart": "Commencer",
+  "onbNext": "Suivant",
+  "onbLangBody": "Nous suivons la langue de votre appareil. Vous pouvez la changer à tout moment dans les paramètres.",
+  "onbPermTitle": "Connecter Health Connect",
+  "onbConnect": "Connecter et synchroniser",
+  "onbSkipSetup": "Configurer plus tard",
+  "onbSyncing": "Synchronisation de vos données…",
+  "onbDoneTitle": "Tout est prêt",
+  "onbDoneBody": "Vos données sont prêtes. Découvrez vos tendances sur l'écran d'accueil.",
+  "onbFinish": "Démarrer"
 }

@@ -100,6 +100,10 @@ abstract interface class HealthSyncRepository {
   /// `[start, end]` と交差する心拍レコードを開始昇順で返す (M5 派生Provider 用)。
   List<HeartRateRecordModel> getHeartRateForRange(DateTime start, DateTime end);
 
+  /// `[start, end)` の範囲で、睡眠・歩数・心拍いずれかのデータがある日 (日付のみ)
+  /// の集合を返す (#104 カレンダーのデータ有無表示用)。
+  Set<DateTime> daysWithData(DateTime start, DateTime end);
+
   /// 最終同期時刻 (未同期なら `null`)。設定画面で表示する (#69)。
   DateTime? get lastSyncTime;
 
@@ -432,6 +436,23 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
         .where((r) => r.endTime.isAfter(start) && r.startTime.isBefore(end))
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  @override
+  Set<DateTime> daysWithData(DateTime start, DateTime end) {
+    final Set<DateTime> days = <DateTime>{};
+    void collect(Iterable<DateTime> times) {
+      for (final DateTime t in times) {
+        if (!t.isBefore(start) && t.isBefore(end)) {
+          days.add(DateTime(t.year, t.month, t.day));
+        }
+      }
+    }
+
+    collect(_db.sleepBox.values.map((r) => r.startTime));
+    collect(_db.stepsBox.values.map((r) => r.startTime));
+    collect(_db.heartRateBox.values.map((r) => r.startTime));
+    return days;
   }
 
   Future<int> _runCategory({

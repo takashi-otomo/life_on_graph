@@ -97,5 +97,7 @@
   "readPolicy": "Datenschutzerklärung lesen",
   "openPolicyBrowser": "Veröffentlichte Version im Browser öffnen",
   "openApp": "App öffnen",
-  "weekShort": "W{n}"
+  "weekShort": "W{n}",
+  "jumpToday": "Zu heute",
+  "jumpThisMonth": "Zu diesem Monat"
 }

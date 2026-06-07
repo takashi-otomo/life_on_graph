@@ -104,5 +104,7 @@
   "openPolicyBrowser": "Open published version in browser",
   "openApp": "Open app",
   "weekShort": "W{n}",
-  "@weekShort": { "placeholders": { "n": { "type": "int" } } }
+  "@weekShort": { "placeholders": { "n": { "type": "int" } } },
+  "jumpToday": "Go to today",
+  "jumpThisMonth": "Go to this month"
 }

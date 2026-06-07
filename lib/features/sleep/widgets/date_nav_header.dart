@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../features/calendar/calendar_picker.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/selected_date_provider.dart';
 
@@ -32,27 +33,50 @@ class DateNavHeader extends ConsumerWidget {
             onTap: nav.previous,
             tooltip: l.prevDay,
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                formatDate(date, localeName),
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final DateTime? picked = await showCalendarPicker(
+                context,
+                mode: CalendarMode.day,
+                initial: date,
+                last: DateTime.now(),
+              );
+              if (picked != null) nav.select(picked);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      formatDate(date, localeName),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
                 ),
-              ),
-              if (isToday)
-                Text(
-                  l.today,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.accentText,
+                if (isToday)
+                  Text(
+                    l.today,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.accentText,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
           _CircleButton(
             icon: Icons.chevron_right,

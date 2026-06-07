@@ -296,4 +296,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String weekShort(int n) {
     return '$n週';
   }
+
+  @override
+  String get jumpToday => '今日へ';
+
+  @override
+  String get jumpThisMonth => '今月へ';
 }

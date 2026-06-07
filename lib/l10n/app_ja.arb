@@ -97,5 +97,7 @@
   "readPolicy": "プライバシーポリシーを読む",
   "openPolicyBrowser": "ブラウザで公開版を開く",
   "openApp": "アプリを開く",
-  "weekShort": "{n}週"
+  "weekShort": "{n}週",
+  "jumpToday": "今日へ",
+  "jumpThisMonth": "今月へ"
 }

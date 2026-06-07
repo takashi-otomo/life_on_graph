@@ -645,6 +645,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'W{n}'**
   String weekShort(int n);
+
+  /// No description provided for @jumpToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to today'**
+  String get jumpToday;
+
+  /// No description provided for @jumpThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to this month'**
+  String get jumpThisMonth;
 }
 
 class _AppLocalizationsDelegate

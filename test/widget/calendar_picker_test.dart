@@ -1,34 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_on_graph/features/calendar/calendar_picker.dart';
 import 'package:life_on_graph/l10n/app_localizations.dart';
+import 'package:life_on_graph/providers/repository_providers.dart';
+
+import '../helpers/fake_health_sync_repository.dart';
 
 void main() {
-  Future<DateTime?> open(
+  Future<void> open(
     WidgetTester tester, {
     required CalendarMode mode,
     required DateTime initial,
     required DateTime last,
+    Set<DateTime>? dataDays,
   }) async {
-    DateTime? result;
+    final FakeHealthSyncRepository repo = FakeHealthSyncRepository()
+      ..dataDays = dataDays ?? <DateTime>{};
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('ja'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  result = await showCalendarPicker(
+      ProviderScope(
+        overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
+        child: MaterialApp(
+          locale: const Locale('ja'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Center(
+                child: ElevatedButton(
+                  onPressed: () => showCalendarPicker(
                     context,
                     mode: mode,
                     initial: initial,
                     last: last,
-                  );
-                },
-                child: const Text('open'),
+                  ),
+                  child: const Text('open'),
+                ),
               ),
             ),
           ),
@@ -37,7 +44,6 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    return Future<DateTime?>.value(result);
   }
 
   testWidgets('#101 日モード: タップした日を返す', (tester) async {

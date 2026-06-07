@@ -100,6 +100,10 @@ abstract interface class HealthSyncRepository {
   /// `[start, end]` と交差する心拍レコードを開始昇順で返す (M5 派生Provider 用)。
   List<HeartRateRecordModel> getHeartRateForRange(DateTime start, DateTime end);
 
+  /// `[start, end)` の範囲で、睡眠・歩数・心拍いずれかのデータがある日 (日付のみ)
+  /// の集合を返す (#104 カレンダーのデータ有無表示用)。
+  Set<DateTime> daysWithData(DateTime start, DateTime end);
+
   /// 最終同期時刻 (未同期なら `null`)。設定画面で表示する (#69)。
   DateTime? get lastSyncTime;
 
@@ -432,6 +436,26 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
         .where((r) => r.endTime.isAfter(start) && r.startTime.isBefore(end))
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  @override
+  Set<DateTime> daysWithData(DateTime start, DateTime end) {
+    // ダッシュボードの「その日」の判定と一致させる (睡眠は正午〜翌正午の表示枠、
+    // 歩数・心拍は暦日)。startTime の暦日でまとめると睡眠の枠とズレ、データの無い日
+    // にドットが出てしまうため、日ごとに表示と同じクエリで有無を判定する (#104)。
+    final Set<DateTime> days = <DateTime>{};
+    DateTime day = DateTime(start.year, start.month, start.day);
+    final DateTime endDay = DateTime(end.year, end.month, end.day);
+    while (day.isBefore(endDay)) {
+      final DateTime dayStart = day;
+      final DateTime dayEnd = day.add(const Duration(days: 1));
+      final bool hasSleep = getCleanedSleepSegmentsForDay(day).isNotEmpty;
+      final bool hasSteps = getStepsForRange(dayStart, dayEnd).isNotEmpty;
+      final bool hasHeart = getHeartRateForRange(dayStart, dayEnd).isNotEmpty;
+      if (hasSleep || hasSteps || hasHeart) days.add(day);
+      day = dayEnd;
+    }
+    return days;
   }
 
   Future<int> _runCategory({

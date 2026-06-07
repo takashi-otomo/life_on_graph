@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/app_colors.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/calendar_data_provider.dart';
 
 /// カレンダーピッカーの選択単位 (#101)。
 enum CalendarMode { day, week, month }
@@ -27,7 +29,7 @@ Future<DateTime?> showCalendarPicker(
 
 DateTime _d(DateTime x) => DateTime(x.year, x.month, x.day);
 
-class _CalendarSheet extends StatefulWidget {
+class _CalendarSheet extends ConsumerStatefulWidget {
   const _CalendarSheet({
     required this.mode,
     required this.initial,
@@ -39,10 +41,10 @@ class _CalendarSheet extends StatefulWidget {
   final DateTime last;
 
   @override
-  State<_CalendarSheet> createState() => _CalendarSheetState();
+  ConsumerState<_CalendarSheet> createState() => _CalendarSheetState();
 }
 
-class _CalendarSheetState extends State<_CalendarSheet> {
+class _CalendarSheetState extends ConsumerState<_CalendarSheet> {
   /// 表示中の基準 (day/week は月、month は年)。
   late DateTime _visible = DateTime(widget.initial.year, widget.initial.month);
 
@@ -153,10 +155,14 @@ class _CalendarSheetState extends State<_CalendarSheet> {
     final DateTime selWeekStart = _d(
       widget.initial,
     ).subtract(Duration(days: widget.initial.weekday - 1));
+    // 表示中の月でデータがある日 (#104)。
+    final Set<DateTime> dataDays = ref.watch(
+      calendarDataDaysProvider(DateTime(_visible.year, _visible.month)),
+    );
 
     final List<Widget> cells = <Widget>[];
     for (int i = 0; i < lead; i++) {
-      cells.add(const Expanded(child: SizedBox(height: 40)));
+      cells.add(const Expanded(child: SizedBox(height: 42)));
     }
     for (int day = 1; day <= daysInMonth; day++) {
       final DateTime date = DateTime(_visible.year, _visible.month, day);
@@ -174,13 +180,14 @@ class _CalendarSheetState extends State<_CalendarSheet> {
             selected: selectedDay,
             inWeek: inSelWeek,
             future: future,
+            hasData: dataDays.contains(date),
             onTap: future ? null : () => Navigator.pop(context, date),
           ),
         ),
       );
     }
     while (cells.length % 7 != 0) {
-      cells.add(const Expanded(child: SizedBox(height: 40)));
+      cells.add(const Expanded(child: SizedBox(height: 42)));
     }
 
     return Column(
@@ -295,6 +302,7 @@ class _DayCell extends StatelessWidget {
     required this.selected,
     required this.inWeek,
     required this.future,
+    required this.hasData,
     required this.onTap,
   });
 
@@ -302,6 +310,9 @@ class _DayCell extends StatelessWidget {
   final bool selected;
   final bool inWeek;
   final bool future;
+
+  /// この日にヘルスデータがあるか (#104)。
+  final bool hasData;
   final VoidCallback? onTap;
 
   @override
@@ -310,33 +321,48 @@ class _DayCell extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        height: 40,
-        child: Center(
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.accent
-                  : (inWeek ? AppColors.accentSoft : Colors.transparent),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '$day',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: (selected || inWeek)
-                    ? FontWeight.w700
-                    : FontWeight.w500,
+        height: 42,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
                 color: selected
-                    ? Colors.white
-                    : future
-                    ? AppColors.divider
-                    : (inWeek ? AppColors.accent : AppColors.textPrimary),
+                    ? AppColors.accent
+                    : (inWeek ? AppColors.accentSoft : Colors.transparent),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '$day',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: (selected || inWeek)
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: selected
+                      ? Colors.white
+                      : future
+                      ? AppColors.divider
+                      : (inWeek ? AppColors.accent : AppColors.textPrimary),
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 2),
+            // データのある日を示すドット。
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hasData
+                    ? (selected ? Colors.white : AppColors.accent)
+                    : Colors.transparent,
+              ),
+            ),
+          ],
         ),
       ),
     );

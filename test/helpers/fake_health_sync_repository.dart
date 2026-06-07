@@ -114,6 +114,13 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
     DateTime end,
   ) => heartRate;
 
+  /// テストで返す「データのある日」。
+  Set<DateTime> dataDays = <DateTime>{};
+
+  @override
+  Set<DateTime> daysWithData(DateTime start, DateTime end) =>
+      dataDays.where((d) => !d.isBefore(start) && d.isBefore(end)).toSet();
+
   /// Health Connect 導入状態 ([isHealthConnectAvailable] の戻り値)。
   bool healthConnectAvailable = true;
 

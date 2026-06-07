@@ -7,15 +7,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:life_on_graph/core/app_constants.dart';
 import 'package:life_on_graph/features/dashboard/dashboard_view.dart';
 import 'package:life_on_graph/main.dart';
+import 'package:life_on_graph/providers/locale_provider.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
 
 import '../helpers/fake_health_sync_repository.dart';
+
+/// テストで日本語 UI に固定するための locale ノーティファイア。
+class _JaLocaleNotifier extends LocaleNotifier {
+  @override
+  Locale? build() => const Locale('ja');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // 起動インテント取得 (#54) の MethodChannel をモックし、通常起動 (null) を返す。
   setUp(() {
+    // 端末ロケールを日本語に固定 (日本語 UI 文言を検証するため)。
+    TestWidgetsFlutterBinding.instance.platformDispatcher.localeTestValue =
+        const Locale('ja');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dev.otomo.life_on_graph/launch'),
@@ -23,6 +33,8 @@ void main() {
         );
   });
   tearDown(() {
+    TestWidgetsFlutterBinding.instance.platformDispatcher
+        .clearLocaleTestValue();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dev.otomo.life_on_graph/launch'),
@@ -36,6 +48,7 @@ void main() {
         healthSyncRepositoryProvider.overrideWithValue(
           FakeHealthSyncRepository(),
         ),
+        localeProvider.overrideWith(_JaLocaleNotifier.new),
       ],
       child: LifeOnGraphApp(ready: Future<void>.value()),
     );

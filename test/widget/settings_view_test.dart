@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/settings/settings_view.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
 
@@ -11,7 +12,12 @@ import '../helpers/fake_health_sync_repository.dart';
 void main() {
   Widget app(FakeHealthSyncRepository repo) => ProviderScope(
     overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
-    child: const MaterialApp(home: SettingsView()),
+    child: const MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: Locale('ja'),
+      home: SettingsView(),
+    ),
   );
 
   testWidgets('#69 各セクションと主要項目を表示する', (tester) async {

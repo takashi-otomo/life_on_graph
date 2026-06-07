@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/app_shell.dart';
 import 'package:life_on_graph/features/settings/settings_view.dart';
 import 'package:life_on_graph/features/summary/summary_view.dart';
@@ -16,7 +17,12 @@ void main() {
         FakeHealthSyncRepository(),
       ),
     ],
-    child: const MaterialApp(home: AppShell()),
+    child: const MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: Locale('ja'),
+      home: AppShell(),
+    ),
   );
 
   IndexedStack stackOf(WidgetTester tester) =>

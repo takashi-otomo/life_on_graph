@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../core/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 /// プライバシーポリシー全文をアプリ内で表示する画面 (#54)。
 ///
@@ -19,7 +20,7 @@ class PolicyView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('プライバシーポリシー'),
+        title: Text(AppLocalizations.of(context).privacyPolicy),
         backgroundColor: AppColors.background,
       ),
       body: SafeArea(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/heart_rate_record_model.dart';
 import '../../../models/sleep_segment.dart';
 import '../../../models/steps_record_model.dart';
@@ -42,6 +43,7 @@ class CrossDataChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CrossDataWindow? window = CrossDataWindow.trailing24h(segments);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -49,14 +51,14 @@ class CrossDataChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Row(
+          Row(
             children: <Widget>[
-              Icon(Icons.insights, size: 18, color: AppColors.accent),
-              SizedBox(width: 8),
+              const Icon(Icons.insights, size: 18, color: AppColors.accent),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '統合ビュー (睡眠×心拍×歩数)',
-                  style: TextStyle(
+                  l.crossTitle,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -66,18 +68,21 @@ class CrossDataChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
-            '起床時刻までの24時間。横スクロールで確認できます',
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+          Text(
+            l.crossSubtitle,
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
           ),
           const SizedBox(height: 14),
           if (window == null)
-            const SizedBox(
+            SizedBox(
               height: 80,
               child: Center(
                 child: Text(
-                  '睡眠データがないため統合表示できません',
-                  style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                  l.crossEmpty,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ),
             )
@@ -112,6 +117,7 @@ class _Chart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     final double hours = window.duration.inMinutes / 60.0;
     final double contentW = (hours * _kPxPerHour).clamp(320.0, 4000.0);
     const double usable = _kChartHeight - _kAxisH;
@@ -127,9 +133,9 @@ class _Chart extends StatelessWidget {
             height: _kChartHeight,
             child: Column(
               children: <Widget>[
-                _laneLabel('心拍', AppColors.heart, usable * _kHrFrac),
-                _laneLabel('睡眠', AppColors.sleepDeep, usable * _kSleepFrac),
-                _laneLabel('歩数', AppColors.steps, usable * _kStepsFrac),
+                _laneLabel(l.heartRate, AppColors.heart, usable * _kHrFrac),
+                _laneLabel(l.sleep, AppColors.sleepDeep, usable * _kSleepFrac),
+                _laneLabel(l.steps, AppColors.steps, usable * _kStepsFrac),
                 const SizedBox(height: _kAxisH),
               ],
             ),
@@ -414,16 +420,17 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
+    final AppLocalizations l = AppLocalizations.of(context);
+    return Wrap(
       spacing: 14,
       runSpacing: 6,
       children: <Widget>[
-        _LegendItem(color: AppColors.sleepDeep, label: '深い'),
-        _LegendItem(color: AppColors.sleepLight, label: '浅い'),
-        _LegendItem(color: AppColors.sleepRem, label: 'レム'),
-        _LegendItem(color: AppColors.sleepAwake, label: '覚醒'),
-        _LegendItem(color: AppColors.heart, label: '心拍', line: true),
-        _LegendItem(color: AppColors.steps, label: '歩数'),
+        _LegendItem(color: AppColors.sleepDeep, label: l.stageDeep),
+        _LegendItem(color: AppColors.sleepLight, label: l.stageLight),
+        _LegendItem(color: AppColors.sleepRem, label: l.stageRem),
+        _LegendItem(color: AppColors.sleepAwake, label: l.stageAwake),
+        _LegendItem(color: AppColors.heart, label: l.heartRate, line: true),
+        _LegendItem(color: AppColors.steps, label: l.steps),
       ],
     );
   }

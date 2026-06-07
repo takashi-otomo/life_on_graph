@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/providers/repository_providers.dart';
 import 'package:life_on_graph/providers/sync_notifier.dart';
 import 'package:life_on_graph/widgets/health_status_banner.dart';
@@ -20,6 +21,9 @@ void main() {
       ProviderScope(
         overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ja'),
           home: Scaffold(
             body: Consumer(
               builder: (context, ref, _) {
@@ -91,6 +95,9 @@ void main() {
       ProviderScope(
         overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ja'),
           home: Scaffold(
             body: Consumer(
               builder: (context, r, _) {

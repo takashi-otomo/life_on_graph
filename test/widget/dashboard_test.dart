@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/dashboard/dashboard_view.dart';
 import 'package:life_on_graph/features/sleep/widgets/sleep_stage_timeline.dart';
 import 'package:life_on_graph/features/sleep/widgets/sleep_summary_card.dart';
@@ -20,7 +21,12 @@ SleepSegment deepSeg() => SleepSegment(
 
 Widget app(FakeHealthSyncRepository repo) => ProviderScope(
   overrides: [healthSyncRepositoryProvider.overrideWithValue(repo)],
-  child: const MaterialApp(home: DashboardView()),
+  child: const MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: Locale('ja'),
+    home: DashboardView(),
+  ),
 );
 
 void main() {

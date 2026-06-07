@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/summary/summary_view.dart';
 import 'package:life_on_graph/features/summary/widgets/trend_bar_chart.dart';
 import 'package:life_on_graph/models/heart_rate_record_model.dart';
@@ -49,7 +50,12 @@ FakeHealthSyncRepository buildRepo() => FakeHealthSyncRepository(
 
 Widget app() => ProviderScope(
   overrides: [healthSyncRepositoryProvider.overrideWithValue(buildRepo())],
-  child: const MaterialApp(home: SummaryView()),
+  child: const MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: Locale('ja'),
+    home: SummaryView(),
+  ),
 );
 
 void main() {
@@ -89,6 +95,9 @@ void main() {
           healthSyncRepositoryProvider.overrideWithValue(buildRepo()),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ja'),
           home: Consumer(
             builder: (context, ref, _) {
               capturedRef = ref;

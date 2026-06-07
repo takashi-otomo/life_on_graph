@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_on_graph/features/sleep/widgets/date_nav_header.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/providers/selected_date_provider.dart';
 
 void main() {
   Widget app() => const ProviderScope(
-    child: MaterialApp(home: Scaffold(body: DateNavHeader())),
+    child: MaterialApp(
+      locale: Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: DateNavHeader()),
+    ),
   );
 
   testWidgets('#41 初期表示は今日 (「今日」ラベル) ', (tester) async {
@@ -14,7 +20,7 @@ void main() {
     final DateTime now = DateTime.now();
     expect(
       find.text(
-        DateNavHeader.formatDate(DateTime(now.year, now.month, now.day)),
+        DateNavHeader.formatDate(DateTime(now.year, now.month, now.day), 'ja'),
       ),
       findsOneWidget,
     );
@@ -29,7 +35,9 @@ void main() {
 
     final DateTime y = DateTime.now().subtract(const Duration(days: 1));
     expect(
-      find.text(DateNavHeader.formatDate(DateTime(y.year, y.month, y.day))),
+      find.text(
+        DateNavHeader.formatDate(DateTime(y.year, y.month, y.day), 'ja'),
+      ),
       findsOneWidget,
     );
     expect(find.text('今日'), findsNothing);

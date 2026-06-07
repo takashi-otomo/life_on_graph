@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/health_availability_provider.dart';
 import '../providers/repository_providers.dart';
 import '../providers/sync_notifier.dart';
@@ -52,15 +53,16 @@ class _HealthStatusBannerState extends ConsumerState<HealthStatusBanner> {
     }
     final bool available = availability.asData?.value ?? true;
     final SyncState sync = ref.watch(syncNotifierProvider);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     // 優先順位1: Health Connect 未導入。
     if (!available) {
       return _StateCard(
         icon: Icons.download_for_offline,
         color: AppColors.accent,
-        title: 'Health Connect が必要です',
-        message: '睡眠・歩数・心拍を取得するには Health Connect の導入が必要です。',
-        actionLabel: 'インストール',
+        title: l.statusUnavailableTitle,
+        message: l.statusUnavailableMessage,
+        actionLabel: l.install,
         onAction: () async {
           await ref.read(healthSyncRepositoryProvider).installHealthConnect();
           // 導線後に再チェック (復帰時にも onResume で再評価される)。
@@ -74,9 +76,9 @@ class _HealthStatusBannerState extends ConsumerState<HealthStatusBanner> {
       return _StateCard(
         icon: Icons.lock_outline,
         color: AppColors.accent,
-        title: 'ヘルスデータへのアクセスが必要です',
-        message: '睡眠・歩数・心拍を表示するには Health Connect の読み取り許可が必要です。',
-        actionLabel: '許可する',
+        title: l.statusPermissionTitle,
+        message: l.statusPermissionMessage,
+        actionLabel: l.allow,
         onAction: () => ref.read(syncNotifierProvider.notifier).sync(),
       );
     }
@@ -86,9 +88,9 @@ class _HealthStatusBannerState extends ConsumerState<HealthStatusBanner> {
       return _StateCard(
         icon: Icons.cloud_off,
         color: AppColors.danger,
-        title: '同期に失敗しました',
-        message: '表示中のデータはローカル保存分です。',
-        actionLabel: '再試行',
+        title: l.statusSyncFailedTitle,
+        message: l.statusSyncFailedMessage,
+        actionLabel: l.retry,
         onAction: () =>
             ref.read(syncNotifierProvider.notifier).sync(force: true),
       );

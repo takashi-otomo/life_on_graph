@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_on_graph/features/sleep/sleep_summary.dart';
+import 'package:life_on_graph/l10n/app_localizations_en.dart';
+import 'package:life_on_graph/l10n/app_localizations_ja.dart';
 import 'package:life_on_graph/models/sleep_segment.dart';
 
 SleepSegment seg(int startMin, int endMin, String stage) => SleepSegment(
@@ -67,11 +69,17 @@ void main() {
     });
   });
 
-  group('#35 formatHm', () {
-    test('時間と分を整形する', () {
-      expect(formatHm(const Duration(minutes: 432)), '7時間 12分');
-      expect(formatHm(const Duration(minutes: 45)), '45分');
-      expect(formatHm(const Duration(hours: 8)), '8時間 0分');
+  group('#35 / #94 formatHm', () {
+    final ja = AppLocalizationsJa();
+    final en = AppLocalizationsEn();
+    test('日本語: 時間と分を整形する', () {
+      expect(formatHm(const Duration(minutes: 432), ja), '7時間 12分');
+      expect(formatHm(const Duration(minutes: 45), ja), '45分');
+      expect(formatHm(const Duration(hours: 8), ja), '8時間 0分');
+    });
+    test('英語: 時間と分を整形する', () {
+      expect(formatHm(const Duration(minutes: 432), en), '7h 12m');
+      expect(formatHm(const Duration(minutes: 45), en), '45m');
     });
   });
 }

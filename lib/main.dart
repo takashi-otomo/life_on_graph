@@ -2,13 +2,16 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/app_constants.dart';
+import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
+import 'providers/locale_provider.dart';
 import 'providers/repository_providers.dart';
 import 'providers/sync_notifier.dart';
 
@@ -20,6 +23,17 @@ final ThemeData _appTheme = ThemeData(
   colorSchemeSeed: Colors.indigo,
   useMaterial3: true,
 );
+
+/// 未対応の端末言語は英語へフォールバックする (#94)。
+///
+/// 既定の解決では `supportedLocales` の先頭 (生成順でドイツ語) に落ちてしまうため、
+/// 言語コードが一致しない場合は明示的に英語を返す。
+Locale _resolveLocale(Locale? deviceLocale, Iterable<Locale> supported) {
+  for (final Locale s in supported) {
+    if (s.languageCode == deviceLocale?.languageCode) return s;
+  }
+  return const Locale('en');
+}
 
 /// アプリのエントリポイント。
 ///
@@ -34,6 +48,8 @@ void main() async {
   if (!kReleaseMode) {
     SemanticsBinding.instance.ensureSemantics();
   }
+  // 各ロケールの日付整形 (DateFormat) 用データを初期化する (#94)。
+  await initializeDateFormatting();
 
   final String? action = await LaunchIntent.action();
   if (LaunchIntent.isRationale(action)) {
@@ -53,17 +69,17 @@ void main() async {
 }
 
 /// Life On Graph (LOG) アプリのルートウィジェット(通常起動)。
-class LifeOnGraphApp extends StatefulWidget {
+class LifeOnGraphApp extends ConsumerStatefulWidget {
   const LifeOnGraphApp({super.key, required this.ready});
 
   /// ローカル DB 初期化の完了 Future。
   final Future<void> ready;
 
   @override
-  State<LifeOnGraphApp> createState() => _LifeOnGraphAppState();
+  ConsumerState<LifeOnGraphApp> createState() => _LifeOnGraphAppState();
 }
 
-class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
+class _LifeOnGraphAppState extends ConsumerState<LifeOnGraphApp> {
   @override
   void initState() {
     super.initState();
@@ -78,11 +94,17 @@ class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
 
   @override
   Widget build(BuildContext context) {
+    // null のときは端末の言語設定に従う (#94)。
+    final Locale? locale = ref.watch(localeProvider);
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
       theme: _appTheme,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: _resolveLocale,
       home: _SplashGate(ready: widget.ready),
     );
   }
@@ -118,6 +140,9 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
       if (mounted) setState(() => _bootFailed = true);
       return; // 初期化失敗時は本画面へ遷移しない (codex P1)。
     }
+    // DB 初期化完了後に保存済み言語を再読込する。localeProvider は DB 準備前に
+    // 一度評価され null (端末設定) になっているため (codex P1)。
+    ref.invalidate(localeProvider);
     // 初回同期 (差分更新) を完了させてからホームへ進む。失敗は表示を妨げない。
     try {
       await ref.read(syncNotifierProvider.notifier).sync();
@@ -203,16 +228,35 @@ class _RationaleAppState extends State<RationaleApp> {
   @override
   Widget build(BuildContext context) {
     final DatabaseManager? db = _db;
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: _appTheme,
-      home: db != null
-          ? ProviderScope(
-              overrides: [databaseManagerProvider.overrideWithValue(db)],
-              child: const AppShell(),
-            )
-          : RationaleView(onContinue: _loading ? null : () => _openApp()),
+    // DB 未初期化 (根拠表示中) は端末設定の言語で表示する。
+    if (db == null) {
+      return MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: _appTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localeResolutionCallback: _resolveLocale,
+        home: RationaleView(onContinue: _loading ? null : () => _openApp()),
+      );
+    }
+    // アプリを開いた後は保存済み言語 (localeProvider) を反映する (#94)。
+    return ProviderScope(
+      overrides: [databaseManagerProvider.overrideWithValue(db)],
+      child: Consumer(
+        builder: (BuildContext context, WidgetRef ref, Widget? _) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: _appTheme,
+            locale: ref.watch(localeProvider),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localeResolutionCallback: _resolveLocale,
+            home: const AppShell(),
+          );
+        },
+      ),
     );
   }
 }

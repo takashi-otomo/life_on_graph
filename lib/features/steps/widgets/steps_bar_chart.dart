@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/app_card.dart';
 import '../steps_hourly.dart';
 
@@ -13,6 +14,7 @@ class StepsBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,9 +27,9 @@ class StepsBarChart extends StatelessWidget {
                 color: AppColors.steps,
               ),
               const SizedBox(width: 8),
-              const Text(
-                '歩数',
-                style: TextStyle(
+              Text(
+                l.steps,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -35,7 +37,7 @@ class StepsBarChart extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${_formatNum(steps.total)} 歩',
+                l.stepsValue(_formatNum(steps.total)),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -46,12 +48,12 @@ class StepsBarChart extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (steps.isEmpty)
-            const SizedBox(
+            SizedBox(
               height: 110,
               child: Center(
                 child: Text(
-                  'この日の歩数データはありません',
-                  style: TextStyle(
+                  l.noStepsDataForDay,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -116,11 +118,12 @@ class StepsBarChart extends StatelessWidget {
   }
 
   Widget _bottomLabel(double value, TitleMeta meta) {
+    // 時刻は言語非依存の 24 時間表記 (0:00 / 6:00 …) で表示する。
     const Map<int, String> labels = <int, String>{
-      0: '0時',
-      6: '6時',
-      12: '12時',
-      18: '18時',
+      0: '0:00',
+      6: '6:00',
+      12: '12:00',
+      18: '18:00',
     };
     final String? text = labels[value.toInt()];
     if (text == null) return const SizedBox.shrink();

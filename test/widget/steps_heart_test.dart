@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_on_graph/l10n/app_localizations.dart';
 import 'package:life_on_graph/features/heart_rate/widgets/heart_rate_chart.dart';
 import 'package:life_on_graph/features/steps/steps_hourly.dart';
 import 'package:life_on_graph/features/steps/widgets/steps_bar_chart.dart';
@@ -7,6 +8,9 @@ import 'package:life_on_graph/models/heart_rate_record_model.dart';
 import 'package:life_on_graph/models/steps_record_model.dart';
 
 Widget wrap(Widget child) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ja'),
   home: Scaffold(body: SingleChildScrollView(child: child)),
 );
 
@@ -70,12 +74,12 @@ void main() {
 
       // 全日(暦日): 当日 日中の 90 のみ。直近 bpm も主表示される (F1)。
       expect(find.text('90 bpm'), findsOneWidget);
-      expect(find.text('安静 90 ・ 最高 90'), findsOneWidget);
+      expect(find.text('安静 90 · 最高 90'), findsOneWidget);
 
       // 睡眠中: 翌朝 2時の 54 (日跨ぎでも欠落しない)。
       await tester.tap(find.text('睡眠中'));
       await tester.pumpAndSettle();
-      expect(find.text('安静 54 ・ 最高 54'), findsOneWidget);
+      expect(find.text('安静 54 · 最高 54'), findsOneWidget);
     });
 
     testWidgets('睡眠期間が無ければトグルは出ない', (tester) async {

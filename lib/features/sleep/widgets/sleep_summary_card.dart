@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/app_card.dart';
 import '../sleep_summary.dart';
 
@@ -10,18 +11,18 @@ class SleepSummaryCard extends StatelessWidget {
 
   final SleepSummary summary;
 
-  static const List<({String key, String label})> _stages =
-      <({String key, String label})>[
-        (key: 'deep', label: '深い睡眠'),
-        (key: 'light', label: '浅い睡眠'),
-        (key: 'rem', label: 'レム睡眠'),
-        (key: 'awake', label: '覚醒'),
-        (key: 'unknown', label: '不明'),
-      ];
-
   @override
   Widget build(BuildContext context) {
-    final List<({String key, String label})> present = _stages
+    final AppLocalizations l = AppLocalizations.of(context);
+    final List<({String key, String label})> stages =
+        <({String key, String label})>[
+          (key: 'deep', label: l.stageDeep),
+          (key: 'light', label: l.stageLight),
+          (key: 'rem', label: l.stageRem),
+          (key: 'awake', label: l.stageAwake),
+          (key: 'unknown', label: l.stageUnknown),
+        ];
+    final List<({String key, String label})> present = stages
         .where((s) => summary.stage(s.key) > Duration.zero)
         .toList();
 
@@ -32,13 +33,17 @@ class SleepSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Row(
+              Row(
                 children: <Widget>[
-                  Icon(Icons.bedtime, size: 20, color: AppColors.sleepDeep),
-                  SizedBox(width: 8),
+                  const Icon(
+                    Icons.bedtime,
+                    size: 20,
+                    color: AppColors.sleepDeep,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '睡眠',
-                    style: TextStyle(
+                    l.sleep,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -47,7 +52,7 @@ class SleepSummaryCard extends StatelessWidget {
                 ],
               ),
               Text(
-                summary.isEmpty ? '—' : formatHm(summary.total),
+                summary.isEmpty ? '—' : formatHm(summary.total, l),
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -58,9 +63,12 @@ class SleepSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (present.isEmpty)
-            const Text(
-              'この日の睡眠データはありません',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            Text(
+              l.noSleepDataForDay,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             )
           else ...<Widget>[
             ClipRRect(
@@ -89,7 +97,7 @@ class SleepSummaryCard extends StatelessWidget {
                   _LegendItem(
                     color: AppColors.sleepStage(s.key),
                     label: s.label,
-                    duration: formatHm(summary.stage(s.key)),
+                    duration: formatHm(summary.stage(s.key), l),
                   ),
               ],
             ),

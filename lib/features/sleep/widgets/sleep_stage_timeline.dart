@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/sleep_segment.dart';
 import '../../../widgets/app_card.dart';
 
@@ -13,17 +14,16 @@ class SleepStageTimeline extends StatelessWidget {
 
   final List<SleepSegment> segments;
 
-  static const List<String> _rowLabels = <String>['覚醒', 'レム', '浅い', '深い'];
-
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            '睡眠ステージ',
-            style: TextStyle(
+          Text(
+            l.sleepStages,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -31,12 +31,12 @@ class SleepStageTimeline extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           if (segments.isEmpty)
-            const SizedBox(
+            SizedBox(
               height: 120,
               child: Center(
                 child: Text(
-                  '睡眠データがありません',
-                  style: TextStyle(
+                  l.noSleepData,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -44,13 +44,18 @@ class SleepStageTimeline extends StatelessWidget {
               ),
             )
           else
-            _buildChart(),
+            _buildChart(<String>[
+              l.stageAwake,
+              l.stageRem,
+              l.stageLight,
+              l.stageDeep,
+            ]),
         ],
       ),
     );
   }
 
-  Widget _buildChart() {
+  Widget _buildChart(List<String> rowLabels) {
     final DateTime start = segments
         .map((s) => s.startTime)
         .reduce((a, b) => a.isBefore(b) ? a : b);
@@ -72,9 +77,9 @@ class SleepStageTimeline extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    for (final l in _rowLabels)
+                    for (final label in rowLabels)
                       Text(
-                        l,
+                        label,
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,

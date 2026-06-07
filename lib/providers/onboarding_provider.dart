@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../repositories/health_sync_repository.dart';
 import 'repository_providers.dart';
 
 /// 初期設定ウィザードを完了済みか (#108)。
@@ -13,8 +14,14 @@ class OnboardingNotifier extends Notifier<bool> {
   @override
   bool build() {
     try {
-      return ref.read(databaseManagerProvider).metadataBox.get(onboardingKey) ==
-          true;
+      final metadata = ref.read(databaseManagerProvider).metadataBox;
+      if (metadata.get(onboardingKey) == true) return true;
+      // 本機能導入前に利用済みの既存インストール (同期履歴あり) はウィザード対象外
+      // とする (アップデート後に初回扱いしない) (codex P1)。
+      if (metadata.get(HealthSyncRepositoryImpl.lastSyncTimeKey) != null) {
+        return true;
+      }
+      return false;
     } catch (_) {
       return false;
     }
@@ -38,3 +45,18 @@ class OnboardingNotifier extends Notifier<bool> {
 final onboardingCompletedProvider = NotifierProvider<OnboardingNotifier, bool>(
   OnboardingNotifier.new,
 );
+
+/// ホームの初回自動同期を一度だけ抑止するフラグの状態。
+class SuppressInitialSyncNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) => state = value;
+}
+
+/// ウィザードを「あとで設定する」でスキップした直後、ホームの初回自動同期を一度だけ
+/// 抑止するフラグ (権限ダイアログの即時表示を避ける) (#108 / codex P1)。
+final suppressInitialSyncProvider =
+    NotifierProvider<SuppressInitialSyncNotifier, bool>(
+      SuppressInitialSyncNotifier.new,
+    );

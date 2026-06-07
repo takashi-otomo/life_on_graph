@@ -6,6 +6,7 @@ import '../../models/heart_rate_record_model.dart';
 import '../../models/sleep_segment.dart';
 import '../../models/steps_record_model.dart';
 import '../../providers/data_providers.dart';
+import '../../providers/onboarding_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
 import '../../widgets/health_status_banner.dart';
@@ -34,6 +35,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ウィザードを「あとで設定する」でスキップした直後は、初回自動同期 (権限要求) を
+      // 一度だけ抑止する (codex P1)。以降は通常どおり。
+      if (ref.read(suppressInitialSyncProvider)) {
+        ref.read(suppressInitialSyncProvider.notifier).set(false);
+        return;
+      }
       ref.read(syncNotifierProvider.notifier).sync();
     });
   }

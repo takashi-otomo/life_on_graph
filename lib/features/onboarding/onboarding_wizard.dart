@@ -44,6 +44,12 @@ class _OnboardingWizardState extends ConsumerState<OnboardingWizard> {
     widget.onFinish();
   }
 
+  /// 「あとで設定する」: 権限要求せずに完了。ホームの初回自動同期も抑止する。
+  Future<void> _skip() async {
+    ref.read(suppressInitialSyncProvider.notifier).set(true);
+    await _finish();
+  }
+
   Future<void> _connectAndSync() async {
     _goTo(3);
     try {
@@ -64,7 +70,7 @@ class _OnboardingWizardState extends ConsumerState<OnboardingWizard> {
           children: <Widget>[
             _WelcomePage(onStart: () => _goTo(1)),
             _LanguagePage(onNext: () => _goTo(2)),
-            _PermissionsPage(onConnect: _connectAndSync, onSkip: _finish),
+            _PermissionsPage(onConnect: _connectAndSync, onSkip: _skip),
             _DonePage(onFinish: _finish),
           ],
         ),

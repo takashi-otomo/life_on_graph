@@ -10,9 +10,9 @@ import '../../../providers/selected_date_provider.dart';
 class DateNavHeader extends ConsumerWidget {
   const DateNavHeader({super.key});
 
-  /// ロケールに応じた日付表記 ("6月7日(土)" / "Sat, Jun 7" 等)。
+  /// ロケールに応じた日付表記 (年込み: "2026年6月7日(土)" / "Sat, Jun 7, 2026" 等)。
   static String formatDate(DateTime d, String localeName) =>
-      DateFormat.MMMEd(localeName).format(d);
+      DateFormat.yMMMEd(localeName).format(d);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

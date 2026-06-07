@@ -71,8 +71,10 @@ class _SummaryViewState extends ConsumerState<SummaryView> {
           Duration(days: _anchor.weekday - 1),
         );
         final DateTime end = start.add(const Duration(days: 6));
-        final DateFormat md = DateFormat.MMMd(localeName);
-        return '${md.format(start)} – ${md.format(end)}';
+        // 週は開始側に年を含め (年跨ぎでも分かるよう)、終了側は月日のみ。
+        final String s = DateFormat.yMMMd(localeName).format(start);
+        final String e = DateFormat.MMMd(localeName).format(end);
+        return '$s – $e';
       case SummaryPeriod.month:
         return DateFormat.yMMMM(localeName).format(_anchor);
     }

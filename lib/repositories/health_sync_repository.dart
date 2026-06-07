@@ -440,18 +440,21 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
 
   @override
   Set<DateTime> daysWithData(DateTime start, DateTime end) {
+    // ダッシュボードの「その日」の判定と一致させる (睡眠は正午〜翌正午の表示枠、
+    // 歩数・心拍は暦日)。startTime の暦日でまとめると睡眠の枠とズレ、データの無い日
+    // にドットが出てしまうため、日ごとに表示と同じクエリで有無を判定する (#104)。
     final Set<DateTime> days = <DateTime>{};
-    void collect(Iterable<DateTime> times) {
-      for (final DateTime t in times) {
-        if (!t.isBefore(start) && t.isBefore(end)) {
-          days.add(DateTime(t.year, t.month, t.day));
-        }
-      }
+    DateTime day = DateTime(start.year, start.month, start.day);
+    final DateTime endDay = DateTime(end.year, end.month, end.day);
+    while (day.isBefore(endDay)) {
+      final DateTime dayStart = day;
+      final DateTime dayEnd = day.add(const Duration(days: 1));
+      final bool hasSleep = getCleanedSleepSegmentsForDay(day).isNotEmpty;
+      final bool hasSteps = getStepsForRange(dayStart, dayEnd).isNotEmpty;
+      final bool hasHeart = getHeartRateForRange(dayStart, dayEnd).isNotEmpty;
+      if (hasSleep || hasSteps || hasHeart) days.add(day);
+      day = dayEnd;
     }
-
-    collect(_db.sleepBox.values.map((r) => r.startTime));
-    collect(_db.stepsBox.values.map((r) => r.startTime));
-    collect(_db.heartRateBox.values.map((r) => r.startTime));
     return days;
   }
 

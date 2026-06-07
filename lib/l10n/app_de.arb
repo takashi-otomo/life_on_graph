@@ -96,5 +96,6 @@
   "rationaleSecurity": "Abgerufene Daten werden mit AES-256 verschlüsselt und nur auf diesem Gerät gespeichert. Kein Cloud-Upload und keine Weitergabe an Dritte.",
   "readPolicy": "Datenschutzerklärung lesen",
   "openPolicyBrowser": "Veröffentlichte Version im Browser öffnen",
-  "openApp": "App öffnen"
+  "openApp": "App öffnen",
+  "weekShort": "W{n}"
 }

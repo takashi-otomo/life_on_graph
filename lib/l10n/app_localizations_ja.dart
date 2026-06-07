@@ -291,4 +291,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openApp => 'アプリを開く';
+
+  @override
+  String weekShort(int n) {
+    return '$n週';
+  }
 }

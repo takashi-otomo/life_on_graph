@@ -299,4 +299,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get openApp => 'Abrir la aplicación';
+
+  @override
+  String weekShort(int n) {
+    return 'Sem $n';
+  }
 }

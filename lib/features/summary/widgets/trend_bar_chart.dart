@@ -1,7 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/app_card.dart';
 import '../period_summary.dart';
 
@@ -24,8 +26,18 @@ class TrendBarChart extends StatelessWidget {
   /// 各バーの数値を取り出す (睡眠=時間, 歩数=歩)。
   final double Function(TrendBar) value;
 
+  /// バーの x 軸ラベルをロケールに応じて整形する (#97)。
+  static String _barLabel(TrendBar b, AppLocalizations l, String locale) {
+    if (b.weekIndex != null) return l.weekShort(b.weekIndex! + 1);
+    if (b.isToday) return l.today;
+    if (b.date != null) return DateFormat.E(locale).format(b.date!);
+    return b.label;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final String locale = Localizations.localeOf(context).toString();
     final double maxV = bars.isEmpty
         ? 1
         : bars.map(value).fold(0.0, (a, b) => a > b ? a : b);
@@ -82,7 +94,7 @@ class TrendBarChart extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
-                            bars[i].label,
+                            _barLabel(bars[i], l, locale),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: bars[i].highlighted

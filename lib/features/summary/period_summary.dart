@@ -30,14 +30,27 @@ class TrendBar {
     required this.sleepHours,
     required this.steps,
     this.highlighted = false,
+    this.date,
+    this.isToday = false,
+    this.weekIndex,
   });
 
+  /// 非ローカライズのフォールバックラベル。表示は UI 層で構造フィールドから整形する。
   final String label;
   final double sleepHours;
   final int steps;
 
   /// 「今日」など強調表示するか (日表示の最終バー)。
   final bool highlighted;
+
+  /// 日/週バーの対象日。UI で曜日ラベルをロケール整形するために使う (#97)。
+  final DateTime? date;
+
+  /// このバーが当日か (日表示で「今日」ラベルにする)。
+  final bool isToday;
+
+  /// 月表示の週インデックス (0 始まり)。UI で「N週」をロケール整形する。
+  final int? weekIndex;
 }
 
 /// 期間サマリー: KPI(平均) + 前期間比 + トレンドバー。
@@ -235,6 +248,8 @@ class _Range {
                       ? '今日'
                       : _wd[days[i].weekday - 1],
                   highlighted: i == days.length - 1,
+                  date: days[i],
+                  isToday: i == days.length - 1 && days[i] == today,
                 ),
             ];
           },
@@ -253,7 +268,8 @@ class _Range {
           kpiDays: week,
           prevDays: prevWeek,
           buildBars: (read) => <TrendBar>[
-            for (int i = 0; i < 7; i++) _bar(read(week[i]), label: _wd[i]),
+            for (int i = 0; i < 7; i++)
+              _bar(read(week[i]), label: _wd[i], date: week[i]),
           ],
         );
       case SummaryPeriod.month:
@@ -298,7 +314,12 @@ class _Range {
                         60;
               final int sumSteps = chunk.fold(0, (a, d) => a + d.steps);
               bars.add(
-                TrendBar(label: '${w + 1}週', sleepHours: avgH, steps: sumSteps),
+                TrendBar(
+                  label: '${w + 1}週',
+                  sleepHours: avgH,
+                  steps: sumSteps,
+                  weekIndex: w,
+                ),
               );
             }
             return bars;
@@ -311,10 +332,14 @@ class _Range {
     DaySummary d, {
     required String label,
     bool highlighted = false,
+    DateTime? date,
+    bool isToday = false,
   }) => TrendBar(
     label: label,
     sleepHours: d.sleep.inMinutes / 60,
     steps: d.steps,
     highlighted: highlighted,
+    date: date,
+    isToday: isToday,
   );
 }

@@ -34,6 +34,10 @@ class FakeHealthClient implements HealthClient {
   final Map<HealthDataType, List<HealthDataPoint>> _dataByType;
   final Set<HealthDataType> _throwOnTypes;
 
+  /// テストで HC 側のデータを差し替える (削除のシミュレーション等)。
+  void setData(HealthDataType type, List<HealthDataPoint> points) =>
+      _dataByType[type] = points;
+
   bool configureCalled = false;
   int configureCallCount = 0;
 
@@ -91,6 +95,29 @@ class FakeHealthClient implements HealthClient {
     historyRequestCount++;
     if (throwOnHistory) throw StateError('fake history request failure');
     return historyRequestResult;
+  }
+
+  /// [getChangesToken] が返すトークン。
+  String? changesToken = 'token-0';
+
+  /// [getChanges] が順に返す結果のキュー (空なら null)。
+  final List<HealthChangesResult> changesQueue = <HealthChangesResult>[];
+
+  /// [getChanges] に渡されたトークンの履歴。
+  final List<String> getChangesCalls = <String>[];
+  int getChangesTokenCalls = 0;
+
+  @override
+  Future<String?> getChangesToken(List<HealthDataType> types) async {
+    getChangesTokenCalls++;
+    return changesToken;
+  }
+
+  @override
+  Future<HealthChangesResult?> getChanges(String changesToken) async {
+    getChangesCalls.add(changesToken);
+    if (changesQueue.isEmpty) return null;
+    return changesQueue.removeAt(0);
   }
 
   /// Health Connect 導入状態 ([isHealthConnectAvailable] の戻り値)。

@@ -1,5 +1,30 @@
 import 'package:health/health.dart';
 
+/// Health Connect の変更 (Changes) API の結果を表す値オブジェクト (#64)。
+///
+/// 削除されたレコードの UUID とページング/トークン情報のみを公開し、抽象境界を
+/// health パッケージの型に依存させない。
+class HealthChangesResult {
+  const HealthChangesResult({
+    required this.deletedUuids,
+    required this.nextToken,
+    required this.hasMore,
+    required this.expired,
+  });
+
+  /// 削除されたレコードの UUID。
+  final List<String> deletedUuids;
+
+  /// 次回取得に用いる変更トークン。
+  final String nextToken;
+
+  /// さらに変更ページがあるか。
+  final bool hasMore;
+
+  /// トークンが期限切れか (再ベースライン要)。
+  final bool expired;
+}
+
 /// `health` パッケージ ([Health]) への薄い抽象境界。
 ///
 /// プラットフォームチャネルに依存する [Health] を直接参照すると、
@@ -38,6 +63,12 @@ abstract interface class HealthClient {
 
   /// Health Connect の導入 (Google Play ストア) へ誘導する (#42)。
   Future<void> installHealthConnect();
+
+  /// 変更追跡トークンを取得する (#64)。非対応・iOS では `null`。
+  Future<String?> getChangesToken(List<HealthDataType> types);
+
+  /// [changesToken] 以降の変更 (削除等) を取得する (#64)。失敗時は `null`。
+  Future<HealthChangesResult?> getChanges(String changesToken);
 }
 
 /// [Health] シングルトンに委譲する本番用 [HealthClient] 実装。
@@ -80,4 +111,22 @@ class HealthPackageClient implements HealthClient {
 
   @override
   Future<void> installHealthConnect() => _health.installHealthConnect();
+
+  @override
+  Future<String?> getChangesToken(List<HealthDataType> types) =>
+      _health.getChangesToken(types: types);
+
+  @override
+  Future<HealthChangesResult?> getChanges(String changesToken) async {
+    final HealthChangesResponse? res = await _health.getChanges(
+      changesToken: changesToken,
+    );
+    if (res == null) return null;
+    return HealthChangesResult(
+      deletedUuids: res.deletedRecordIds,
+      nextToken: res.nextChangesToken,
+      hasMore: res.hasMore,
+      expired: res.changesTokenExpired,
+    );
+  }
 }

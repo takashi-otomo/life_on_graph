@@ -50,6 +50,21 @@ void main() {
       );
     });
 
+    test('既存インストール(last_sync有・トークン無)でもトークンを確立する', () async {
+      final client = FakeHealthClient(authorized: true)..changesToken = 'tok-x';
+      // アップグレードを模擬: last_sync は有るがトークンが無い。
+      await db.metadataBox.put(
+        HealthSyncRepositoryImpl.lastSyncTimeKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+      // force なし → 差分極小でフェッチはスキップされ得るが、トークンは確立される。
+      await repo(client).sync();
+      expect(
+        db.metadataBox.get(HealthSyncRepositoryImpl.changesTokenKey),
+        'tok-x',
+      );
+    });
+
     test('リモート削除されたレコードをローカルから除去する', () async {
       final client = FakeHealthClient(
         authorized: true,

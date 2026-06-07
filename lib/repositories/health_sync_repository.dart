@@ -275,6 +275,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     // #64: 先にリモート削除をローカルへ反映する。トークン期限切れ時はローカルを消去し
     // last_sync をリセットするため、ウィンドウ算出はこの後に行う。
     await _applyRemoteDeletions();
+    // 差分極小スキップやアップグレード (last_sync 有・トークン無) でも削除追跡を始め
+    // られるよう、フェッチ前にトークンを確立する。
+    await _ensureChangesToken();
 
     final SyncWindow window = computeSyncWindow(end);
 
@@ -321,9 +324,6 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       await _db.metadataBox.put(lastSyncTimeKey, end.millisecondsSinceEpoch);
     }
 
-    // #64: 以降の削除検出のため、トークン未確立なら確立する (初回 / 期限切れ後)。
-    await _ensureChangesToken();
-
     return SyncOutcome(window: window, savedCounts: saved, failedTypes: failed);
   }
 
@@ -341,7 +341,8 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
 
       final Set<String> deleted = <String>{};
       String current = token;
-      for (int page = 0; page < 50; page++) {
+      bool drained = false;
+      for (int page = 0; page < 200; page++) {
         final HealthChangesResult? res = await _health.getChanges(current);
         if (res == null) return; // 取得失敗時はトークンを据え置き次回再試行。
         if (res.expired) {
@@ -354,10 +355,15 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
         }
         deleted.addAll(res.deletedUuids);
         current = res.nextToken;
-        if (!res.hasMore) break;
+        if (!res.hasMore) {
+          drained = true;
+          break;
+        }
       }
       if (deleted.isNotEmpty) await _deleteByUuids(deleted);
-      await _db.metadataBox.put(changesTokenKey, current);
+      // 全ページを消化できた時のみトークンを前進させる (取りこぼし防止)。未消化なら
+      // 据え置き、次回同期で続きから再処理する (削除は冪等)。
+      if (drained) await _db.metadataBox.put(changesTokenKey, current);
     } catch (_) {
       // 削除反映の失敗は同期(取得・保存)を阻害しない。
     }

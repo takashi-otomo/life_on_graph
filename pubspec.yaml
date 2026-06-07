@@ -89,14 +89,12 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 # 起動画面 (スプラッシュ) 生成 (#87)。`dart run flutter_native_splash:create` で適用。
+# ネイティブスプラッシュは背景色のみ(静止画なし)とし、Flutter のアニメーション
+# スプラッシュ (AnimatedSplash) へ滑らかに引き継ぐ。
 flutter_native_splash:
   color: "#F5F6FA"
-  image: "assets/branding/app_icon.png"
   android_12:
-    # Android 12+ は円形マスクのため、セーフゾーン中央に収まる透過前景を用いる。
-    image: "assets/branding/app_icon_foreground.png"
     color: "#F5F6FA"
-    icon_background_color: "#4F46E5"
   android: true
   ios: false
   web: false

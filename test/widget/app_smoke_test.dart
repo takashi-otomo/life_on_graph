@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +37,7 @@ void main() {
           FakeHealthSyncRepository(),
         ),
       ],
-      child: const LifeOnGraphApp(),
+      child: LifeOnGraphApp(ready: Future<void>.value()),
     );
 
     testWidgets('ProviderScope 配下でアプリが例外なく起動する', (tester) async {
@@ -55,6 +56,27 @@ void main() {
       expect(find.text('サマリー'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
       expect(AppConstants.appName, 'Life On Graph');
+    });
+
+    testWidgets('DB初期化失敗時はエラー画面を表示し本画面へ遷移しない', (tester) async {
+      // await 接続後にエラー完了させ、未処理エラー扱いを避ける。
+      final Completer<void> ready = Completer<void>();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            healthSyncRepositoryProvider.overrideWithValue(
+              FakeHealthSyncRepository(),
+            ),
+          ],
+          child: LifeOnGraphApp(ready: ready.future),
+        ),
+      );
+      await tester.pump(); // initState → _boot が ready を await。
+      ready.completeError(StateError('boot fail'));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.textContaining('起動に失敗'), findsOneWidget);
+      expect(find.byType(DashboardView), findsNothing);
     });
   });
 }

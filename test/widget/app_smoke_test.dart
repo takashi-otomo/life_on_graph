@@ -36,7 +36,7 @@ void main() {
           FakeHealthSyncRepository(),
         ),
       ],
-      child: const LifeOnGraphApp(),
+      child: LifeOnGraphApp(ready: Future<void>.value()),
     );
 
     testWidgets('ProviderScope 配下でアプリが例外なく起動する', (tester) async {

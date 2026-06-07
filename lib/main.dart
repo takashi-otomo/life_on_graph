@@ -8,6 +8,7 @@ import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
 import 'features/rationale/rationale_view.dart';
+import 'features/splash/animated_splash.dart';
 import 'providers/repository_providers.dart';
 
 /// アプリ全体の Navigator キー(実行中の根拠インテント通知から遷移するため)。
@@ -39,19 +40,23 @@ void main() async {
     return;
   }
 
+  // DB 初期化はアニメーションスプラッシュと並行実行し、両者完了で本画面へ遷移する。
   final DatabaseManager databaseManager = DatabaseManager();
-  await databaseManager.initialize();
+  final Future<void> ready = databaseManager.initialize();
   runApp(
     ProviderScope(
       overrides: [databaseManagerProvider.overrideWithValue(databaseManager)],
-      child: const LifeOnGraphApp(),
+      child: LifeOnGraphApp(ready: ready),
     ),
   );
 }
 
 /// Life On Graph (LOG) アプリのルートウィジェット(通常起動)。
 class LifeOnGraphApp extends StatefulWidget {
-  const LifeOnGraphApp({super.key});
+  const LifeOnGraphApp({super.key, required this.ready});
+
+  /// ローカル DB 初期化の完了 Future。
+  final Future<void> ready;
 
   @override
   State<LifeOnGraphApp> createState() => _LifeOnGraphAppState();
@@ -77,7 +82,45 @@ class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
       theme: _appTheme,
-      home: const AppShell(),
+      home: _SplashGate(ready: widget.ready),
+    );
+  }
+}
+
+/// アニメーションスプラッシュを表示し、アニメ完了 **かつ** DB 準備完了で本画面へ。
+class _SplashGate extends StatefulWidget {
+  const _SplashGate({required this.ready});
+
+  final Future<void> ready;
+
+  @override
+  State<_SplashGate> createState() => _SplashGateState();
+}
+
+class _SplashGateState extends State<_SplashGate> {
+  bool _animationDone = false;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.ready
+        .then((_) {
+          if (mounted) setState(() => _ready = true);
+        })
+        .catchError((_) {
+          // 初期化失敗時も画面遷移は妨げない (DB 側の回復に委ねる)。
+          if (mounted) setState(() => _ready = true);
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_animationDone && _ready) return const AppShell();
+    return AnimatedSplash(
+      onAnimationEnd: () {
+        if (mounted) setState(() => _animationDone = true);
+      },
     );
   }
 }

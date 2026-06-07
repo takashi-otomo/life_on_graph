@@ -10,6 +10,7 @@ import 'features/app_shell.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
 import 'providers/repository_providers.dart';
+import 'providers/sync_notifier.dart';
 
 /// アプリ全体の Navigator キー(実行中の根拠インテント通知から遷移するため)。
 final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
@@ -87,40 +88,92 @@ class _LifeOnGraphAppState extends State<LifeOnGraphApp> {
   }
 }
 
-/// アニメーションスプラッシュを表示し、アニメ完了 **かつ** DB 準備完了で本画面へ。
-class _SplashGate extends StatefulWidget {
+/// アニメーションスプラッシュを表示し、**DB 初期化 → 初回同期(差分更新)** の完了
+/// かつアニメ完了で本画面へ遷移する。同期完了まで待つため、スプラッシュは同期時間
+/// だけ表示され続ける (ユーザー要望)。DB 初期化失敗時はエラー画面を表示する。
+class _SplashGate extends ConsumerStatefulWidget {
   const _SplashGate({required this.ready});
 
   final Future<void> ready;
 
   @override
-  State<_SplashGate> createState() => _SplashGateState();
+  ConsumerState<_SplashGate> createState() => _SplashGateState();
 }
 
-class _SplashGateState extends State<_SplashGate> {
+class _SplashGateState extends ConsumerState<_SplashGate> {
   bool _animationDone = false;
-  bool _ready = false;
+  bool _bootDone = false;
+  bool _bootFailed = false;
 
   @override
   void initState() {
     super.initState();
-    widget.ready
-        .then((_) {
-          if (mounted) setState(() => _ready = true);
-        })
-        .catchError((_) {
-          // 初期化失敗時も画面遷移は妨げない (DB 側の回復に委ねる)。
-          if (mounted) setState(() => _ready = true);
-        });
+    _boot();
+  }
+
+  Future<void> _boot() async {
+    try {
+      await widget.ready; // 暗号化 DB の初期化。
+    } catch (_) {
+      if (mounted) setState(() => _bootFailed = true);
+      return; // 初期化失敗時は本画面へ遷移しない (codex P1)。
+    }
+    // 初回同期 (差分更新) を完了させてからホームへ進む。失敗は表示を妨げない。
+    try {
+      await ref.read(syncNotifierProvider.notifier).sync();
+    } catch (_) {
+      // 同期失敗時も保存済みローカルデータで描画する (状態別UI がフォールバック表示)。
+    }
+    if (mounted) setState(() => _bootDone = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_animationDone && _ready) return const AppShell();
-    return AnimatedSplash(
-      onAnimationEnd: () {
-        if (mounted) setState(() => _animationDone = true);
-      },
+    if (_bootFailed) return const _BootErrorView();
+    if (_animationDone && _bootDone) return const AppShell();
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        AnimatedSplash(
+          onAnimationEnd: () {
+            if (mounted) setState(() => _animationDone = true);
+          },
+        ),
+        // アニメ完了後も同期待ちの間は進捗を示す。
+        if (_animationDone && !_bootDone)
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 72,
+            child: Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// DB 初期化失敗時の最小エラー画面。
+class _BootErrorView extends StatelessWidget {
+  const _BootErrorView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            'アプリの起動に失敗しました。\nお手数ですがアプリを再起動してください。',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }

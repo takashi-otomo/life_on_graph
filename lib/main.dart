@@ -1,10 +1,12 @@
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/app_colors.dart';
+import 'firebase_options.dart';
 import 'core/app_constants.dart';
 import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
@@ -55,6 +57,15 @@ void main() async {
   }
   // 各ロケールの日付整形 (DateFormat) 用データを初期化する (#94)。
   await initializeDateFormatting();
+
+  // Firebase を初期化する。失敗してもローカルファースト機能は継続させる。
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialize failed: $e');
+  }
 
   final String? action = await LaunchIntent.action();
   if (LaunchIntent.isRationale(action)) {

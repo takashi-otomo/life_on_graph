@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "563091576174",
+    "project_id": "lifeongraph",
+    "storage_bucket": "lifeongraph.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563091576174:android:37f82d768fadf1cbbadd7f",
+        "android_client_info": {
+          "package_name": "dev.otomo.life_on_graph"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQynIZq9mRMXgw_K5MgsYmkPPRWiyw3_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

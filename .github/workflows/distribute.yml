@@ -1,0 +1,77 @@
+name: Distribute (Firebase App Distribution)
+
+# ブランチ戦略:
+#   - develop へのマージ → テスト版を testers グループへ配信
+#   - main    へのマージ → 製品候補版を production グループへ配信 (Google Play リリース前段)
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch: # 手動実行も許可
+
+concurrency:
+  group: distribute-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-distribute:
+    name: Build & Distribute
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.1
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code (build_runner)
+        run: dart run build_runner build
+
+      # 配信先グループとリリースノートをブランチに応じて決定する。
+      - name: Resolve distribution target
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "groups=production" >> "$GITHUB_OUTPUT"
+            echo "notes=製品候補 (main) build ${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "groups=testers" >> "$GITHUB_OUTPUT"
+            echo "notes=テスト版 (develop) build ${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: ${{ steps.target.outputs.groups }}
+          releaseNotes: ${{ steps.target.outputs.notes }}
+          file: build/app/outputs/flutter-apk/app-release.apk
+
+      # main は Google Play 提出用の AAB も生成し、成果物として保存する。
+      - name: Build App Bundle (main only)
+        if: github.ref_name == 'main'
+        run: flutter build appbundle --release
+
+      - name: Upload AAB artifact (main only)
+        if: github.ref_name == 'main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn

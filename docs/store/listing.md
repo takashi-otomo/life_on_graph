@@ -46,7 +46,9 @@ https://lifeongraph.web.app/privacy
 https://lifeongraph.web.app
 
 ## 連絡先
-tekinananika@gmail.com
+
+- Play Console 連絡先メール (掲載に必須): tekinananika@gmail.com
+- アプリ内/サポート問い合わせ (Google フォーム): https://forms.gle/TQSUCq7ERuMLn6jB8
 
 ## データセーフティ(申告の要点)
 - **データ収集: なし**。Google Play の「収集 (collection)」は端末外(サーバー等)への

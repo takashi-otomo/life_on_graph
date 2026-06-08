@@ -777,6 +777,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switch between Home (daily detail), Summary (day/week/month trends) and Settings.'**
   String get tutTabsBody;
+
+  /// No description provided for @appLock.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock'**
+  String get appLock;
+
+  /// No description provided for @appLockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Require biometric or PIN to open the app'**
+  String get appLockSubtitle;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// No description provided for @lockReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate to unlock Life On Graph'**
+  String get lockReason;
+
+  /// No description provided for @lockUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric or device PIN is not set up on this device'**
+  String get lockUnavailable;
 }
 
 class _AppLocalizationsDelegate

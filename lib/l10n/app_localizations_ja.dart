@@ -365,4 +365,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tutTabsBody => 'ホーム(その日の詳細)・サマリー(日/週/月のトレンド)・設定 をタブで切り替えられます。';
+
+  @override
+  String get appLock => 'アプリのロック';
+
+  @override
+  String get appLockSubtitle => '起動時に生体認証/PINで保護する';
+
+  @override
+  String get unlock => 'ロック解除';
+
+  @override
+  String get lockReason => 'ロックを解除するために認証してください';
+
+  @override
+  String get lockUnavailable => 'この端末では生体認証/PINが設定されていません';
 }

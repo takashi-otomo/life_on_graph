@@ -111,5 +111,10 @@
   "tutCardsTitle": "Seus dados do dia",
   "tutCardsBody": "Fases do sono, passos e frequência cardíaca do dia selecionado, além de uma visão integrada no mesmo eixo de tempo.",
   "tutTabsTitle": "Alternar telas",
-  "tutTabsBody": "Alterne entre Início (detalhe do dia), Resumo (tendências dia/semana/mês) e Configurações."
+  "tutTabsBody": "Alterne entre Início (detalhe do dia), Resumo (tendências dia/semana/mês) e Configurações.",
+  "appLock": "Bloqueio do app",
+  "appLockSubtitle": "Exigir biometria ou PIN para abrir o app",
+  "unlock": "Desbloquear",
+  "lockReason": "Autentique-se para desbloquear o Life On Graph",
+  "lockUnavailable": "Nenhuma biometria ou PIN está configurado neste dispositivo"
 }

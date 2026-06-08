@@ -111,5 +111,10 @@
   "tutCardsTitle": "Vos données du jour",
   "tutCardsBody": "Phases de sommeil, pas et fréquence cardiaque du jour sélectionné, avec une vue intégrée sur un axe temporel commun.",
   "tutTabsTitle": "Changer d'écran",
-  "tutTabsBody": "Basculez entre Accueil (détail du jour), Résumé (tendances jour/semaine/mois) et Paramètres."
+  "tutTabsBody": "Basculez entre Accueil (détail du jour), Résumé (tendances jour/semaine/mois) et Paramètres.",
+  "appLock": "Verrouillage de l'app",
+  "appLockSubtitle": "Exiger la biométrie ou le code pour ouvrir l'app",
+  "unlock": "Déverrouiller",
+  "lockReason": "Authentifiez-vous pour déverrouiller Life On Graph",
+  "lockUnavailable": "Aucune biométrie ni code n'est configuré sur cet appareil"
 }

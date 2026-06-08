@@ -111,5 +111,10 @@
   "tutCardsTitle": "Deine Tagesdaten",
   "tutCardsBody": "Schlafphasen, Schritte und Herzfrequenz des gewählten Tages sowie eine integrierte Ansicht auf gemeinsamer Zeitachse.",
   "tutTabsTitle": "Bildschirme wechseln",
-  "tutTabsBody": "Wechsle zwischen Start (Tagesdetail), Übersicht (Trends Tag/Woche/Monat) und Einstellungen."
+  "tutTabsBody": "Wechsle zwischen Start (Tagesdetail), Übersicht (Trends Tag/Woche/Monat) und Einstellungen.",
+  "appLock": "App-Sperre",
+  "appLockSubtitle": "Biometrie oder PIN zum Öffnen erforderlich",
+  "unlock": "Entsperren",
+  "lockReason": "Authentifiziere dich, um Life On Graph zu entsperren",
+  "lockUnavailable": "Auf diesem Gerät ist keine Biometrie oder PIN eingerichtet"
 }

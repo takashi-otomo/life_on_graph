@@ -10,9 +10,11 @@ import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
+import 'features/lock/app_lock_gate.dart';
 import 'features/onboarding/onboarding_wizard.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
+import 'providers/app_lock_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/repository_providers.dart';
@@ -108,6 +110,9 @@ class _LifeOnGraphAppState extends ConsumerState<LifeOnGraphApp> {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: _resolveLocale,
+      // ロック有効時は pushed ルートも含め全画面を覆うため builder でラップする (#79)。
+      builder: (context, child) =>
+          AppLockGate(child: child ?? const SizedBox.shrink()),
       home: _SplashGate(ready: widget.ready),
     );
   }
@@ -149,6 +154,7 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
     // DB 初期化完了後に保存済み言語/初回設定フラグを再読込する (DB 準備前は既定値)。
     ref.invalidate(localeProvider);
     ref.invalidate(onboardingCompletedProvider);
+    ref.invalidate(appLockEnabledProvider); // ロック状態を確定し builder のゲートに反映。
     final bool first = !ref.read(onboardingCompletedProvider);
     if (mounted) setState(() => _firstLaunch = first);
     // 初回起動はウィザードへ (同期はウィザード内で実行)。スプラッシュでは差分同期しない。
@@ -189,7 +195,9 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
     }
 
     // 通常起動: 短いスプラッシュ + 差分同期 → ホーム。
-    if (_animationDone && _syncDone) return const AppShell();
+    if (_animationDone && _syncDone) {
+      return const AppShell();
+    }
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
@@ -286,6 +294,8 @@ class _RationaleAppState extends State<RationaleApp> {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             localeResolutionCallback: _resolveLocale,
+            builder: (context, child) =>
+                AppLockGate(child: child ?? const SizedBox.shrink()),
             home: const AppShell(),
           );
         },

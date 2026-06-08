@@ -378,4 +378,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tutTabsBody =>
       'Switch between Home (daily detail), Summary (day/week/month trends) and Settings.';
+
+  @override
+  String get appLock => 'App lock';
+
+  @override
+  String get appLockSubtitle => 'Require biometric or PIN to open the app';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get lockReason => 'Authenticate to unlock Life On Graph';
+
+  @override
+  String get lockUnavailable =>
+      'Biometric or device PIN is not set up on this device';
 }

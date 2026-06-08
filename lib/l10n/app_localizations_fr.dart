@@ -382,4 +382,21 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get tutTabsBody =>
       'Basculez entre Accueil (détail du jour), Résumé (tendances jour/semaine/mois) et Paramètres.';
+
+  @override
+  String get appLock => 'Verrouillage de l\'app';
+
+  @override
+  String get appLockSubtitle =>
+      'Exiger la biométrie ou le code pour ouvrir l\'app';
+
+  @override
+  String get unlock => 'Déverrouiller';
+
+  @override
+  String get lockReason => 'Authentifiez-vous pour déverrouiller Life On Graph';
+
+  @override
+  String get lockUnavailable =>
+      'Aucune biométrie ni code n\'est configuré sur cet appareil';
 }

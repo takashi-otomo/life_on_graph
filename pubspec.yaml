@@ -49,6 +49,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   local_auth: ^3.0.1
+  firebase_core: ^4.10.0
 
 dev_dependencies:
   flutter_test:

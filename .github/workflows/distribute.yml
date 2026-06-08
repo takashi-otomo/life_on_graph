@@ -1,0 +1,110 @@
+name: Distribute (Firebase App Distribution)
+
+# ブランチ戦略:
+#   - develop へのマージ → テスト版を testers グループへ配信
+#   - main    へのマージ → 製品候補版を production グループへ配信 (Google Play リリース前段)
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch: # 手動実行も許可
+
+concurrency:
+  group: distribute-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 配信に必要な Secret (サービスアカウント) が未登録の間はビルド/配信ジョブをスキップし、
+  # 設定前の push で赤色失敗にならないようにする (docs/release.md のセットアップ後に有効化)。
+  guard:
+    name: Check distribution config
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ] && [ -n "${{ secrets.FIREBASE_ANDROID_APP_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Firebase App Distribution の Secret が未設定のため配信をスキップします (docs/release.md 参照)。"
+          fi
+
+  build-and-distribute:
+    name: Build & Distribute
+    needs: guard
+    if: needs.guard.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    # アップロード鍵 (keystore) Secret がある場合のみ Play 提出用 AAB を生成する (#121)。
+    env:
+      HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.1
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code (build_runner)
+        run: dart run build_runner build
+
+      # 配信先グループとリリースノートをブランチに応じて決定する。
+      - name: Resolve distribution target
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "groups=production" >> "$GITHUB_OUTPUT"
+            echo "notes=製品候補 (main) build ${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "groups=testers" >> "$GITHUB_OUTPUT"
+            echo "notes=テスト版 (develop) build ${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # テスト失敗時は配信しないよう、ビルド前に analyze/test でゲートする。
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: ${{ steps.target.outputs.groups }}
+          releaseNotes: ${{ steps.target.outputs.notes }}
+          file: build/app/outputs/flutter-apk/app-release.apk
+
+      # main かつアップロード鍵が設定済みの場合のみ Play 提出用 AAB を生成する。
+      # 署名未設定 (デバッグ署名) の AAB は Play に提出できないため成果物化しない (#121)。
+      - name: Build App Bundle (signed main only)
+        if: github.ref_name == 'main' && env.HAS_SIGNING == 'true'
+        run: flutter build appbundle --release
+
+      - name: Upload AAB artifact (signed main only)
+        if: github.ref_name == 'main' && env.HAS_SIGNING == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn

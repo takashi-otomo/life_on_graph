@@ -13,8 +13,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 配信に必要な Secret (サービスアカウント) が未登録の間はビルド/配信ジョブをスキップし、
+  # 設定前の push で赤色失敗にならないようにする (docs/release.md のセットアップ後に有効化)。
+  guard:
+    name: Check distribution config
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ] && [ -n "${{ secrets.FIREBASE_ANDROID_APP_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Firebase App Distribution の Secret が未設定のため配信をスキップします (docs/release.md 参照)。"
+          fi
+
   build-and-distribute:
     name: Build & Distribute
+    needs: guard
+    if: needs.guard.outputs.configured == 'true'
     runs-on: ubuntu-latest
     # アップロード鍵 (keystore) Secret がある場合のみ Play 提出用 AAB を生成する (#121)。
     env:

@@ -11,9 +11,11 @@ class AppConstants {
   /// アプリの表示バージョン (pubspec の version と一致させる)。
   static const String appVersion = '1.0.0';
 
-  /// プライバシーポリシーの公開 URL (#43, GitHub Pages)。
-  static const String privacyPolicyUrl =
-      'https://takashi-otomo.github.io/life_on_graph/privacy-policy.html';
+  /// プライバシーポリシーの公開 URL (#115, ホームページと同一ドメイン / Firebase Hosting)。
+  static const String privacyPolicyUrl = 'https://lifeongraph.web.app/privacy';
+
+  /// アプリ公式ホームページ (#114, Firebase Hosting)。
+  static const String homepageUrl = 'https://lifeongraph.web.app';
 
   /// お問い合わせ先メールアドレス。
   static const String contactEmail = 'tekinananika@gmail.com';

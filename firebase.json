@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"lifeongraph","appId":"1:563091576174:android:37f82d768fadf1cbbadd7f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"lifeongraph","configurations":{"android":"1:563091576174:android:37f82d768fadf1cbbadd7f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "lifeongraph",
+          "appId": "1:563091576174:android:37f82d768fadf1cbbadd7f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "lifeongraph",
+          "configurations": {
+            "android": "1:563091576174:android:37f82d768fadf1cbbadd7f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "website/public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "headers": [
+      {
+        "source": "**/*.@(css|svg)",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+      }
+    ]
+  }
+}

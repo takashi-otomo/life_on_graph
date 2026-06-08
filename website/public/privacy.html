@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <title>プライバシーポリシー — Life On Graph</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/">
+      <img class="brand-logo" src="assets/logo.svg" width="34" height="34" alt="Life On Graph logo" />
+      <span class="brand-name">Life On Graph</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#features">機能</a>
+      <a href="/privacy">プライバシー</a>
+      <a href="mailto:tekinananika@gmail.com">お問い合わせ</a>
+    </nav>
+  </header>
+
+  <main class="policy">
+    <h1>プライバシーポリシー — Life On Graph (LOG)</h1>
+    <p class="updated"><strong>最終更新日: 2026年6月6日</strong></p>
+
+    <p>本プライバシーポリシー（以下「本ポリシー」）は、Takashi Otomo（以下「当方」）が提供する Android アプリ <strong>Life On Graph（LOG）</strong>（以下「本アプリ」）における利用者の情報の取り扱いについて定めるものです。本アプリはヘルスケアデータを<strong>端末内のみで処理するローカルファースト設計</strong>を採用しており、利用者のデータをクラウドへ送信しません。</p>
+
+    <h2>1. 取得する情報</h2>
+    <p>本アプリは、Android の <strong>Health Connect</strong> を通じて、利用者が明示的に許可した場合に限り、以下の健康データを<strong>読み取り専用（READ）</strong>で取得します。</p>
+    <ul>
+      <li>睡眠（睡眠ステージを含む）— <code>READ_SLEEP</code></li>
+      <li>歩数 — <code>READ_STEPS</code></li>
+      <li>心拍（脈拍）— <code>READ_HEART_RATE</code></li>
+      <li>上記データの過去履歴（初回バックフィル用）— <code>READ_HEALTH_DATA_HISTORY</code></li>
+    </ul>
+    <p>歩数の取得には、Android の<strong>身体活動（Activity Recognition）</strong>権限を別途利用します。本アプリは上記<strong>以外の健康データを取得しません</strong>。また、健康データへの<strong>書き込み（WRITE）権限は一切要求しません</strong>（データ最小化の原則）。本アプリは利用者の氏名・メールアドレス・位置情報・連絡先・端末識別子などの個人を特定する情報を収集しません。</p>
+
+    <h2>2. 利用目的</h2>
+    <p>取得した健康データは、<strong>利用者本人がご自身の睡眠・歩数・心拍を可視化（グラフ表示）する目的にのみ</strong>利用します。これ以外の目的（分析サービスへの提供、広告、プロファイリング等）には利用しません。</p>
+
+    <h2>3. データの保存と保護</h2>
+    <ul>
+      <li>取得したデータは、<strong>利用者の端末内</strong>の暗号化データベース（Hive）に保存されます。</li>
+      <li>データベースは <strong>AES-256</strong> で暗号化され、暗号鍵は Android の Keystore と連携したセキュアストレージ（<code>flutter_secure_storage</code>）でのみ取り扱います。</li>
+      <li>本アプリは取得データを<strong>外部サーバーへ送信しません</strong>。クラウドバックアップ・同期機能は提供しません。</li>
+      <li>本アプリは Android の自動バックアップおよび端末間データ転送の対象から本アプリのデータ（暗号化された健康データおよび暗号鍵）を<strong>除外</strong>しています。</li>
+      <li>健康データを<strong>ログとして平文出力しません</strong>。</li>
+    </ul>
+
+    <h2>4. 第三者への提供・共有</h2>
+    <p>当方は、法令に基づく場合を除き、取得した健康データを<strong>第三者へ提供・共有・販売しません</strong>。本アプリは広告 SDK・解析 SDK を組み込んでおらず、第三者によるデータ収集は行われません。</p>
+
+    <h2>5. データの保持と削除</h2>
+    <ul>
+      <li>データは利用者の端末内にのみ保持されます。</li>
+      <li><strong>アプリ内の「設定 → すべてのデータを削除」から、端末内に保存した睡眠・歩数・心拍データをいつでも削除できます。</strong></li>
+      <li><strong>本アプリをアンインストールすると、端末内に保存された本アプリのデータは削除されます。</strong></li>
+      <li>利用者が Health Connect 側で本アプリへの権限を撤回した場合、本アプリはそれ以降の新規データ取得を停止します。</li>
+      <li>利用者が Health Connect 側で元データを削除した場合、<strong>次回の同期時に本アプリの端末内複製も削除されます</strong>。</li>
+    </ul>
+
+    <h2>6. 利用者の権利と管理</h2>
+    <p>利用者は、Android の <strong>Health Connect アプリ</strong>から、本アプリに付与した健康データの権限をいつでも確認・撤回できます。権限の撤回後も、本アプリは引き続きご利用いただけます（新規データ取得は停止します）。</p>
+
+    <h2>7. 子どものプライバシー</h2>
+    <p>本アプリは、健康データを扱う性質上、未成年者の利用にあたっては保護者の同意のもとでのご利用を推奨します。</p>
+
+    <h2>8. 本ポリシーの改定</h2>
+    <p>当方は、法令の変更や本アプリの機能追加に応じて本ポリシーを改定することがあります。重要な変更を行う場合は、本ページの最終更新日を更新するとともに、必要に応じてアプリ内で通知します。</p>
+
+    <h2>9. お問い合わせ</h2>
+    <ul>
+      <li>運営者: Takashi Otomo</li>
+      <li>連絡先: <a href="mailto:tekinananika@gmail.com">tekinananika@gmail.com</a></li>
+    </ul>
+  </main>
+
+  <footer class="footer">
+    <span class="copy">© 2026 Life On Graph</span>
+    <nav class="footer-links">
+      <a href="/privacy">プライバシーポリシー</a>
+      <a href="mailto:tekinananika@gmail.com">お問い合わせ</a>
+    </nav>
+  </footer>
+</body>
+</html>

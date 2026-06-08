@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life On Graph — 睡眠・歩数・心拍を、端末内だけで可視化</title>
+  <meta name="description" content="Life On Graph は Android の Health Connect から睡眠・歩数・心拍を取得し、端末内だけで可視化するローカルファーストなアプリです。データを外部に送信しません。" />
+  <meta property="og:title" content="Life On Graph" />
+  <meta property="og:description" content="睡眠・歩数・心拍を、端末内だけで可視化。ローカルファーストなヘルスケアアプリ。" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/">
+      <img class="brand-logo" src="assets/logo.svg" width="34" height="34" alt="Life On Graph logo" />
+      <span class="brand-name">Life On Graph</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">機能</a>
+      <a href="/privacy">プライバシー</a>
+      <a href="mailto:tekinananika@gmail.com">お問い合わせ</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-text">
+        <h1>睡眠・歩数・心拍を、<br />端末内だけで可視化。</h1>
+        <p>Life On Graph は Health Connect のデータを端末内だけで可視化するローカルファーストなアプリ。あなたのヘルスデータを外部に送信しません。</p>
+        <a class="play-badge" href="#" aria-label="Google Play で入手 (準備中)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3.5v17a.5.5 0 0 0 .77.42l13-8.5a.5.5 0 0 0 0-.84l-13-8.5A.5.5 0 0 0 5 3.5z"/></svg>
+          <span>Google Play で入手</span>
+        </a>
+        <p class="badge-note">※ 近日公開予定</p>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="ps-bar"></div>
+            <div class="ps-card"></div>
+            <div class="ps-card tall"></div>
+            <div class="ps-card"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2>主な機能</h2>
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="chip chip-indigo">🌙</div>
+          <h3>睡眠ステージ</h3>
+          <p>深い / 浅い / レム / 覚醒をヒプノグラムで可視化。</p>
+        </article>
+        <article class="feature">
+          <div class="chip chip-green">👣</div>
+          <h3>歩数トレンド</h3>
+          <p>時間帯別・日 / 週 / 月の推移をグラフで把握。</p>
+        </article>
+        <article class="feature">
+          <div class="chip chip-rose">❤️</div>
+          <h3>心拍</h3>
+          <p>安静時 / 最高・睡眠中の心拍を表示。</p>
+        </article>
+        <article class="feature">
+          <div class="chip chip-indigo">🔒</div>
+          <h3>ローカルファースト</h3>
+          <p>端末内で AES-256 暗号化保存。外部送信なし。</p>
+        </article>
+        <article class="feature">
+          <div class="chip chip-indigo">📅</div>
+          <h3>カレンダー</h3>
+          <p>特定の日 / 週 / 月へジャンプ。データのある日が一目で分かる。</p>
+        </article>
+        <article class="feature">
+          <div class="chip chip-green">🌐</div>
+          <h3>多言語対応</h3>
+          <p>日本語・英語・フランス語・ドイツ語・ポルトガル語・スペイン語。</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="copy">© 2026 Life On Graph</span>
+    <nav class="footer-links">
+      <a href="/privacy">プライバシーポリシー</a>
+      <a href="mailto:tekinananika@gmail.com">お問い合わせ</a>
+    </nav>
+  </footer>
+</body>
+</html>

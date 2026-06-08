@@ -40,7 +40,10 @@ Life On Graph (LOG) は、Android の Health Connect から **睡眠・歩数・
 睡眠, 歩数, 心拍, Health Connect, ヘルスケア, 可視化, ローカル, プライバシー
 
 ## プライバシーポリシー URL
-https://takashi-otomo.github.io/life_on_graph/privacy-policy.html
+https://lifeongraph.web.app/privacy
+
+## ホームページ URL
+https://lifeongraph.web.app
 
 ## 連絡先
 tekinananika@gmail.com

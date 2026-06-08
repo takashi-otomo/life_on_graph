@@ -13,8 +13,10 @@
 2. PR を **`develop`** 向けに作成 → CI (analyze/test) 緑 + レビュー後マージ。
 3. `develop` への push で **テスト版 APK** が App Distribution の `testers` へ自動配信される。
 4. テスト OK なら `develop` → **`main`** へ PR してマージ。
-5. `main` への push で **製品候補 APK** が `production` へ配信され、同時に **AAB** が成果物として生成される。
-6. その AAB を **Google Play** (内部テスト→製品トラック) に提出してリリースする。
+5. `main` への push で **製品候補 APK** が `production` へ配信される。アップロード鍵 (keystore) Secret が設定済みなら **署名済み AAB** も成果物として生成される (未設定時はスキップ。#121)。
+6. その署名済み AAB を **Google Play** (内部テスト→製品トラック) に提出してリリースする。
+
+> 配信ジョブはビルド前に `dart format` / `flutter analyze` / `flutter test` を実行し、**テストが通った場合のみ配信**する。
 
 > 旧運用 (作業ブランチを `main` から切る) から変更。今後の起点は `develop`。
 

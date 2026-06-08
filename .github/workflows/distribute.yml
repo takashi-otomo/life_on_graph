@@ -16,6 +16,9 @@ jobs:
   build-and-distribute:
     name: Build & Distribute
     runs-on: ubuntu-latest
+    # アップロード鍵 (keystore) Secret がある場合のみ Play 提出用 AAB を生成する (#121)。
+    env:
+      HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,6 +54,16 @@ jobs:
             echo "notes=テスト版 (develop) build ${{ github.sha }}" >> "$GITHUB_OUTPUT"
           fi
 
+      # テスト失敗時は配信しないよう、ビルド前に analyze/test でゲートする。
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
       - name: Build APK (release)
         run: flutter build apk --release
 
@@ -63,13 +76,14 @@ jobs:
           releaseNotes: ${{ steps.target.outputs.notes }}
           file: build/app/outputs/flutter-apk/app-release.apk
 
-      # main は Google Play 提出用の AAB も生成し、成果物として保存する。
-      - name: Build App Bundle (main only)
-        if: github.ref_name == 'main'
+      # main かつアップロード鍵が設定済みの場合のみ Play 提出用 AAB を生成する。
+      # 署名未設定 (デバッグ署名) の AAB は Play に提出できないため成果物化しない (#121)。
+      - name: Build App Bundle (signed main only)
+        if: github.ref_name == 'main' && env.HAS_SIGNING == 'true'
         run: flutter build appbundle --release
 
-      - name: Upload AAB artifact (main only)
-        if: github.ref_name == 'main'
+      - name: Upload AAB artifact (signed main only)
+        if: github.ref_name == 'main' && env.HAS_SIGNING == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab

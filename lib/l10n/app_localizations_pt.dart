@@ -378,4 +378,20 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get tutTabsBody =>
       'Alterne entre Início (detalhe do dia), Resumo (tendências dia/semana/mês) e Configurações.';
+
+  @override
+  String get appLock => 'Bloqueio do app';
+
+  @override
+  String get appLockSubtitle => 'Exigir biometria ou PIN para abrir o app';
+
+  @override
+  String get unlock => 'Desbloquear';
+
+  @override
+  String get lockReason => 'Autentique-se para desbloquear o Life On Graph';
+
+  @override
+  String get lockUnavailable =>
+      'Nenhuma biometria ou PIN está configurado neste dispositivo';
 }

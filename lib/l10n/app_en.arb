@@ -129,5 +129,11 @@
   "tutCardsTitle": "Your daily data",
   "tutCardsBody": "Sleep stages, steps and heart rate for the selected day, plus an integrated view on a shared timeline.",
   "tutTabsTitle": "Switch screens",
-  "tutTabsBody": "Switch between Home (daily detail), Summary (day/week/month trends) and Settings."
+  "tutTabsBody": "Switch between Home (daily detail), Summary (day/week/month trends) and Settings.",
+
+  "appLock": "App lock",
+  "appLockSubtitle": "Require biometric or PIN to open the app",
+  "unlock": "Unlock",
+  "lockReason": "Authenticate to unlock Life On Graph",
+  "lockUnavailable": "Biometric or device PIN is not set up on this device"
 }

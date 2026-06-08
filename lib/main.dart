@@ -10,6 +10,7 @@ import 'l10n/app_localizations.dart';
 import 'core/database_manager.dart';
 import 'core/launch_intent.dart';
 import 'features/app_shell.dart';
+import 'features/lock/app_lock_gate.dart';
 import 'features/onboarding/onboarding_wizard.dart';
 import 'features/rationale/rationale_view.dart';
 import 'features/splash/animated_splash.dart';
@@ -173,7 +174,7 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
 
     // 初回起動: 約5秒の丁寧なアニメーション → 設定ウィザード。差分同期はしない。
     if (_firstLaunch!) {
-      if (_onboardingDone) return const AppShell();
+      if (_onboardingDone) return const AppLockGate(child: AppShell());
       if (_animationDone) {
         return OnboardingWizard(
           onFinish: () => setState(() => _onboardingDone = true),
@@ -189,7 +190,9 @@ class _SplashGateState extends ConsumerState<_SplashGate> {
     }
 
     // 通常起動: 短いスプラッシュ + 差分同期 → ホーム。
-    if (_animationDone && _syncDone) return const AppShell();
+    if (_animationDone && _syncDone) {
+      return const AppLockGate(child: AppShell());
+    }
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
@@ -286,7 +289,7 @@ class _RationaleAppState extends State<RationaleApp> {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             localeResolutionCallback: _resolveLocale,
-            home: const AppShell(),
+            home: const AppLockGate(child: AppShell()),
           );
         },
       ),

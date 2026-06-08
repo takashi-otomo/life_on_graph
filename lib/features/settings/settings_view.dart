@@ -5,9 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_constants.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/app_lock_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/sync_notifier.dart';
+import '../../repositories/biometric_auth.dart';
 
 /// 設定画面 (データ同期 / プライバシー・セキュリティ / 情報) (#69)。
 class SettingsView extends ConsumerWidget {
@@ -83,6 +85,22 @@ class SettingsView extends ConsumerWidget {
             _SectionHeader(l.sectionPrivacy),
             _SettingsCard(
               children: <Widget>[
+                _SettingsTile(
+                  icon: Icons.lock_outline,
+                  iconColor: AppColors.accent,
+                  title: l.appLock,
+                  subtitle: l.appLockSubtitle,
+                  trailing: Switch(
+                    value: ref.watch(appLockEnabledProvider),
+                    onChanged: (v) => _toggleLock(context, ref, v),
+                  ),
+                  onTap: () => _toggleLock(
+                    context,
+                    ref,
+                    !ref.read(appLockEnabledProvider),
+                  ),
+                ),
+                const _Divider(),
                 _SettingsTile(
                   icon: Icons.privacy_tip,
                   iconColor: AppColors.accent,
@@ -225,6 +243,32 @@ class SettingsView extends ConsumerWidget {
     if (selected == null) return; // シートを閉じただけ。
     final Locale? next = selected == systemSentinel ? null : Locale(selected);
     await ref.read(localeProvider.notifier).setLocale(next);
+  }
+
+  /// アプリロックの有効/無効を切り替える (#79)。
+  ///
+  /// 有効化時は端末の認証可否を確認し、認証成功時のみ有効にする (誤設定で締め出されない
+  /// ようにする)。無効化は解錠済み画面からの操作のため確認のみ。
+  Future<void> _toggleLock(
+    BuildContext context,
+    WidgetRef ref,
+    bool enable,
+  ) async {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final BiometricAuth auth = ref.read(biometricAuthProvider);
+    if (enable) {
+      if (!await auth.isAvailable()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.lockUnavailable)));
+        }
+        return;
+      }
+      final bool ok = await auth.authenticate(l.lockReason);
+      if (!ok) return;
+    }
+    await ref.read(appLockEnabledProvider.notifier).set(enable);
   }
 
   static Future<void> _openUrl(String url) async {

@@ -17,8 +17,8 @@ class AppConstants {
   /// アプリ公式ホームページ (#114, Firebase Hosting)。
   static const String homepageUrl = 'https://lifeongraph.web.app';
 
-  /// お問い合わせ先メールアドレス。
-  static const String contactEmail = 'tekinananika@gmail.com';
+  /// お問い合わせ先 (Google フォーム)。
+  static const String contactUrl = 'https://forms.gle/TQSUCq7ERuMLn6jB8';
 
   /// 初回同期で遡るバックフィル日数 (設計doc 8 章)。
   ///

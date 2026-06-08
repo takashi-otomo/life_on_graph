@@ -75,7 +75,7 @@ Android アプリ **Life On Graph（LOG）**（以下「本アプリ」）にお
 本ポリシーまたは本アプリのデータの取り扱いに関するお問い合わせは、以下までご連絡ください。
 
 - 運営者: Takashi Otomo
-- 連絡先: tekinananika@gmail.com
+- お問い合わせ (Google フォーム): https://forms.gle/TQSUCq7ERuMLn6jB8
 
 ---
 

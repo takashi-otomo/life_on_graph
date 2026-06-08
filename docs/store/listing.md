@@ -45,8 +45,8 @@ https://lifeongraph.web.app/privacy
 ## ホームページ URL
 https://lifeongraph.web.app
 
-## 連絡先
-tekinananika@gmail.com
+## お問い合わせ (Google フォーム)
+https://forms.gle/TQSUCq7ERuMLn6jB8
 
 ## データセーフティ(申告の要点)
 - **データ収集: なし**。Google Play の「収集 (collection)」は端末外(サーバー等)への

@@ -47,3 +47,9 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // local_auth (#79) の BiometricPrompt は API 26/27 の互換ダイアログで
+    // AppCompat テーマを要求するため appcompat を明示的に追加する。
+    implementation("androidx.appcompat:appcompat:1.7.0")
+}

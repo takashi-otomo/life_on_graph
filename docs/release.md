@@ -14,7 +14,7 @@
 3. `develop` への push で **テスト版 APK** が App Distribution の `testers` へ自動配信される。
 4. テスト OK なら `develop` → **`main`** へ PR してマージ。
 5. `main` への push では**署名が設定済みの場合のみ** production 配信を行う(デバッグ署名の製品配布を避けるため)。**署名済み APK** を `production` へ配信し、さらに Play サービスアカウントが設定済みなら **署名済み AAB** を **Google Play (production トラック) へ自動公開**する。versionCode は実行ごとに一意化される。
-6. リリースノートは **`tool/release_notes.sh` が git 履歴から自動生成**し、App Distribution と Play の双方に反映する。
+6. リリースノートは **App Distribution は `tool/release_notes.sh` が git 履歴から自動生成**、**Google Play は `distribution/whatsnew/whatsnew-<locale>` を言語ごとに手動管理**して反映する(詳細は後述「リリースノート」)。
 
 > 配信ジョブはビルド前に `dart format` / `flutter analyze` / `flutter test` を実行し、**テストが通った場合のみ配信**する。
 
@@ -99,8 +99,11 @@ Google Play は **versionCode の重複を許さない**ため、アップロー
   tool/build_release.sh apk        # 同上で APK
   tool/build_release.sh aab --keep # 増分せず現在値でビルド
   ```
-- **CI**: `distribute.yml` / `build-aab.yml` は `--build-number=<run number>` で実行ごとに
+- **CI**: `distribute.yml` / `build-aab.yml` は `--build-number=$((10000 + run number))` で実行ごとに
   一意・増加する versionCode を自動付与する(手動バンプ不要)。
+- **番号帯の分離**: ローカル手動アップロードは **10000 未満**(`build_release.sh` の小さい番号)、
+  CI は **10000 以上**を用いるため、両者の versionCode が衝突しない。初回手動アップロードを
+  versionCode 1 で行っても、CI の初回公開 (10001〜) が必ずそれを上回る。
 - Play へ実アップロードする versionCode は常に増加させること。
 
 ## 初回 AAB をローカルでビルドする

@@ -133,10 +133,15 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
-      # Play は versionCode の重複を拒否するため、毎公開で一意・増加する build-number
-      # (GitHub の run number) を付与する。
+      # Play は versionCode の重複を拒否するため、毎公開で一意・増加する build-number を
+      # 付与する。ローカル手動アップロード (小さい番号) と衝突しないよう 10000 を加算した
+      # 高い番号帯 (CI 専用) を用いる。
+      - name: Resolve versionCode
+        id: vc
+        run: echo "value=$((10000 + ${{ github.run_number }}))" >> "$GITHUB_OUTPUT"
+
       - name: Build APK (signed release)
-        run: flutter build apk --release --build-number=${{ github.run_number }}
+        run: flutter build apk --release --build-number=${{ steps.vc.outputs.value }}
 
       - name: Distribute to production (App Distribution)
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -150,7 +155,7 @@ jobs:
       # Play サービスアカウントが揃う場合のみ Google Play へ公開する。
       - name: Build App Bundle (signed)
         if: needs.guard.outputs.play == 'true'
-        run: flutter build appbundle --release --build-number=${{ github.run_number }}
+        run: flutter build appbundle --release --build-number=${{ steps.vc.outputs.value }}
 
       - name: Publish to Google Play (production)
         if: needs.guard.outputs.play == 'true'

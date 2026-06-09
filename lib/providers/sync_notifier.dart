@@ -69,6 +69,20 @@ final dataRevisionProvider = NotifierProvider<DataRevision, int>(
   DataRevision.new,
 );
 
+/// 同期の進捗 (初期同期 UI 表示用)。同期中のみ非 null、完了/未同期で `null`。
+class SyncProgressNotifier extends Notifier<SyncProgress?> {
+  @override
+  SyncProgress? build() => null;
+
+  void update(SyncProgress? progress) => state = progress;
+}
+
+/// 同期進捗プロバイダ。UI が watch して件数・種別を表示する (#sync-progress)。
+final syncProgressProvider =
+    NotifierProvider<SyncProgressNotifier, SyncProgress?>(
+      SyncProgressNotifier.new,
+    );
+
 /// 同期を駆動し状態遷移を公開する [Notifier] (T-502)。
 class SyncNotifier extends Notifier<SyncState> {
   @override
@@ -82,6 +96,10 @@ class SyncNotifier extends Notifier<SyncState> {
   /// 終了時に [dataRevisionProvider] をインクリメントし派生プロバイダを再評価させる。
   Future<void> sync({bool force = false}) async {
     state = const SyncInProgress();
+    final SyncProgressNotifier progress = ref.read(
+      syncProgressProvider.notifier,
+    );
+    progress.update(null);
     final HealthSyncRepository repo = ref.read(healthSyncRepositoryProvider);
     try {
       await repo.configure();
@@ -94,13 +112,17 @@ class SyncNotifier extends Notifier<SyncState> {
       // 歩数取得に必要な ACTIVITY_RECOGNITION 権限を best-effort で確保 (#58)。
       // 拒否されても歩数のみ影響し、睡眠・心拍は継続するため結果は問わない。
       await repo.ensureActivityRecognitionPermission();
-      final SyncOutcome outcome = await repo.sync(force: force);
+      final SyncOutcome outcome = await repo.sync(
+        force: force,
+        onProgress: progress.update,
+      );
       state = outcome.isFullSuccess ? SyncDone(outcome) : SyncPartial(outcome);
     } catch (e) {
       // ヘルスコネクト未導入・クエリ制限等 (設計doc 12 章) は捕捉し次回同期へ委譲。
       state = SyncError(e);
     } finally {
-      // 同期完了 (成功/部分/失敗) 後に一度だけ再評価させる。
+      // 進捗をクリアし、同期完了 (成功/部分/失敗) 後に一度だけ再評価させる。
+      progress.update(null);
       ref.read(dataRevisionProvider.notifier).bump();
     }
   }

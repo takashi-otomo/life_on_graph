@@ -88,6 +88,21 @@ base64 -i upload-keystore.jks | pbcopy
 CI はこれらから `android/app/upload-keystore.jks` + `android/key.properties` を復元し、`release` ビルドを署名する
 (ローカルに `key.properties` が無ければデバッグ署名にフォールバック)。
 
+## バージョン番号 (versionCode) の運用
+
+Google Play は **versionCode の重複を許さない**ため、アップロードのたびに増やす必要がある。
+
+- **ローカルビルド**: [`tool/build_release.sh`](../tool/build_release.sh) がビルドのたびに
+  `pubspec.yaml` の `version: <name>+<code>` の `<code>` を +1 してからビルドする(変更はコミット)。
+  ```sh
+  tool/build_release.sh            # versionCode を +1 して AAB をビルド
+  tool/build_release.sh apk        # 同上で APK
+  tool/build_release.sh aab --keep # 増分せず現在値でビルド
+  ```
+- **CI**: `distribute.yml` / `build-aab.yml` は `--build-number=<run number>` で実行ごとに
+  一意・増加する versionCode を自動付与する(手動バンプ不要)。
+- Play へ実アップロードする versionCode は常に増加させること。
+
 ## 初回 AAB をローカルでビルドする
 
 Play は最初の 1 本を手動アップロードする必要がある。署名済み AAB をローカルで生成する手順:

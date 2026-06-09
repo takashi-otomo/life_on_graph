@@ -14,7 +14,7 @@
 3. `develop` への push で **テスト版 APK** が App Distribution の `testers` へ自動配信される。
 4. テスト OK なら `develop` → **`main`** へ PR してマージ。
 5. `main` への push では**署名が設定済みの場合のみ** production 配信を行う(デバッグ署名の製品配布を避けるため)。**署名済み APK** を `production` へ配信し、さらに Play サービスアカウントが設定済みなら **署名済み AAB** を **Google Play (production トラック) へ自動公開**する。versionCode は実行ごとに一意化される。
-6. リリースノートは **`tool/release_notes.sh` が git 履歴から自動生成**し、App Distribution と Play の双方に反映する。
+6. リリースノートは **App Distribution は `tool/release_notes.sh` が git 履歴から自動生成**、**Google Play は `distribution/whatsnew/whatsnew-<locale>` を言語ごとに手動管理**して反映する(詳細は後述「リリースノート」)。
 
 > 配信ジョブはビルド前に `dart format` / `flutter analyze` / `flutter test` を実行し、**テストが通った場合のみ配信**する。
 
@@ -63,14 +63,17 @@ firebase appdistribution:distribute \
   --release-notes "manual build"
 ```
 
-## リリースノートの自動生成
+## リリースノート
 
+### Firebase App Distribution (自動生成)
 [`tool/release_notes.sh`](../tool/release_notes.sh) が直近タグ以降 (タグが無ければ直近 30 コミット) の
-`feat:` / `fix:` コミットを集計し、以下を生成する。
-- `release_notes.txt` — App Distribution 用 (全文)
-- `distribution/whatsnew/whatsnew-en-US` / `whatsnew-ja-JP` — Google Play 用 (各 500 字以内)
+`feat:` / `fix:` コミットを集計して `release_notes.txt` を生成する。
+コミットメッセージ規約 (`feat: ...` / `fix: ...`) に沿って書くと自動反映される。
 
-コミットメッセージ規約 (`feat: ...` / `fix: ...`) に沿って書くことで、リリースノートに自動反映される。
+### Google Play (言語ごとに手動管理)
+[`distribution/whatsnew/whatsnew-<locale>`](../distribution/whatsnew/) に**言語ごと**に記述する
+(プレーンテキスト・500 字以内)。`main` 公開時に Play の「最新情報」へ反映される。
+記述ルールは [`distribution/whatsnew/README.md`](../distribution/whatsnew/README.md) を参照。
 
 ## アップロード鍵 (署名) のセットアップ
 
@@ -84,6 +87,48 @@ base64 -i upload-keystore.jks | pbcopy
 `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` も Secrets に登録する。
 CI はこれらから `android/app/upload-keystore.jks` + `android/key.properties` を復元し、`release` ビルドを署名する
 (ローカルに `key.properties` が無ければデバッグ署名にフォールバック)。
+
+## バージョン番号 (versionCode) の運用
+
+Google Play は **versionCode の重複を許さない**ため、アップロードのたびに増やす必要がある。
+
+- **ローカルビルド**: [`tool/build_release.sh`](../tool/build_release.sh) がビルドのたびに
+  `pubspec.yaml` の `version: <name>+<code>` の `<code>` を +1 してからビルドする(変更はコミット)。
+  ```sh
+  tool/build_release.sh            # versionCode を +1 して AAB をビルド
+  tool/build_release.sh apk        # 同上で APK
+  tool/build_release.sh aab --keep # 増分せず現在値でビルド
+  ```
+- **CI**: `distribute.yml` / `build-aab.yml` は `--build-number=$((10000 + run number))` で実行ごとに
+  一意・増加する versionCode を自動付与する(手動バンプ不要)。
+- **番号帯の分離**: ローカル手動アップロードは **10000 未満**(`build_release.sh` の小さい番号)、
+  CI は **10000 以上**を用いるため、両者の versionCode が衝突しない。初回手動アップロードを
+  versionCode 1 で行っても、CI の初回公開 (10001〜) が必ずそれを上回る。
+- Play へ実アップロードする versionCode は常に増加させること。
+
+## 初回 AAB をローカルでビルドする
+
+Play は最初の 1 本を手動アップロードする必要がある。署名済み AAB をローカルで生成する手順:
+
+```sh
+# 1. アップロード鍵をプロジェクトに配置 (android/app/ 配下。git 管理対象外)
+cp upload-keystore.jks android/app/upload-keystore.jks
+
+# 2. android/key.properties を作成 (パスワード等は keystore 生成時の値)
+cat > android/key.properties <<'EOF'
+storeFile=upload-keystore.jks
+storePassword=<キーストアのパスワード>
+keyAlias=upload
+keyPassword=<鍵のパスワード>
+EOF
+
+# 3. 署名済み AAB をビルド (build-number は Play の versionCode。重複不可)
+flutter build appbundle --release --build-number=1
+# 出力: build/app/outputs/bundle/release/app-release.aab
+```
+
+生成された `app-release.aab` を Play Console にアップロードする。
+`android/key.properties` と `*.jks` は `.gitignore` 済みでコミットされない。
 
 ## Google Play 公開のセットアップ
 

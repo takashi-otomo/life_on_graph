@@ -17,6 +17,9 @@ env:
 jobs:
   build-aab:
     name: Build signed AAB
+    # 署名鍵 Secret を使うため、保護されたリリースブランチからの実行のみ許可する
+    # (任意ブランチからの鍵悪用を防ぐ)。
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,14 +54,21 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
+      # 入力は env 経由で受け取り、数値であることを検証してからビルドへ渡す
+      # (シェル/コマンド注入を防ぐ)。
       - name: Resolve build number
         id: bn
+        env:
+          INPUT_BN: ${{ github.event.inputs.build_number }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
-          if [ -n "${{ github.event.inputs.build_number }}" ]; then
-            echo "value=${{ github.event.inputs.build_number }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          bn="$INPUT_BN"
+          [ -z "$bn" ] && bn="$RUN_NUMBER"
+          if ! printf '%s' "$bn" | grep -Eq '^[0-9]+$'; then
+            echo "::error::build_number は数値で指定してください: '$bn'"
+            exit 1
           fi
+          echo "value=$bn" >> "$GITHUB_OUTPUT"
 
       - name: Build App Bundle (signed)
         run: flutter build appbundle --release --build-number=${{ steps.bn.outputs.value }}

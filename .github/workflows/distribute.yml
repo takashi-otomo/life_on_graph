@@ -28,12 +28,22 @@ jobs:
       signing: ${{ steps.c.outputs.signing }}
       play: ${{ steps.c.outputs.play }}
     steps:
+      # Secret は env 経由で参照する (JSON 鍵を run に直接展開しない / インジェクション回避)。
       - id: c
+        env:
+          FB_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FB_APP: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PLAY_SA: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
         run: |
           firebase=false; signing=false; play=false
-          [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ] && [ -n "${{ secrets.FIREBASE_ANDROID_APP_ID }}" ] && firebase=true
-          [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && signing=true
-          [ -n "${{ secrets.PLAY_SERVICE_ACCOUNT }}" ] && play=true
+          [ -n "$FB_SA" ] && [ -n "$FB_APP" ] && firebase=true
+          # 署名は keystore + 全パスワード/エイリアスが揃って初めて有効。
+          [ -n "$KS_B64" ] && [ -n "$KS_PW" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PW" ] && signing=true
+          [ -n "$PLAY_SA" ] && play=true
           echo "firebase=$firebase" >> "$GITHUB_OUTPUT"
           echo "signing=$signing" >> "$GITHUB_OUTPUT"
           echo "play=$play" >> "$GITHUB_OUTPUT"
@@ -76,11 +86,15 @@ jobs:
           releaseNotesFile: release_notes.txt
           file: build/app/outputs/flutter-apk/app-release.apk
 
-  # main → 製品配信 + Google Play 本番公開
+  # main → 製品配信 + Google Play 本番公開。
+  # production への配信/公開はデバッグ署名を避けるため署名必須とする。
   release-production:
     name: Release to production (main)
     needs: guard
-    if: github.ref_name == 'main' && needs.guard.outputs.firebase == 'true'
+    if: >-
+      github.ref_name == 'main' &&
+      needs.guard.outputs.firebase == 'true' &&
+      needs.guard.outputs.signing == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,9 +117,8 @@ jobs:
       - name: Generate release notes
         run: bash tool/release_notes.sh
 
-      # アップロード鍵 (keystore) を Secrets から復元する。
+      # アップロード鍵 (keystore) を Secrets から復元する (job が signing 必須)。
       - name: Decode upload keystore
-        if: needs.guard.outputs.signing == 'true'
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -113,15 +126,17 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks
-          cat > android/key.properties <<EOF
-          storeFile=upload-keystore.jks
-          storePassword=$STORE_PASSWORD
-          keyAlias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
-          EOF
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
 
-      - name: Build APK (release)
-        run: flutter build apk --release
+      # Play は versionCode の重複を拒否するため、毎公開で一意・増加する build-number
+      # (GitHub の run number) を付与する。
+      - name: Build APK (signed release)
+        run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Distribute to production (App Distribution)
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -132,13 +147,13 @@ jobs:
           releaseNotesFile: release_notes.txt
           file: build/app/outputs/flutter-apk/app-release.apk
 
-      # 署名 + Play サービスアカウントが揃う場合のみ Google Play へ公開する。
+      # Play サービスアカウントが揃う場合のみ Google Play へ公開する。
       - name: Build App Bundle (signed)
-        if: needs.guard.outputs.signing == 'true' && needs.guard.outputs.play == 'true'
-        run: flutter build appbundle --release
+        if: needs.guard.outputs.play == 'true'
+        run: flutter build appbundle --release --build-number=${{ github.run_number }}
 
       - name: Publish to Google Play (production)
-        if: needs.guard.outputs.signing == 'true' && needs.guard.outputs.play == 'true'
+        if: needs.guard.outputs.play == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
@@ -149,5 +164,5 @@ jobs:
           whatsNewDirectory: distribution/whatsnew
 
       - name: Notice (Play publish skipped)
-        if: needs.guard.outputs.signing != 'true' || needs.guard.outputs.play != 'true'
-        run: echo "::warning::署名(ANDROID_KEYSTORE_BASE64)または Play サービスアカウント(PLAY_SERVICE_ACCOUNT)が未設定のため Google Play 公開をスキップしました (docs/release.md / #121)。"
+        if: needs.guard.outputs.play != 'true'
+        run: echo "::warning::Play サービスアカウント(PLAY_SERVICE_ACCOUNT)が未設定のため Google Play 公開をスキップしました。App Distribution(production)のみ実施 (docs/release.md)。"

@@ -13,7 +13,7 @@
 2. PR を **`develop`** 向けに作成 → CI (analyze/test) 緑 + レビュー後マージ。
 3. `develop` への push で **テスト版 APK** が App Distribution の `testers` へ自動配信される。
 4. テスト OK なら `develop` → **`main`** へ PR してマージ。
-5. `main` への push で **製品版 APK** が `production` へ配信され、さらに署名 + Play サービスアカウントが設定済みなら **署名済み AAB** を **Google Play (production トラック) へ自動公開**する。
+5. `main` への push では**署名が設定済みの場合のみ** production 配信を行う(デバッグ署名の製品配布を避けるため)。**署名済み APK** を `production` へ配信し、さらに Play サービスアカウントが設定済みなら **署名済み AAB** を **Google Play (production トラック) へ自動公開**する。versionCode は実行ごとに一意化される。
 6. リリースノートは **`tool/release_notes.sh` が git 履歴から自動生成**し、App Distribution と Play の双方に反映する。
 
 > 配信ジョブはビルド前に `dart format` / `flutter analyze` / `flutter test` を実行し、**テストが通った場合のみ配信**する。

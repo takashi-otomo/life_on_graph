@@ -48,7 +48,9 @@ done < <(git log "${RANGE}" --no-merges --pretty='%s' || true)
 echo "=== release_notes.txt ==="
 cat release_notes.txt
 
-# Google Play 用 whatsnew (500 字以内に丸める)。
+# Google Play 用 whatsnew (500 字以内に丸める)。日本語を含むためバイトではなく
+# 文字単位で切り詰める (head -c だとマルチバイトが壊れる)。
 mkdir -p distribution/whatsnew
-head -c 480 release_notes.txt > distribution/whatsnew/whatsnew-en-US
+perl -CS -e 'local $/; my $t=<STDIN>; print substr($t, 0, 480)' \
+  < release_notes.txt > distribution/whatsnew/whatsnew-en-US
 cp distribution/whatsnew/whatsnew-en-US distribution/whatsnew/whatsnew-ja-JP

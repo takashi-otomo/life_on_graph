@@ -63,14 +63,17 @@ firebase appdistribution:distribute \
   --release-notes "manual build"
 ```
 
-## リリースノートの自動生成
+## リリースノート
 
+### Firebase App Distribution (自動生成)
 [`tool/release_notes.sh`](../tool/release_notes.sh) が直近タグ以降 (タグが無ければ直近 30 コミット) の
-`feat:` / `fix:` コミットを集計し、以下を生成する。
-- `release_notes.txt` — App Distribution 用 (全文)
-- `distribution/whatsnew/whatsnew-en-US` / `whatsnew-ja-JP` — Google Play 用 (各 500 字以内)
+`feat:` / `fix:` コミットを集計して `release_notes.txt` を生成する。
+コミットメッセージ規約 (`feat: ...` / `fix: ...`) に沿って書くと自動反映される。
 
-コミットメッセージ規約 (`feat: ...` / `fix: ...`) に沿って書くことで、リリースノートに自動反映される。
+### Google Play (言語ごとに手動管理)
+[`distribution/whatsnew/whatsnew-<locale>`](../distribution/whatsnew/) に**言語ごと**に記述する
+(プレーンテキスト・500 字以内)。`main` 公開時に Play の「最新情報」へ反映される。
+記述ルールは [`distribution/whatsnew/README.md`](../distribution/whatsnew/README.md) を参照。
 
 ## アップロード鍵 (署名) のセットアップ
 
@@ -84,6 +87,30 @@ base64 -i upload-keystore.jks | pbcopy
 `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` も Secrets に登録する。
 CI はこれらから `android/app/upload-keystore.jks` + `android/key.properties` を復元し、`release` ビルドを署名する
 (ローカルに `key.properties` が無ければデバッグ署名にフォールバック)。
+
+## 初回 AAB をローカルでビルドする
+
+Play は最初の 1 本を手動アップロードする必要がある。署名済み AAB をローカルで生成する手順:
+
+```sh
+# 1. アップロード鍵をプロジェクトに配置 (android/app/ 配下。git 管理対象外)
+cp upload-keystore.jks android/app/upload-keystore.jks
+
+# 2. android/key.properties を作成 (パスワード等は keystore 生成時の値)
+cat > android/key.properties <<'EOF'
+storeFile=upload-keystore.jks
+storePassword=<キーストアのパスワード>
+keyAlias=upload
+keyPassword=<鍵のパスワード>
+EOF
+
+# 3. 署名済み AAB をビルド (build-number は Play の versionCode。重複不可)
+flutter build appbundle --release --build-number=1
+# 出力: build/app/outputs/bundle/release/app-release.aab
+```
+
+生成された `app-release.aab` を Play Console にアップロードする。
+`android/key.properties` と `*.jks` は `.gitignore` 済みでコミットされない。
 
 ## Google Play 公開のセットアップ
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# リリースノートを git 履歴から自動生成する (#release-pipeline)。
+# Firebase App Distribution 用のリリースノートを git 履歴から自動生成する。
 #
 # 生成物:
-#   - release_notes.txt                     … Firebase App Distribution 用 (全文)
-#   - distribution/whatsnew/whatsnew-en-US  … Google Play 用 (英語, 500字以内)
-#   - distribution/whatsnew/whatsnew-ja-JP  … Google Play 用 (日本語, 500字以内)
+#   - release_notes.txt … App Distribution 用 (全文)
+#
+# Google Play のリリースノートは言語ごとに手動管理する (distribution/whatsnew/whatsnew-<locale>)。
+# 本スクリプトはそれらを上書きしない。
 #
 # 直近のタグ以降 (タグが無ければ直近 30 コミット) の feat/fix を要約する。
 set -euo pipefail
@@ -47,10 +48,3 @@ done < <(git log "${RANGE}" --no-merges --pretty='%s' || true)
 
 echo "=== release_notes.txt ==="
 cat release_notes.txt
-
-# Google Play 用 whatsnew (500 字以内に丸める)。日本語を含むためバイトではなく
-# 文字単位で切り詰める (head -c だとマルチバイトが壊れる)。
-mkdir -p distribution/whatsnew
-perl -CS -e 'local $/; my $t=<STDIN>; print substr($t, 0, 480)' \
-  < release_notes.txt > distribution/whatsnew/whatsnew-en-US
-cp distribution/whatsnew/whatsnew-en-US distribution/whatsnew/whatsnew-ja-JP

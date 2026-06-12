@@ -116,5 +116,9 @@
   "appLockSubtitle": "Exigir biometria ou PIN para abrir o app",
   "unlock": "Desbloquear",
   "lockReason": "Autentique-se para desbloquear o Life On Graph",
-  "lockUnavailable": "Nenhuma biometria ou PIN está configurado neste dispositivo"
+  "lockUnavailable": "Nenhuma biometria ou PIN está configurado neste dispositivo",
+  "syncReadingSleep": "Lendo dados de sono…",
+  "syncReadingSteps": "Lendo dados de passos…",
+  "syncReadingHeart": "Lendo dados de frequência cardíaca…",
+  "syncRecordsRead": "{count} registros"
 }

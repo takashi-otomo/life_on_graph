@@ -4,7 +4,6 @@
   "tabSummary": "サマリー",
   "tabSettings": "設定",
   "today": "今日",
-
   "sleep": "睡眠",
   "steps": "歩数",
   "heartRate": "心拍",
@@ -19,13 +18,11 @@
   "max": "最高",
   "allDay": "全日",
   "duringSleep": "睡眠中",
-
   "stageDeep": "深い",
   "stageLight": "浅い",
   "stageRem": "レム",
   "stageAwake": "覚醒",
   "stageUnknown": "不明",
-
   "summaryTitle": "サマリー",
   "periodDay": "日",
   "periodWeek": "週",
@@ -40,7 +37,6 @@
   "viewTodayDetail": "今日の詳細を見る",
   "sleepDuration": "睡眠時間",
   "summaryHint": "同じ時間軸で各データを別レーンに表示します",
-
   "settingsTitle": "設定",
   "sectionDataSync": "データ同期",
   "syncNow": "今すぐ同期",
@@ -64,7 +60,6 @@
   "delete": "削除する",
   "deletedSnack": "ローカルデータを削除しました",
   "deleteAbortedSyncing": "同期中のため削除を中止しました",
-
   "statusUnavailableTitle": "Health Connect が必要です",
   "statusUnavailableMessage": "睡眠・歩数・心拍を取得するには Health Connect の導入が必要です。",
   "install": "インストール",
@@ -74,7 +69,6 @@
   "statusSyncFailedTitle": "同期に失敗しました",
   "statusSyncFailedMessage": "表示中のデータはローカル保存分です。",
   "retry": "再試行",
-
   "durationHm": "{h}時間 {m}分",
   "durationMin": "{m}分",
   "prevDay": "前日",
@@ -82,10 +76,8 @@
   "crossTitle": "統合ビュー (睡眠×心拍×歩数)",
   "crossSubtitle": "起床時刻までの24時間。横スクロールで確認できます",
   "crossEmpty": "睡眠データがないため統合表示できません",
-
   "language": "言語",
   "languageSystem": "端末の設定に従う",
-
   "rationaleTitle": "ヘルスデータの利用について",
   "rationaleIntro": "{app} は、以下のデータを Health Connect から読み取り、端末内でのグラフ表示にのみ使用します。データを外部へ送信することはありません。",
   "rationaleSleepDesc": "睡眠ステージ(深い/浅い/レム/覚醒)を可視化するために読み取ります。",
@@ -100,7 +92,6 @@
   "weekShort": "{n}週",
   "jumpToday": "今日へ",
   "jumpThisMonth": "今月へ",
-
   "onbWelcomeTitle": "{app} へようこそ",
   "onbWelcomeBody": "睡眠・歩数・心拍を、端末内だけで可視化します。データを外部に送信することはありません。",
   "onbStart": "始める",
@@ -113,7 +104,6 @@
   "onbDoneTitle": "準備完了",
   "onbDoneBody": "データの準備ができました。ホーム画面でトレンドを確認しましょう。",
   "onbFinish": "はじめる",
-
   "tutSkip": "スキップ",
   "tutDone": "完了",
   "tutDateTitle": "日付をタップ",
@@ -122,10 +112,13 @@
   "tutCardsBody": "選択した日の睡眠ステージ・歩数・心拍に加え、同じ時間軸で見る統合ビューを表示します。",
   "tutTabsTitle": "画面を切り替え",
   "tutTabsBody": "ホーム(その日の詳細)・サマリー(日/週/月のトレンド)・設定 をタブで切り替えられます。",
-
   "appLock": "アプリのロック",
   "appLockSubtitle": "起動時に生体認証/PINで保護する",
   "unlock": "ロック解除",
   "lockReason": "ロックを解除するために認証してください",
-  "lockUnavailable": "この端末では生体認証/PINが設定されていません"
+  "lockUnavailable": "この端末では生体認証/PINが設定されていません",
+  "syncReadingSleep": "睡眠データを読み込み中…",
+  "syncReadingSteps": "歩数データを読み込み中…",
+  "syncReadingHeart": "心拍データを読み込み中…",
+  "syncRecordsRead": "{count} 件を取得"
 }

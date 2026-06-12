@@ -399,4 +399,22 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get lockUnavailable =>
       'Aucune biométrie ni code n\'est configuré sur cet appareil';
+
+  @override
+  String get syncReadingSleep => 'Lecture des données de sommeil…';
+
+  @override
+  String get syncReadingSteps => 'Lecture des données de pas…';
+
+  @override
+  String get syncReadingHeart => 'Lecture des données de fréquence cardiaque…';
+
+  @override
+  String syncRecordsRead(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString enregistrements';
+  }
 }

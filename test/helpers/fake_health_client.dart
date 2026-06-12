@@ -79,7 +79,13 @@ class FakeHealthClient implements HealthClient {
       if (_throwOnTypes.contains(type)) {
         throw StateError('fake fetch failure: $type');
       }
-      result.addAll(_dataByType[type] ?? const <HealthDataPoint>[]);
+      // 実 API 同様、クエリ範囲 `[start, end)` に開始が入るレコードのみ返す。
+      // (チャンク分割時に同一レコードが複数チャンクへ重複しないようにする)
+      for (final HealthDataPoint p in _dataByType[type] ?? const []) {
+        if (!p.dateFrom.isBefore(startTime) && p.dateFrom.isBefore(endTime)) {
+          result.add(p);
+        }
+      }
     }
     return result;
   }

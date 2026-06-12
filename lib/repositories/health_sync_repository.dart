@@ -58,6 +58,47 @@ class SyncOutcome {
   int get totalSaved => savedCounts.values.fold(0, (a, b) => a + b);
 }
 
+/// 同期の対象データ種別 (進捗表示用)。
+enum SyncPhase { sleep, steps, heartRate }
+
+/// 同期の進捗 (初期同期 UI 表示用)。種別ごと・時間チャンクごとに通知される。
+class SyncProgress {
+  const SyncProgress({
+    required this.phase,
+    required this.savedInPhase,
+    required this.phaseIndex,
+    required this.phaseCount,
+    required this.chunkIndex,
+    required this.chunkCount,
+  });
+
+  /// 現在処理中のデータ種別。
+  final SyncPhase phase;
+
+  /// この種別でこれまでに保存した件数 (累計)。
+  final int savedInPhase;
+
+  /// 種別の進行位置 (0 始まり)。
+  final int phaseIndex;
+
+  /// 種別総数 (睡眠・歩数・心拍 = 3)。
+  final int phaseCount;
+
+  /// 現在処理中の時間チャンク (0 始まり)。
+  final int chunkIndex;
+
+  /// この種別の総チャンク数。
+  final int chunkCount;
+
+  /// 全体の進捗率 (0.0〜1.0)。種別とチャンクの両方を加味した概算。
+  double get fraction {
+    if (phaseCount <= 0 || chunkCount <= 0) return 0;
+    final double perPhase = 1 / phaseCount;
+    final double within = (chunkIndex + 1) / chunkCount;
+    return (phaseIndex * perPhase + within * perPhase).clamp(0.0, 1.0);
+  }
+}
+
 /// ヘルスコネクト ⇄ ローカル DB を仲介する同期リポジトリ (設計doc 2 / 8 章)。
 ///
 /// 将来のクラウド / iOS 差し替えに備えインタフェースとして公開する。
@@ -86,7 +127,14 @@ abstract interface class HealthSyncRepository {
   /// 差分を取得してローカル DB へバッチ保存する。
   ///
   /// [force] が `true` の場合、差分極小スキップ (T-305) を無視して強制同期する。
-  Future<SyncOutcome> sync({DateTime? now, bool force = false});
+  ///
+  /// [onProgress] が指定された場合、種別・時間チャンクごとに進捗を通知する
+  /// (初期同期の UI 表示用)。
+  Future<SyncOutcome> sync({
+    DateTime? now,
+    bool force = false,
+    void Function(SyncProgress progress)? onProgress,
+  });
 
   /// [day] (正午〜翌正午の表示枠) のクレンジング済み睡眠セグメントを返す (M4)。
   ///
@@ -146,6 +194,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
 
   /// 初回バックフィル日数 (設計doc 8 章)。
   static const int backfillDays = AppConstants.backfillDays;
+
+  /// 同期時の時間チャンク日数 (メモリ抑制)。
+  static const int syncChunkDays = AppConstants.syncChunkDays;
 
   /// 履歴権限付与時の初回バックフィル日数。
   static const int historyBackfillDays = AppConstants.historyBackfillDays;
@@ -273,7 +324,11 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   Future<void> installHealthConnect() => _health.installHealthConnect();
 
   @override
-  Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {
+  Future<SyncOutcome> sync({
+    DateTime? now,
+    bool force = false,
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
     final DateTime end = now ?? DateTime.now();
 
     // #64: 先にリモート削除をローカルへ反映する。トークン期限切れ時はローカルを消去し
@@ -302,24 +357,33 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     // 1 種別の取得失敗が他種別の保存を阻害しないよう、種別ごとに独立実行する。
     saved['sleep'] = await _runCategory(
       key: 'sleep',
+      phase: SyncPhase.sleep,
+      phaseIndex: 0,
       failed: failed,
       types: sleepStageTypes,
       window: window,
       save: _saveSleep,
+      onProgress: onProgress,
     );
     saved['steps'] = await _runCategory(
       key: 'steps',
+      phase: SyncPhase.steps,
+      phaseIndex: 1,
       failed: failed,
       types: const <HealthDataType>[HealthDataType.STEPS],
       window: window,
       save: _saveSteps,
+      onProgress: onProgress,
     );
     saved['heart_rate'] = await _runCategory(
       key: 'heart_rate',
+      phase: SyncPhase.heartRate,
+      phaseIndex: 2,
       failed: failed,
       types: const <HealthDataType>[HealthDataType.HEART_RATE],
       window: window,
       save: _saveHeartRate,
+      onProgress: onProgress,
     );
 
     // 全種別成功時のみ last_sync_time を前進させる。失敗を含む場合は据え置き、
@@ -458,25 +522,68 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     return days;
   }
 
+  /// 1 種別を時間チャンクに分割して取得・保存する。
+  ///
+  /// 全期間を一括取得するとメモリを圧迫し大量データで停止し得るため、[syncChunkDays]
+  /// 日ごとに取得 → 保存 → 解放を繰り返し、メモリ使用量を一定に抑える。各チャンク完了で
+  /// [onProgress] に進捗を通知する。
   Future<int> _runCategory({
     required String key,
+    required SyncPhase phase,
+    required int phaseIndex,
     required Set<String> failed,
     required List<HealthDataType> types,
     required SyncWindow window,
     required Future<int> Function(List<HealthDataPoint>) save,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
+    final List<SyncWindow> chunks = _chunkWindow(window);
+    int total = 0;
     try {
-      final List<HealthDataPoint> points = await _health.getHealthDataFromTypes(
-        types: types,
-        startTime: window.start,
-        endTime: window.end,
-      );
-      return await save(points);
+      for (int i = 0; i < chunks.length; i++) {
+        // チャンク単位で取得・保存し、ループ毎に points を解放してメモリを抑える。
+        final List<HealthDataPoint> points = await _health
+            .getHealthDataFromTypes(
+              types: types,
+              startTime: chunks[i].start,
+              endTime: chunks[i].end,
+            );
+        total += await save(points);
+        onProgress?.call(
+          SyncProgress(
+            phase: phase,
+            savedInPhase: total,
+            phaseIndex: phaseIndex,
+            phaseCount: 3,
+            chunkIndex: i,
+            chunkCount: chunks.length,
+          ),
+        );
+      }
+      return total;
     } catch (_) {
       // 例外内容は機密データを含み得るためログ出力しない (データ最小化)。
       failed.add(key);
-      return 0;
+      return total;
     }
+  }
+
+  /// 同期ウィンドウを [syncChunkDays] 日ごとのチャンクに分割する。
+  List<SyncWindow> _chunkWindow(SyncWindow window) {
+    final List<SyncWindow> chunks = <SyncWindow>[];
+    DateTime cursor = window.start;
+    while (cursor.isBefore(window.end)) {
+      final DateTime next = cursor.add(const Duration(days: syncChunkDays));
+      chunks.add(
+        SyncWindow(
+          start: cursor,
+          end: next.isAfter(window.end) ? window.end : next,
+        ),
+      );
+      cursor = next;
+    }
+    if (chunks.isEmpty) chunks.add(window);
+    return chunks;
   }
 
   Future<int> _saveSleep(List<HealthDataPoint> points) async {

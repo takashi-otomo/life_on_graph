@@ -644,6 +644,37 @@ class _SyncProgressView extends ConsumerWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
+        const SizedBox(height: 24),
+        // 初回は過去3か月のみ読み込む旨と、設定での全件再読み込みを案内する。
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Icon(
+                Icons.info_outline,
+                size: 18,
+                color: AppColors.accentText,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l.syncInitialNote,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

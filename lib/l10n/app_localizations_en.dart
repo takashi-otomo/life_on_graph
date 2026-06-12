@@ -412,4 +412,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return '$countString records read';
   }
+
+  @override
+  String get syncInitialNote =>
+      'The first sync loads the last 3 months. Older data can be loaded anytime from “Reload all data” in Settings.';
+
+  @override
+  String get reloadAll => 'Reload all data';
+
+  @override
+  String get reloadAllSubtitle => 'Fetch older history going further back';
+
+  @override
+  String get reloadAllStarted => 'Reloading all data…';
 }

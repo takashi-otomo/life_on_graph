@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health/health.dart';
+import 'package:life_on_graph/core/app_constants.dart';
 import 'package:life_on_graph/core/database_manager.dart';
 import 'package:life_on_graph/models/sleep_record_model.dart';
 import 'package:life_on_graph/repositories/health_sync_repository.dart';
@@ -208,11 +209,14 @@ void main() {
       final now = DateTime(2026, 6, 5, 12);
       final client = FakeHealthClient(historyAlreadyAuthorized: true);
       final r = repo(client);
-      await r.ensureHistoryPermission(); // 365 日バックフィルにする
+      await r.ensureHistoryPermission(); // 初回バックフィル (過去3か月) にする
       await r.sync(now: now);
 
-      // 365 日 / 14 日 = 27 チャンク × 3 種別。
-      final int chunks = (365 / HealthSyncRepositoryImpl.syncChunkDays).ceil();
+      // 90 日 / 14 日 = 7 チャンク × 3 種別。
+      final int chunks =
+          (HealthSyncRepositoryImpl.historyBackfillDays /
+                  HealthSyncRepositoryImpl.syncChunkDays)
+              .ceil();
       expect(client.queriedWindows.length, chunks * 3);
     });
 
@@ -387,7 +391,7 @@ void main() {
       expect(client.historyRequestCount, 0);
     });
 
-    test('初回・履歴権限ありでバックフィルが 365 日へ拡張される (P1-2)', () async {
+    test('初回・履歴権限ありでバックフィルは過去3か月 (90日) に限定される', () async {
       // 新規ユーザーが初回同期前に履歴権限を許可したケース (last_sync_time == 0)。
       final now = DateTime(2026, 6, 5, 12);
       final client = FakeHealthClient(historyAlreadyAuthorized: true);
@@ -396,7 +400,47 @@ void main() {
       await r.ensureHistoryPermission();
       final window = r.computeSyncWindow(now);
 
-      expect(window.start, now.subtract(const Duration(days: 365)));
+      expect(window.start, now.subtract(const Duration(days: 90)));
+    });
+
+    test('fullHistory 指定時は last_sync を無視し全件範囲を遡る', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+      await r.ensureHistoryPermission();
+      // last_sync があっても全件再読み込みは広い範囲を返す。
+      await db.metadataBox.put(
+        HealthSyncRepositoryImpl.lastSyncTimeKey,
+        now.subtract(const Duration(days: 1)).millisecondsSinceEpoch,
+      );
+
+      final window = r.computeSyncWindow(now, fullHistory: true);
+      expect(
+        window.start,
+        now.subtract(const Duration(days: AppConstants.fullReloadDays)),
+      );
+    });
+
+    test('fullHistory はウィンドウ内の既存レコードを消去してから再保存する', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      // リモートには存在しない既存ローカルレコードを直接投入 (ウィンドウ内)。
+      final stale = SleepRecordModel(
+        uuid: 'stale',
+        startTime: now.subtract(const Duration(days: 10)),
+        endTime: now.subtract(const Duration(days: 10, hours: -1)),
+        stageType: 'deep',
+        sourcePackage: 'x',
+      );
+      await db.sleepBox.put(stale.hiveKey, stale);
+      expect(db.sleepBox.length, 1);
+
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+      await r.ensureHistoryPermission();
+      await r.sync(now: now, fullHistory: true);
+
+      // ウィンドウ内のため消去され、再取得 (空) で再保存されないので 0 件。
+      expect(db.sleepBox.length, 0);
     });
 
     test('初回・履歴権限拒否時は 30 日に制限され例外が出ない', () async {

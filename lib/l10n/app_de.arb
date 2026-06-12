@@ -120,5 +120,9 @@
   "syncReadingSleep": "Schlafdaten werden gelesen…",
   "syncReadingSteps": "Schrittdaten werden gelesen…",
   "syncReadingHeart": "Herzfrequenzdaten werden gelesen…",
-  "syncRecordsRead": "{count} Einträge"
+  "syncRecordsRead": "{count} Einträge",
+  "syncInitialNote": "Die erste Synchronisierung lädt die letzten 3 Monate. Ältere Daten können jederzeit über „Alle Daten neu laden“ in den Einstellungen geladen werden.",
+  "reloadAll": "Alle Daten neu laden",
+  "reloadAllSubtitle": "Ältere Verlaufsdaten erneut abrufen",
+  "reloadAllStarted": "Alle Daten werden neu geladen…"
 }

@@ -831,6 +831,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} records read'**
   String syncRecordsRead(int count);
+
+  /// No description provided for @syncInitialNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The first sync loads the last 3 months. Older data can be loaded anytime from “Reload all data” in Settings.'**
+  String get syncInitialNote;
+
+  /// No description provided for @reloadAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload all data'**
+  String get reloadAll;
+
+  /// No description provided for @reloadAllSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch older history going further back'**
+  String get reloadAllSubtitle;
+
+  /// No description provided for @reloadAllStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reloading all data…'**
+  String get reloadAllStarted;
 }
 
 class _AppLocalizationsDelegate

@@ -417,4 +417,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return '$countString enregistrements';
   }
+
+  @override
+  String get syncInitialNote =>
+      'La première synchronisation charge les 3 derniers mois. Les données plus anciennes peuvent être chargées à tout moment via « Recharger toutes les données » dans les Réglages.';
+
+  @override
+  String get reloadAll => 'Recharger toutes les données';
+
+  @override
+  String get reloadAllSubtitle => 'Récupère l\'historique plus ancien';
+
+  @override
+  String get reloadAllStarted => 'Rechargement de toutes les données…';
 }

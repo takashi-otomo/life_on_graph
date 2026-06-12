@@ -120,5 +120,9 @@
   "syncReadingSleep": "睡眠データを読み込み中…",
   "syncReadingSteps": "歩数データを読み込み中…",
   "syncReadingHeart": "心拍データを読み込み中…",
-  "syncRecordsRead": "{count} 件を取得"
+  "syncRecordsRead": "{count} 件を取得",
+  "syncInitialNote": "初回は過去3か月分のデータを読み込みます。それ以前のデータは、設定の「全データを再読み込み」でいつでも取得できます。",
+  "reloadAll": "全データを再読み込み",
+  "reloadAllSubtitle": "過去のデータをさかのぼって再取得します",
+  "reloadAllStarted": "全データの再読み込みを開始しました"
 }

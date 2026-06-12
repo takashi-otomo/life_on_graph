@@ -79,16 +79,21 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
   }
 
   @override
-  SyncWindow computeSyncWindow(DateTime now) =>
+  SyncWindow computeSyncWindow(DateTime now, {bool fullHistory = false}) =>
       SyncWindow(start: now.subtract(const Duration(days: 30)), end: now);
+
+  /// 直近の sync 呼び出しで fullHistory が指定されたか。
+  bool lastSyncFullHistory = false;
 
   @override
   Future<SyncOutcome> sync({
     DateTime? now,
     bool force = false,
+    bool fullHistory = false,
     void Function(SyncProgress progress)? onProgress,
   }) async {
     syncCalls++;
+    lastSyncFullHistory = fullHistory;
     if (throwOnSync) {
       throw StateError('fake sync failure');
     }

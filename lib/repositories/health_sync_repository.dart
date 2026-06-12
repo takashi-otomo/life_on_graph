@@ -122,7 +122,10 @@ abstract interface class HealthSyncRepository {
   Future<bool> ensureActivityRecognitionPermission();
 
   /// [now] を終端とする同期ウィンドウを算出する。
-  SyncWindow computeSyncWindow(DateTime now);
+  ///
+  /// [fullHistory] が `true` の場合、last_sync_time を無視して全件再読み込み用の
+  /// 広い範囲 (履歴権限あり時 [AppConstants.fullReloadDays] 日) を返す。
+  SyncWindow computeSyncWindow(DateTime now, {bool fullHistory = false});
 
   /// 差分を取得してローカル DB へバッチ保存する。
   ///
@@ -130,9 +133,12 @@ abstract interface class HealthSyncRepository {
   ///
   /// [onProgress] が指定された場合、種別・時間チャンクごとに進捗を通知する
   /// (初期同期の UI 表示用)。
+  /// [fullHistory] が `true` の場合、過去データを遡って全件再読み込みする
+  /// (設定の「全データを再読み込み」用)。
   Future<SyncOutcome> sync({
     DateTime? now,
     bool force = false,
+    bool fullHistory = false,
     void Function(SyncProgress progress)? onProgress,
   });
 
@@ -280,7 +286,17 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   }
 
   @override
-  SyncWindow computeSyncWindow(DateTime now) {
+  SyncWindow computeSyncWindow(DateTime now, {bool fullHistory = false}) {
+    if (fullHistory) {
+      // 全件再読み込み: last_sync を無視し、履歴権限あり時は広い範囲を遡る。
+      final int days = _historyAuthorized
+          ? AppConstants.fullReloadDays
+          : backfillDays;
+      return SyncWindow(
+        start: now.subtract(Duration(days: days)),
+        end: now,
+      );
+    }
     final int lastSyncMs = _lastSyncMs();
     final DateTime start;
     if (lastSyncMs <= 0) {
@@ -327,6 +343,7 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   Future<SyncOutcome> sync({
     DateTime? now,
     bool force = false,
+    bool fullHistory = false,
     void Function(SyncProgress progress)? onProgress,
   }) async {
     final DateTime end = now ?? DateTime.now();
@@ -338,11 +355,11 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     // られるよう、フェッチ前にトークンを確立する。
     await _ensureChangesToken();
 
-    final SyncWindow window = computeSyncWindow(end);
+    final SyncWindow window = computeSyncWindow(end, fullHistory: fullHistory);
 
-    // T-305: 前回同期からの差分が極小ならクエリをスキップ (初回・強制時は対象外)。
+    // T-305: 前回同期からの差分が極小ならクエリをスキップ (初回・強制・全件再読込時は対象外)。
     final int lastSyncMs = _lastSyncMs();
-    if (!force && lastSyncMs > 0) {
+    if (!force && !fullHistory && lastSyncMs > 0) {
       final Duration elapsed = end.difference(
         DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
       );

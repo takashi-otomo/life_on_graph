@@ -94,7 +94,9 @@ class SyncNotifier extends Notifier<SyncState> {
   /// → `ensureHistoryPermission` を前置し (P1-b)、その後 `sync` を実行する。結果は
   /// 全成功で [SyncDone]、一部失敗で [SyncPartial]、例外・権限拒否で [SyncError]。
   /// 終了時に [dataRevisionProvider] をインクリメントし派生プロバイダを再評価させる。
-  Future<void> sync({bool force = false}) async {
+  /// [fullHistory] が `true` の場合、過去データを遡って全件再読み込みする
+  /// (設定の「全データを再読み込み」用)。
+  Future<void> sync({bool force = false, bool fullHistory = false}) async {
     state = const SyncInProgress();
     final SyncProgressNotifier progress = ref.read(
       syncProgressProvider.notifier,
@@ -114,6 +116,7 @@ class SyncNotifier extends Notifier<SyncState> {
       await repo.ensureActivityRecognitionPermission();
       final SyncOutcome outcome = await repo.sync(
         force: force,
+        fullHistory: fullHistory,
         onProgress: progress.update,
       );
       state = outcome.isFullSuccess ? SyncDone(outcome) : SyncPartial(outcome);

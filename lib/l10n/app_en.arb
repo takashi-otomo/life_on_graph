@@ -187,5 +187,9 @@
         "format": "decimalPattern"
       }
     }
-  }
+  },
+  "syncInitialNote": "The first sync loads the last 3 months. Older data can be loaded anytime from “Reload all data” in Settings.",
+  "reloadAll": "Reload all data",
+  "reloadAllSubtitle": "Fetch older history going further back",
+  "reloadAllStarted": "Reloading all data…"
 }

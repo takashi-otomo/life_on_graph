@@ -398,4 +398,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
     return '$countString 件を取得';
   }
+
+  @override
+  String get syncInitialNote =>
+      '初回は過去3か月分のデータを読み込みます。それ以前のデータは、設定の「全データを再読み込み」でいつでも取得できます。';
+
+  @override
+  String get reloadAll => '全データを再読み込み';
+
+  @override
+  String get reloadAllSubtitle => '過去のデータをさかのぼって再取得します';
+
+  @override
+  String get reloadAllStarted => '全データの再読み込みを開始しました';
 }

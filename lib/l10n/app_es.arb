@@ -120,5 +120,9 @@
   "syncReadingSleep": "Leyendo datos de sueño…",
   "syncReadingSteps": "Leyendo datos de pasos…",
   "syncReadingHeart": "Leyendo datos de frecuencia cardíaca…",
-  "syncRecordsRead": "{count} registros"
+  "syncRecordsRead": "{count} registros",
+  "syncInitialNote": "La primera sincronización carga los últimos 3 meses. Los datos anteriores se pueden cargar en cualquier momento desde «Recargar todos los datos» en Ajustes.",
+  "reloadAll": "Recargar todos los datos",
+  "reloadAllSubtitle": "Recupera el historial más antiguo",
+  "reloadAllStarted": "Recargando todos los datos…"
 }

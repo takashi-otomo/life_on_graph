@@ -74,6 +74,20 @@ class SettingsView extends ConsumerWidget {
                 ),
                 const _Divider(),
                 _SettingsTile(
+                  icon: Icons.history,
+                  iconColor: AppColors.accent,
+                  title: l.reloadAll,
+                  subtitle: l.reloadAllSubtitle,
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.divider,
+                  ),
+                  onTap: sync is SyncInProgress
+                      ? null
+                      : () => _reloadAll(context, ref, l),
+                ),
+                const _Divider(),
+                _SettingsTile(
                   icon: Icons.health_and_safety,
                   iconColor: AppColors.positive,
                   title: l.healthConnectLink,
@@ -273,6 +287,16 @@ class SettingsView extends ConsumerWidget {
       if (!ok) return;
     }
     await ref.read(appLockEnabledProvider.notifier).set(enable);
+  }
+
+  /// 過去データを遡って全件再読み込みする (初回は過去3か月のみのため)。
+  void _reloadAll(BuildContext context, WidgetRef ref, AppLocalizations l) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l.reloadAllStarted)));
+    ref
+        .read(syncNotifierProvider.notifier)
+        .sync(force: true, fullHistory: true);
   }
 
   static Future<void> _openUrl(String url) async {

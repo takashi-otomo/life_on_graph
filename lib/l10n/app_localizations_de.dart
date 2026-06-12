@@ -416,4 +416,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
     return '$countString Einträge';
   }
+
+  @override
+  String get syncInitialNote =>
+      'Die erste Synchronisierung lädt die letzten 3 Monate. Ältere Daten können jederzeit über „Alle Daten neu laden“ in den Einstellungen geladen werden.';
+
+  @override
+  String get reloadAll => 'Alle Daten neu laden';
+
+  @override
+  String get reloadAllSubtitle => 'Ältere Verlaufsdaten erneut abrufen';
+
+  @override
+  String get reloadAllStarted => 'Alle Daten werden neu geladen…';
 }

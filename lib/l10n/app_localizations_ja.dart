@@ -380,4 +380,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get lockUnavailable => 'この端末では生体認証/PINが設定されていません';
+
+  @override
+  String get syncReadingSleep => '睡眠データを読み込み中…';
+
+  @override
+  String get syncReadingSteps => '歩数データを読み込み中…';
+
+  @override
+  String get syncReadingHeart => '心拍データを読み込み中…';
+
+  @override
+  String syncRecordsRead(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString 件を取得';
+  }
 }

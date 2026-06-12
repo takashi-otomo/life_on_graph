@@ -394,4 +394,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lockUnavailable =>
       'Biometric or device PIN is not set up on this device';
+
+  @override
+  String get syncReadingSleep => 'Reading sleep data…';
+
+  @override
+  String get syncReadingSteps => 'Reading step data…';
+
+  @override
+  String get syncReadingHeart => 'Reading heart rate data…';
+
+  @override
+  String syncRecordsRead(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString records read';
+  }
 }

@@ -63,7 +63,9 @@ jobs:
           RUN_NUMBER: ${{ github.run_number }}
         run: |
           bn="$INPUT_BN"
-          [ -z "$bn" ] && bn="$RUN_NUMBER"
+          # 入力が無ければ CI 専用の高い番号帯 (10000+run number) を用い、ローカル手動
+          # アップロード (小さい番号) と衝突しないようにする。
+          [ -z "$bn" ] && bn="$((10000 + RUN_NUMBER))"
           if ! printf '%s' "$bn" | grep -Eq '^[0-9]+$'; then
             echo "::error::build_number は数値で指定してください: '$bn'"
             exit 1

@@ -83,7 +83,11 @@ class FakeHealthSyncRepository implements HealthSyncRepository {
       SyncWindow(start: now.subtract(const Duration(days: 30)), end: now);
 
   @override
-  Future<SyncOutcome> sync({DateTime? now, bool force = false}) async {
+  Future<SyncOutcome> sync({
+    DateTime? now,
+    bool force = false,
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
     syncCalls++;
     if (throwOnSync) {
       throw StateError('fake sync failure');

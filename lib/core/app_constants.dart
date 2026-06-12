@@ -31,6 +31,12 @@ class AppConstants {
   /// 拡張する。無制限取得による初回同期の重さを避けるため上限を設ける。
   static const int historyBackfillDays = 365;
 
+  /// 同期時に時間ウィンドウを分割するチャンク日数 (#sync-progress)。
+  ///
+  /// 全期間を一括取得するとメモリを圧迫し大量データで停止し得るため、この日数ごとに
+  /// 取得 → 保存 → 解放を繰り返してメモリ使用量を一定に抑える。
+  static const int syncChunkDays = 14;
+
   /// 差分同期のクエリスキップ閾値 (設計doc 8 章)。
   ///
   /// 前回同期からの経過がこの値未満なら `getHealthDataFromTypes` を呼ばずに

@@ -398,4 +398,22 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get lockUnavailable =>
       'Auf diesem Gerät ist keine Biometrie oder PIN eingerichtet';
+
+  @override
+  String get syncReadingSleep => 'Schlafdaten werden gelesen…';
+
+  @override
+  String get syncReadingSteps => 'Schrittdaten werden gelesen…';
+
+  @override
+  String get syncReadingHeart => 'Herzfrequenzdaten werden gelesen…';
+
+  @override
+  String syncRecordsRead(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString Einträge';
+  }
 }

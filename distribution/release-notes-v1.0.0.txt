@@ -1,0 +1,77 @@
+<ja-JP>
+Life On Graph 初回リリース 🎉
+睡眠・歩数・心拍を「端末内だけ」で可視化するローカルファーストなアプリです。
+
+• 睡眠ステージをヒプノグラムで表示
+• 歩数・心拍のトレンド（日／週／月）
+• カレンダーで特定の日・週・月へジャンプ
+• アプリのロック（生体認証）
+• 6言語対応（日英仏独葡西）
+
+データは外部に送信しません。
+</ja-JP>
+
+<en-US>
+Welcome to Life On Graph 🎉
+A local-first app that visualizes your sleep, steps and heart rate entirely on your device.
+
+• Sleep stages shown as a hypnogram
+• Steps & heart rate trends (day/week/month)
+• Jump to any day, week or month via the calendar
+• App lock (biometrics)
+• 6 languages
+
+Your data never leaves your device.
+</en-US>
+
+<fr-FR>
+Bienvenue sur Life On Graph 🎉
+Une application « local-first » qui visualise votre sommeil, vos pas et votre fréquence cardiaque entièrement sur votre appareil.
+
+• Phases de sommeil en hypnogramme
+• Tendances des pas et du rythme cardiaque (jour/semaine/mois)
+• Accès rapide à un jour, une semaine ou un mois via le calendrier
+• Verrouillage de l'app (biométrie)
+• 6 langues
+
+Vos données ne quittent jamais votre appareil.
+</fr-FR>
+
+<de-DE>
+Willkommen bei Life On Graph 🎉
+Eine „Local-first"-App, die Schlaf, Schritte und Herzfrequenz ausschließlich auf deinem Gerät visualisiert.
+
+• Schlafphasen als Hypnogramm
+• Schritt- und Herzfrequenz-Trends (Tag/Woche/Monat)
+• Schneller Sprung zu Tag, Woche oder Monat über den Kalender
+• App-Sperre (Biometrie)
+• 6 Sprachen
+
+Deine Daten verlassen niemals dein Gerät.
+</de-DE>
+
+<pt-BR>
+Bem-vindo ao Life On Graph 🎉
+Um aplicativo local-first que visualiza seu sono, passos e frequência cardíaca totalmente no seu dispositivo.
+
+• Fases do sono em hipnograma
+• Tendências de passos e frequência cardíaca (dia/semana/mês)
+• Vá para um dia, semana ou mês pelo calendário
+• Bloqueio do app (biometria)
+• 6 idiomas
+
+Seus dados nunca saem do seu dispositivo.
+</pt-BR>
+
+<es-ES>
+Te damos la bienvenida a Life On Graph 🎉
+Una app local-first que visualiza tu sueño, pasos y frecuencia cardíaca totalmente en tu dispositivo.
+
+• Fases del sueño en hipnograma
+• Tendencias de pasos y frecuencia cardíaca (día/semana/mes)
+• Salta a un día, semana o mes desde el calendario
+• Bloqueo de la app (biometría)
+• 6 idiomas
+
+Tus datos nunca salen de tu dispositivo.
+</es-ES>

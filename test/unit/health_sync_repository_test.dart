@@ -421,6 +421,28 @@ void main() {
       );
     });
 
+    test('fullHistory はウィンドウ内の既存レコードを消去してから再保存する', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      // リモートには存在しない既存ローカルレコードを直接投入 (ウィンドウ内)。
+      final stale = SleepRecordModel(
+        uuid: 'stale',
+        startTime: now.subtract(const Duration(days: 10)),
+        endTime: now.subtract(const Duration(days: 10, hours: -1)),
+        stageType: 'deep',
+        sourcePackage: 'x',
+      );
+      await db.sleepBox.put(stale.hiveKey, stale);
+      expect(db.sleepBox.length, 1);
+
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+      await r.ensureHistoryPermission();
+      await r.sync(now: now, fullHistory: true);
+
+      // ウィンドウ内のため消去され、再取得 (空) で再保存されないので 0 件。
+      expect(db.sleepBox.length, 0);
+    });
+
     test('初回・履歴権限拒否時は 30 日に制限され例外が出ない', () async {
       final now = DateTime(2026, 6, 5, 12);
       final client = FakeHealthClient(

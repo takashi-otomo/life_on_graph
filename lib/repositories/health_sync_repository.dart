@@ -368,6 +368,13 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       }
     }
 
+    // 全件再読み込みは「再取得結果を正」とする。ウィンドウ内の既存レコードを先に消去し、
+    // リモートで削除済みの古いレコードがローカルに残らないようにする (再取得で再保存)。
+    // ウィンドウ外 (より過去) のデータは消さないため、権限不足で範囲が狭くても既存を失わない。
+    if (fullHistory) {
+      await _clearWindow(window);
+    }
+
     final Map<String, int> saved = <String, int>{};
     final Set<String> failed = <String>{};
 
@@ -583,6 +590,25 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       failed.add(key);
       return total;
     }
+  }
+
+  /// 全件再読み込み時に、ウィンドウ `[start, end]` に開始が入る既存レコードを消去する。
+  /// 再取得で再保存されるため、リモート削除済みの古いレコードがローカルに残らない。
+  Future<void> _clearWindow(SyncWindow window) async {
+    bool inWindow(DateTime t) =>
+        !t.isBefore(window.start) && !t.isAfter(window.end);
+    final List<dynamic> sleepKeys = _db.sleepBox.keys
+        .where((k) => inWindow(_db.sleepBox.get(k)!.startTime))
+        .toList();
+    final List<dynamic> stepsKeys = _db.stepsBox.keys
+        .where((k) => inWindow(_db.stepsBox.get(k)!.startTime))
+        .toList();
+    final List<dynamic> hrKeys = _db.heartRateBox.keys
+        .where((k) => inWindow(_db.heartRateBox.get(k)!.startTime))
+        .toList();
+    await _db.sleepBox.deleteAll(sleepKeys);
+    await _db.stepsBox.deleteAll(stepsKeys);
+    await _db.heartRateBox.deleteAll(hrKeys);
   }
 
   /// 同期ウィンドウを [syncChunkDays] 日ごとのチャンクに分割する。

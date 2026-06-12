@@ -183,15 +183,87 @@ void main() {
       expect(db.heartRateBox.values.single.beatsPerMinute, 62);
     });
 
-    test('getHealthDataFromTypes へ算出ウィンドウの start/end を渡す', () async {
+    test('取得は算出ウィンドウをチャンク分割して全期間を被覆する', () async {
       final client = FakeHealthClient();
       final now = DateTime(2026, 6, 5, 12);
       await repo(client).sync(now: now);
 
       expect(client.queriedWindows, isNotEmpty);
+      final DateTime windowStart = now.subtract(const Duration(days: 30));
+      // 先頭チャンクは window 開始から、末尾チャンクは now まで。
+      expect(client.queriedWindows.first.start, windowStart);
+      expect(client.queriedWindows.last.end, now);
       for (final w in client.queriedWindows) {
-        expect(w.end, now);
-        expect(w.start, now.subtract(const Duration(days: 30)));
+        // 各チャンクは window 内に収まり、最大 syncChunkDays 日。
+        expect(w.start.isBefore(windowStart), isFalse);
+        expect(w.end.isAfter(now), isFalse);
+        expect(
+          w.end.difference(w.start).inDays,
+          lessThanOrEqualTo(HealthSyncRepositoryImpl.syncChunkDays),
+        );
+      }
+    });
+
+    test('同期ウィンドウは syncChunkDays ごとに分割して取得する (メモリ抑制)', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final client = FakeHealthClient(historyAlreadyAuthorized: true);
+      final r = repo(client);
+      await r.ensureHistoryPermission(); // 365 日バックフィルにする
+      await r.sync(now: now);
+
+      // 365 日 / 14 日 = 27 チャンク × 3 種別。
+      final int chunks = (365 / HealthSyncRepositoryImpl.syncChunkDays).ceil();
+      expect(client.queriedWindows.length, chunks * 3);
+    });
+
+    test('onProgress が種別ごとに進捗 (件数・チャンク) を通知する', () async {
+      final now = DateTime(2026, 6, 5, 12);
+      final client = FakeHealthClient(
+        dataByType: {
+          HealthDataType.SLEEP_DEEP: [
+            fakePoint(
+              uuid: 's1',
+              type: HealthDataType.SLEEP_DEEP,
+              from: now.subtract(const Duration(days: 1)),
+              to: now.subtract(const Duration(days: 1, hours: -1)),
+            ),
+          ],
+          HealthDataType.STEPS: [
+            fakePoint(
+              uuid: 'st1',
+              type: HealthDataType.STEPS,
+              from: now.subtract(const Duration(days: 1)),
+              to: now.subtract(const Duration(days: 1, minutes: -10)),
+              value: 100,
+            ),
+          ],
+          HealthDataType.HEART_RATE: [
+            fakePoint(
+              uuid: 'h1',
+              type: HealthDataType.HEART_RATE,
+              from: now.subtract(const Duration(days: 1)),
+              to: now.subtract(const Duration(days: 1)),
+              value: 60,
+            ),
+          ],
+        },
+      );
+      final List<SyncProgress> events = <SyncProgress>[];
+      await repo(client).sync(now: now, onProgress: events.add);
+
+      expect(events, isNotEmpty);
+      // 3 種別すべてが通知される。
+      expect(events.map((e) => e.phase).toSet(), <SyncPhase>{
+        SyncPhase.sleep,
+        SyncPhase.steps,
+        SyncPhase.heartRate,
+      });
+      // 進捗率は 0..1、チャンク数は正、件数は非負。
+      for (final SyncProgress e in events) {
+        expect(e.fraction, inInclusiveRange(0.0, 1.0));
+        expect(e.chunkCount, greaterThan(0));
+        expect(e.savedInPhase, greaterThanOrEqualTo(0));
+        expect(e.phaseCount, 3);
       }
     });
 
@@ -453,6 +525,9 @@ void main() {
           },
         ),
       );
+      // 差分窓は過去を再取得しないため、再バックフィル相当として last_sync をクリアし
+      // 同一 uuid の再取得・上書きを検証する。
+      db.metadataBox.delete(HealthSyncRepositoryImpl.lastSyncTimeKey);
       await r2.sync(now: DateTime(2026, 6, 5, 13));
 
       expect(db.sleepBox.length, 1);
@@ -477,6 +552,7 @@ void main() {
           },
         ),
       ).sync(now: DateTime(2026, 6, 5, 12));
+      db.metadataBox.delete(HealthSyncRepositoryImpl.lastSyncTimeKey);
       await repo(
         FakeHealthClient(
           dataByType: {
@@ -506,6 +582,7 @@ void main() {
           },
         ),
       ).sync(now: DateTime(2026, 6, 5, 12));
+      db.metadataBox.delete(HealthSyncRepositoryImpl.lastSyncTimeKey);
       await repo(
         FakeHealthClient(
           dataByType: {

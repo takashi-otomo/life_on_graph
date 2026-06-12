@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../providers/sync_notifier.dart';
+import '../../repositories/health_sync_repository.dart';
 
 /// 初回起動の初期設定ウィザード (#108)。
 ///
@@ -561,21 +562,7 @@ class _DonePage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 if (syncing) ...<Widget>[
-                  const SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: CircularProgressIndicator(strokeWidth: 3),
-                  ),
-                  const SizedBox(height: 22),
-                  Text(
-                    l.onbSyncing,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  const _SyncProgressView(),
                 ] else ...<Widget>[
                   const _Hero(icon: Icons.check_rounded),
                   const SizedBox(height: 22),
@@ -607,6 +594,57 @@ class _DonePage extends ConsumerWidget {
           _PrimaryButton(label: l.onbFinish, onTap: syncing ? () {} : onFinish),
         ],
       ),
+    );
+  }
+}
+
+/// 初期同期の進捗表示。読み込み中の種別・取得件数・全体進捗バーを示す (#sync-progress)。
+class _SyncProgressView extends ConsumerWidget {
+  const _SyncProgressView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final SyncProgress? p = ref.watch(syncProgressProvider);
+    final String label = switch (p?.phase) {
+      SyncPhase.sleep => l.syncReadingSleep,
+      SyncPhase.steps => l.syncReadingSteps,
+      SyncPhase.heartRate => l.syncReadingHeart,
+      null => l.onbSyncing,
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          width: 220,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: p?.fraction,
+              minHeight: 8,
+              backgroundColor: AppColors.accentSoft,
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          p == null
+              ? ''
+              : '${l.syncRecordsRead(p.savedInPhase)}  (${p.phaseIndex + 1}/${p.phaseCount})',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 }

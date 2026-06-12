@@ -807,6 +807,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Biometric or device PIN is not set up on this device'**
   String get lockUnavailable;
+
+  /// No description provided for @syncReadingSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading sleep data…'**
+  String get syncReadingSleep;
+
+  /// No description provided for @syncReadingSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading step data…'**
+  String get syncReadingSteps;
+
+  /// No description provided for @syncReadingHeart.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading heart rate data…'**
+  String get syncReadingHeart;
+
+  /// No description provided for @syncRecordsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records read'**
+  String syncRecordsRead(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -378,6 +378,11 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     final Map<String, int> saved = <String, int>{};
     final Set<String> failed = <String>{};
 
+    // 全件再読み込みは範囲が広いため取得回数を抑えるべく大きめのチャンクにする。
+    final int chunkDays = fullHistory
+        ? AppConstants.fullReloadChunkDays
+        : syncChunkDays;
+
     // 1 種別の取得失敗が他種別の保存を阻害しないよう、種別ごとに独立実行する。
     saved['sleep'] = await _runCategory(
       key: 'sleep',
@@ -386,6 +391,7 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       failed: failed,
       types: sleepStageTypes,
       window: window,
+      chunkDays: chunkDays,
       save: _saveSleep,
       onProgress: onProgress,
     );
@@ -396,6 +402,7 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       failed: failed,
       types: const <HealthDataType>[HealthDataType.STEPS],
       window: window,
+      chunkDays: chunkDays,
       save: _saveSteps,
       onProgress: onProgress,
     );
@@ -406,6 +413,7 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       failed: failed,
       types: const <HealthDataType>[HealthDataType.HEART_RATE],
       window: window,
+      chunkDays: chunkDays,
       save: _saveHeartRate,
       onProgress: onProgress,
     );
@@ -558,10 +566,11 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     required Set<String> failed,
     required List<HealthDataType> types,
     required SyncWindow window,
+    required int chunkDays,
     required Future<int> Function(List<HealthDataPoint>) save,
     void Function(SyncProgress progress)? onProgress,
   }) async {
-    final List<SyncWindow> chunks = _chunkWindow(window);
+    final List<SyncWindow> chunks = _chunkWindow(window, chunkDays);
     int total = 0;
     try {
       for (int i = 0; i < chunks.length; i++) {
@@ -583,6 +592,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
             chunkCount: chunks.length,
           ),
         );
+        // UI スレッドにフレーム描画の余地を与え、長時間ブロックによる ANR (強制終了)
+        // を避ける。次チャンクへ進む前に一度イベントループへ制御を返す。
+        await Future<void>.delayed(Duration.zero);
       }
       return total;
     } catch (_) {
@@ -611,12 +623,12 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     await _db.heartRateBox.deleteAll(hrKeys);
   }
 
-  /// 同期ウィンドウを [syncChunkDays] 日ごとのチャンクに分割する。
-  List<SyncWindow> _chunkWindow(SyncWindow window) {
+  /// 同期ウィンドウを [chunkDays] 日ごとのチャンクに分割する。
+  List<SyncWindow> _chunkWindow(SyncWindow window, int chunkDays) {
     final List<SyncWindow> chunks = <SyncWindow>[];
     DateTime cursor = window.start;
     while (cursor.isBefore(window.end)) {
-      final DateTime next = cursor.add(const Duration(days: syncChunkDays));
+      final DateTime next = cursor.add(Duration(days: chunkDays));
       chunks.add(
         SyncWindow(
           start: cursor,

@@ -92,21 +92,26 @@ base64 -i upload-keystore.jks | pbcopy
 CI はこれらから `android/app/upload-keystore.jks` + `android/key.properties` を復元し、`release` ビルドを署名する
 (ローカルに `key.properties` が無ければデバッグ署名にフォールバック)。
 
-## バージョン番号 (versionCode) の運用
+## バージョン番号の運用
 
-Google Play は **versionCode の重複を許さない**ため、アップロードのたびに増やす必要がある。
+### versionName ([SemVer](https://semver.org/lang/ja/): MAJOR.MINOR.PATCH)
+CI が `pubspec.yaml` の versionName をブランチに応じて自動更新する ([`tool/bump_version.sh`](../tool/bump_version.sh))。
 
-- **versionCode は `git rev-list --count HEAD`(git コミット数)から自動採番**する
-  (`android/app/build.gradle.kts`)。コミットを重ねるごとに**単調増加**し、ローカル/CI の
-  どちらでも同じ規則になるため、**手動バンプ不要**で重複も起きない。
-  ```sh
-  tool/build_release.sh        # 署名済み AAB をビルド (versionCode は git から自動)
-  tool/build_release.sh apk    # APK
-  ```
-- **versionName**(例 `1.0.0`)はマーケティング上の版。変えたいときだけ `pubspec.yaml` の
-  `version:` の名前部分を編集する(`+` 以降のビルド番号は git 採番のため無視される)。
-- 同一コミットを再ビルドすると versionCode は同じ(= 同じコード)。新しいコミットを積めば増える。
-- git が使えない環境では `pubspec.yaml` の値にフォールバックする。
+| 契機 | 更新 | 例 |
+|---|---|---|
+| `develop` への push (ビルドごと) | **PATCH +1** | `1.2.3` → `1.2.4` |
+| `main` への push (リリース) | **MINOR +1 / PATCH 0** | `1.2.4` → `1.3.0` |
+| リリース後 | main の版を **develop へ引き継ぎ** | develop も `1.3.0` に |
+
+- 各更新コミットは `[skip ci]` 付きで該当ブランチへ書き戻され、無限ループしない。
+- `main` リリース後は `carry-back-version` ジョブが develop の versionName を main に揃える。
+- ローカルビルド (`tool/build_release.sh`) は SemVer を増分しない (CI のみ)。検証用途のため現行 pubspec の版を使う。
+
+### versionCode (Play 用の整数)
+- **`git rev-list --count HEAD`(git コミット数)+ ベース 100000** から自動採番する
+  (`android/app/build.gradle.kts`)。コミットを重ねるごとに**単調増加**し、ローカル/CI 共通・
+  手動バンプ不要・Play の重複も回避する。git が使えない環境では `pubspec.yaml` 値にフォールバック。
+- versionName の自動更新コミット自体もコミット数を増やすため、versionCode も連動して増える。
 
 ## 初回 AAB をローカルでビルドする
 

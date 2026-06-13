@@ -14,6 +14,10 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# バージョン番号 (versionName) を pubspec に書き戻すため push 権限が必要。
+permissions:
+  contents: write
+
 env:
   FLUTTER_VERSION: "3.44.1"
   PACKAGE_NAME: dev.otomo.life_on_graph
@@ -102,6 +106,16 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
+      # テスト通過後にパッチバージョンを +1 し、pubspec を develop へ書き戻す ([skip ci]
+      # で再トリガを防止)。ビルドはこの更新後のワークツリーを使う。
+      - name: Bump patch version (develop)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          NEW="$(bash tool/bump_version.sh develop)"
+          git commit -m "chore(release): bump version to ${NEW} [skip ci]" pubspec.yaml
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "::notice::develop の versionName を ${NEW} に更新しました。"
       - name: Generate release notes
         run: bash tool/release_notes.sh
       - run: flutter build apk --release
@@ -142,6 +156,15 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
+      # リリース: マイナーを +1 / パッチを 0 にして main へ書き戻す ([skip ci])。
+      - name: Bump minor version (main release)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          NEW="$(bash tool/bump_version.sh main)"
+          git commit -m "chore(release): bump version to ${NEW} [skip ci]" pubspec.yaml
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "::notice::main の versionName を ${NEW} に更新しました。"
       - name: Generate release notes
         run: bash tool/release_notes.sh
 
@@ -193,3 +216,33 @@ jobs:
       - name: Notice (Play publish skipped)
         if: needs.guard.outputs.play != 'true'
         run: echo "::warning::Play サービスアカウント(PLAY_SERVICE_ACCOUNT)が未設定のため Google Play 公開をスキップしました。App Distribution(production)のみ実施 (docs/release.md)。"
+
+  # リリース後、main で確定したバージョンを develop へ引き継ぐ。
+  carry-back-version:
+    name: Carry version back to develop
+    needs: release-production
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+      - name: Sync develop versionName to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --quiet
+          # main の確定 versionName を develop の pubspec に反映する (suffix は develop 側を維持)。
+          MAIN_NAME="$(git show origin/main:pubspec.yaml | sed -n 's/^version:[[:space:]]*//p' | sed 's/+.*//')"
+          cur="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml)"
+          suffix=""
+          case "$cur" in *+*) suffix="+${cur#*+}" ;; esac
+          perl -pi -e "s/^version:.*/version: ${MAIN_NAME}${suffix}/" pubspec.yaml
+          if git diff --quiet; then
+            echo "::notice::develop は既に ${MAIN_NAME} のため引き継ぎ不要。"
+          else
+            git commit -m "chore(release): sync version to ${MAIN_NAME} from main [skip ci]" pubspec.yaml
+            git push origin develop
+            echo "::notice::develop の versionName を ${MAIN_NAME} に引き継ぎました。"
+          fi

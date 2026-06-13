@@ -1,0 +1,57 @@
+name: Deploy Website (Firebase Hosting)
+
+# website/ が main にマージされたら Firebase Hosting (lifeongraph) へ自動デプロイする。
+# 公開ディレクトリは firebase.json の hosting.public = "website/public" を使う
+# (既にこの構成でデプロイ済みのため、リポジトリ直下から deploy するだけでよい)。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "firebase.json"
+      - ".firebaserc"
+  workflow_dispatch:
+
+concurrency:
+  group: hosting-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FIREBASE_PROJECT: lifeongraph
+
+jobs:
+  # サービスアカウント未設定の間はスキップし、赤色失敗にしない。
+  guard:
+    name: Check hosting config
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.c.outputs.ready }}
+    steps:
+      - id: c
+        env:
+          SA: ${{ secrets.FIREBASE_HOSTING_SA }}
+        run: |
+          if [ -n "$SA" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_HOSTING_SA 未設定のため Hosting デプロイをスキップ。"
+          fi
+
+  deploy:
+    name: Deploy to Firebase Hosting (live)
+    needs: guard
+    # live への公開は main からのみ許可する (手動実行で任意ブランチを公開しない)。
+    if: needs.guard.outputs.ready == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # firebase.json の hosting.public (= website/public) を live チャンネルへ公開する。
+      # Hosting 専用のサービスアカウント (Firebase Hosting 管理者) を用いる。
+      - name: Deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_HOSTING_SA }}
+          channelId: live
+          projectId: ${{ env.FIREBASE_PROJECT }}

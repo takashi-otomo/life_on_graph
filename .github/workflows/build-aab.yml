@@ -5,11 +5,6 @@ name: Build signed AAB (manual)
 # ローカルに鍵やパスワードを置かずに署名済みビルドを得られる。
 on:
   workflow_dispatch:
-    inputs:
-      build_number:
-        description: "versionCode (build number)。空なら run number を使用"
-        required: false
-        default: ""
 
 env:
   FLUTTER_VERSION: "3.44.1"
@@ -23,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # versionCode を git コミット数で採番するため全履歴を取得
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -54,26 +51,9 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
-      # 入力は env 経由で受け取り、数値であることを検証してからビルドへ渡す
-      # (シェル/コマンド注入を防ぐ)。
-      - name: Resolve build number
-        id: bn
-        env:
-          INPUT_BN: ${{ github.event.inputs.build_number }}
-          RUN_NUMBER: ${{ github.run_number }}
-        run: |
-          bn="$INPUT_BN"
-          # 入力が無ければ CI 専用の高い番号帯 (10000+run number) を用い、ローカル手動
-          # アップロード (小さい番号) と衝突しないようにする。
-          [ -z "$bn" ] && bn="$((10000 + RUN_NUMBER))"
-          if ! printf '%s' "$bn" | grep -Eq '^[0-9]+$'; then
-            echo "::error::build_number は数値で指定してください: '$bn'"
-            exit 1
-          fi
-          echo "value=$bn" >> "$GITHUB_OUTPUT"
-
+      # versionCode は build.gradle.kts が git コミット数から自動採番する (単調増加)。
       - name: Build App Bundle (signed)
-        run: flutter build appbundle --release --build-number=${{ steps.bn.outputs.value }}
+        run: flutter build appbundle --release
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4

@@ -21,6 +21,19 @@ if (hasReleaseSigning) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// versionCode は git のコミット数から自動採番する。コミットを重ねるごとに単調増加し、
+// ローカル/CI のどちらでも同じ規則になるため、手動バンプ不要で Play の versionCode 重複も
+// 避けられる。git が使えない場合は pubspec の値 (flutter.versionCode) にフォールバックする。
+fun gitVersionCode(): Int? = try {
+    val proc = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+        .directory(rootProject.projectDir)
+        .start()
+    val out = proc.inputStream.bufferedReader().readText().trim()
+    if (proc.waitFor() == 0) out.toIntOrNull() else null
+} catch (e: Exception) {
+    null
+}
+
 android {
     namespace = "dev.otomo.life_on_graph"
     // Health Connect / 依存プラグイン (health, flutter_secure_storage 等) が要求する
@@ -47,7 +60,8 @@ android {
         // minSdk を 26 に固定する (技術調査資料 §2)。
         minSdk = 26
         targetSdk = 36
-        versionCode = flutter.versionCode
+        // versionCode は git コミット数で自動採番 (フォールバック: pubspec)。
+        versionCode = gitVersionCode() ?: flutter.versionCode
         versionName = flutter.versionName
     }
 

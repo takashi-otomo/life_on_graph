@@ -22,6 +22,10 @@
 
 > 旧運用 (作業ブランチを `main` から切る) から変更。今後の起点は `develop`。
 
+> **二重配信の防止**: `develop` → `main` 昇格後に同じコミットが `develop` へ戻っても、
+> その commit が既に `main` 上にある場合は testers 配信をスキップする (`distribute.yml` の
+> `testers-gate`)。`main` 公開 (production) と重複しない。
+
 ## Firebase App Distribution
 
 CI: [`.github/workflows/distribute.yml`](../.github/workflows/distribute.yml)
@@ -92,19 +96,17 @@ CI はこれらから `android/app/upload-keystore.jks` + `android/key.propertie
 
 Google Play は **versionCode の重複を許さない**ため、アップロードのたびに増やす必要がある。
 
-- **ローカルビルド**: [`tool/build_release.sh`](../tool/build_release.sh) がビルドのたびに
-  `pubspec.yaml` の `version: <name>+<code>` の `<code>` を +1 してからビルドする(変更はコミット)。
+- **versionCode は `git rev-list --count HEAD`(git コミット数)から自動採番**する
+  (`android/app/build.gradle.kts`)。コミットを重ねるごとに**単調増加**し、ローカル/CI の
+  どちらでも同じ規則になるため、**手動バンプ不要**で重複も起きない。
   ```sh
-  tool/build_release.sh            # versionCode を +1 して AAB をビルド
-  tool/build_release.sh apk        # 同上で APK
-  tool/build_release.sh aab --keep # 増分せず現在値でビルド
+  tool/build_release.sh        # 署名済み AAB をビルド (versionCode は git から自動)
+  tool/build_release.sh apk    # APK
   ```
-- **CI**: `distribute.yml` / `build-aab.yml` は `--build-number=$((10000 + run number))` で実行ごとに
-  一意・増加する versionCode を自動付与する(手動バンプ不要)。
-- **番号帯の分離**: ローカル手動アップロードは **10000 未満**(`build_release.sh` の小さい番号)、
-  CI は **10000 以上**を用いるため、両者の versionCode が衝突しない。初回手動アップロードを
-  versionCode 1 で行っても、CI の初回公開 (10001〜) が必ずそれを上回る。
-- Play へ実アップロードする versionCode は常に増加させること。
+- **versionName**(例 `1.0.0`)はマーケティング上の版。変えたいときだけ `pubspec.yaml` の
+  `version:` の名前部分を編集する(`+` 以降のビルド番号は git 採番のため無視される)。
+- 同一コミットを再ビルドすると versionCode は同じ(= 同じコード)。新しいコミットを積めば増える。
+- git が使えない環境では `pubspec.yaml` の値にフォールバックする。
 
 ## 初回 AAB をローカルでビルドする
 
@@ -122,8 +124,8 @@ keyAlias=upload
 keyPassword=<鍵のパスワード>
 EOF
 
-# 3. 署名済み AAB をビルド (build-number は Play の versionCode。重複不可)
-flutter build appbundle --release --build-number=1
+# 3. 署名済み AAB をビルド (versionCode は git コミット数から自動採番)
+tool/build_release.sh
 # 出力: build/app/outputs/bundle/release/app-release.aab
 ```
 

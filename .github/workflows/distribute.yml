@@ -49,11 +49,37 @@ jobs:
           echo "play=$play" >> "$GITHUB_OUTPUT"
           echo "::notice::firebase=$firebase signing=$signing play=$play (docs/release.md)"
 
+  # この commit が既に main 上にあるか判定する。develop→main 昇格後の同期 (sync-back) で
+  # 同一 commit が develop へ push された場合に、testers への二重配信を避けるため。
+  testers-gate:
+    name: Check testers eligibility
+    needs: guard
+    if: github.ref_name == 'develop' && needs.guard.outputs.firebase == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.c.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: c
+        run: |
+          git fetch origin main --quiet 2>/dev/null || true
+          if git merge-base --is-ancestor "${{ github.sha }}" origin/main 2>/dev/null; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::この commit は既に main 上にあるため testers 配信をスキップ (二重配信防止)。"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # develop → テスター配信
   distribute-testers:
     name: Distribute to testers (develop)
-    needs: guard
-    if: github.ref_name == 'develop' && needs.guard.outputs.firebase == 'true'
+    needs: [guard, testers-gate]
+    if: >-
+      github.ref_name == 'develop' &&
+      needs.guard.outputs.firebase == 'true' &&
+      needs.testers-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -133,15 +159,9 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
-      # Play は versionCode の重複を拒否するため、毎公開で一意・増加する build-number を
-      # 付与する。ローカル手動アップロード (小さい番号) と衝突しないよう 10000 を加算した
-      # 高い番号帯 (CI 専用) を用いる。
-      - name: Resolve versionCode
-        id: vc
-        run: echo "value=$((10000 + ${{ github.run_number }}))" >> "$GITHUB_OUTPUT"
-
+      # versionCode は build.gradle.kts が git コミット数から自動採番する (単調増加)。
       - name: Build APK (signed release)
-        run: flutter build apk --release --build-number=${{ steps.vc.outputs.value }}
+        run: flutter build apk --release
 
       - name: Distribute to production (App Distribution)
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -155,7 +175,7 @@ jobs:
       # Play サービスアカウントが揃う場合のみ Google Play へ公開する。
       - name: Build App Bundle (signed)
         if: needs.guard.outputs.play == 'true'
-        run: flutter build appbundle --release --build-number=${{ steps.vc.outputs.value }}
+        run: flutter build appbundle --release
 
       - name: Publish to Google Play (production)
         if: needs.guard.outputs.play == 'true'

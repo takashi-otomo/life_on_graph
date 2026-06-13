@@ -583,6 +583,9 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
             chunkCount: chunks.length,
           ),
         );
+        // UI スレッドにフレーム描画の余地を与え、長時間ブロックによる ANR (強制終了)
+        // を避ける。次チャンクへ進む前に一度イベントループへ制御を返す。
+        await Future<void>.delayed(Duration.zero);
       }
       return total;
     } catch (_) {

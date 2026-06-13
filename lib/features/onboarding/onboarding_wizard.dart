@@ -53,6 +53,9 @@ class _OnboardingWizardState extends ConsumerState<OnboardingWizard> {
 
   Future<void> _connectAndSync() async {
     _goTo(3);
+    // 同期の前に完了を記録する。初回同期は時間がかかり、その途中でアプリが落ちても
+    // 再起動時に再オンボーディングにならないようにする (完了は権限付与の時点で確定)。
+    await ref.read(onboardingCompletedProvider.notifier).complete();
     try {
       await ref.read(syncNotifierProvider.notifier).sync(force: true);
     } catch (_) {

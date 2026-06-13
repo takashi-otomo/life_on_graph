@@ -21,15 +21,21 @@ if (hasReleaseSigning) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-// versionCode は git のコミット数から自動採番する。コミットを重ねるごとに単調増加し、
-// ローカル/CI のどちらでも同じ規則になるため、手動バンプ不要で Play の versionCode 重複も
-// 避けられる。git が使えない場合は pubspec の値 (flutter.versionCode) にフォールバックする。
+// versionCode は git のコミット数 + ベースオフセットから自動採番する。コミットを重ねるごとに
+// 単調増加し、ローカル/CI のどちらでも同じ規則になるため、手動バンプ不要で Play の versionCode
+// 重複も避けられる。git が使えない場合は pubspec の値 (flutter.versionCode) にフォールバックする。
+//
+// 旧 CI が用いていた番号帯 (10000+run number) や手動アップロード値を必ず上回るよう、
+// 既存の Play 高水位を超える十分大きいベースを加算する (versionCode は減らせないため)。
+val versionCodeBase = 100000
+
 fun gitVersionCode(): Int? = try {
     val proc = ProcessBuilder("git", "rev-list", "--count", "HEAD")
         .directory(rootProject.projectDir)
         .start()
     val out = proc.inputStream.bufferedReader().readText().trim()
-    if (proc.waitFor() == 0) out.toIntOrNull() else null
+    val count = if (proc.waitFor() == 0) out.toIntOrNull() else null
+    count?.let { versionCodeBase + it }
 } catch (e: Exception) {
     null
 }

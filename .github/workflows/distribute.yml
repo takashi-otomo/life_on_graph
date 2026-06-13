@@ -65,9 +65,11 @@ jobs:
       - id: c
         run: |
           git fetch origin main --quiet 2>/dev/null || true
-          if git merge-base --is-ancestor "${{ github.sha }}" origin/main 2>/dev/null; then
+          # develop の内容が main と同一 (= 新規変更なし) なら配信不要。fast-forward でも
+          # マージコミットでの sync-back でも検出できるよう、ツリー差分で判定する。
+          if git diff --quiet origin/main HEAD 2>/dev/null; then
             echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::この commit は既に main 上にあるため testers 配信をスキップ (二重配信防止)。"
+            echo "::notice::develop は main と同一内容のため testers 配信をスキップ (二重配信防止)。"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi

@@ -46,6 +46,12 @@ class AppConstants {
   /// 避けるため小さめにする。
   static const int syncChunkDays = 7;
 
+  /// 「全データを再読み込み」(最大 [fullReloadDays] 日) 用のチャンク日数。
+  ///
+  /// 初回同期より範囲が桁違いに広いため、小さすぎるチャンクだと取得回数が膨大になる。
+  /// メモリ抑制と取得回数のバランスを取り、初回同期より大きめにする。
+  static const int fullReloadChunkDays = 30;
+
   /// 差分同期のクエリスキップ閾値 (設計doc 8 章)。
   ///
   /// 前回同期からの経過がこの値未満なら `getHealthDataFromTypes` を呼ばずに

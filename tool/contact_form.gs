@@ -11,7 +11,7 @@
  *   2. createBranchingForm() を実行 (初回は権限承認)。
  *   3. ログ (表示 → ログ) の Published URL / Edit URL を確認。
  *      ※ 既存 URL を維持したい場合は、対象フォームを開き 拡張機能 → Apps Script から
- *         appendBranchingToActiveForm() を実行する。
+ *         updateActiveForm() を実行する (冪等な差分更新。重複追加されない)。
  *
  * 対応言語: ja / en / de / es / fr / pt (画像の選択肢順)
  */

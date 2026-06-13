@@ -29,27 +29,29 @@ jobs:
     steps:
       - id: c
         env:
-          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SA: ${{ secrets.FIREBASE_HOSTING_SA }}
         run: |
           if [ -n "$SA" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::FIREBASE_SERVICE_ACCOUNT 未設定のため Hosting デプロイをスキップ。"
+            echo "::notice::FIREBASE_HOSTING_SA 未設定のため Hosting デプロイをスキップ。"
           fi
 
   deploy:
     name: Deploy to Firebase Hosting (live)
     needs: guard
-    if: needs.guard.outputs.ready == 'true'
+    # live への公開は main からのみ許可する (手動実行で任意ブランチを公開しない)。
+    if: needs.guard.outputs.ready == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       # firebase.json の hosting.public (= website/public) を live チャンネルへ公開する。
+      # Hosting 専用のサービスアカウント (Firebase Hosting 管理者) を用いる。
       - name: Deploy
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_HOSTING_SA }}
           channelId: live
           projectId: ${{ env.FIREBASE_PROJECT }}

@@ -8,6 +8,40 @@ import '../../../widgets/app_card.dart';
 import '../../../widgets/segmented_toggle.dart';
 import '../heart_rate_series.dart';
 
+/// データ欠落とみなす隣接サンプルの最大間隔 (#hr-gap)。
+///
+/// これを超える間隔の前後は連続データではないとみなし、線を分断して**空白区間に
+/// 線を引かない** (統合ビューと同じ閾値)。心拍は間引き後おおむね 1 分粒度のため、
+/// 10 分超の無データを「欠落」とする。
+const Duration kHeartRateGapThreshold = Duration(minutes: 10);
+
+/// 時刻昇順の心拍点列を fl_chart 用スポット列へ変換する (#hr-gap)。
+///
+/// [kHeartRateGapThreshold] を超える間隔では [FlSpot.nullSpot] を挟んで線を分断し、
+/// 欠落区間を直線補間で繋がないようにする。前後とも欠落で**孤立した点**の x 値は
+/// [isolatedX] に収集し、呼び出し側がドット表示の判定に用いる。
+List<FlSpot> buildHeartRateSpots(
+  List<HeartRateRecordModel> sortedPoints, {
+  Set<double>? isolatedX,
+}) {
+  final int gapMs = kHeartRateGapThreshold.inMilliseconds;
+  final List<FlSpot> spots = <FlSpot>[];
+  for (int i = 0; i < sortedPoints.length; i++) {
+    final int t = sortedPoints[i].startTime.millisecondsSinceEpoch;
+    final bool gapBefore =
+        i == 0 ||
+        t - sortedPoints[i - 1].startTime.millisecondsSinceEpoch > gapMs;
+    final bool gapAfter =
+        i == sortedPoints.length - 1 ||
+        sortedPoints[i + 1].startTime.millisecondsSinceEpoch - t > gapMs;
+    if (gapBefore && i > 0) spots.add(FlSpot.nullSpot);
+    final double x = t.toDouble();
+    spots.add(FlSpot(x, sortedPoints[i].beatsPerMinute.toDouble()));
+    if (gapBefore && gapAfter) isolatedX?.add(x);
+  }
+  return spots;
+}
+
 /// 心拍折れ線グラフ + 全日/睡眠中フィルタ (#37 / #38)。
 class HeartRateChart extends StatefulWidget {
   const HeartRateChart({
@@ -149,13 +183,13 @@ class _HeartRateChartState extends State<HeartRateChart> {
   Widget _buildChart(List<HeartRateRecordModel> points) {
     final List<HeartRateRecordModel> sorted = <HeartRateRecordModel>[...points]
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    final List<FlSpot> spots = <FlSpot>[
-      for (final p in sorted)
-        FlSpot(
-          p.startTime.millisecondsSinceEpoch.toDouble(),
-          p.beatsPerMinute.toDouble(),
-        ),
-    ];
+    // 欠落区間 (10分超) では線を分断し、空白を直線補間で繋がない (#hr-gap)。
+    // 前後とも欠落の孤立点は線にならないためドットで描く。
+    final Set<double> isolatedX = <double>{};
+    final List<FlSpot> spots = buildHeartRateSpots(
+      sorted,
+      isolatedX: isolatedX,
+    );
 
     return LineChart(
       LineChartData(
@@ -170,7 +204,15 @@ class _HeartRateChartState extends State<HeartRateChart> {
             curveSmoothness: 0.3,
             color: AppColors.heart,
             barWidth: 2.5,
-            dotData: const FlDotData(show: false),
+            dotData: FlDotData(
+              show: isolatedX.isNotEmpty,
+              checkToShowDot: (FlSpot spot, _) => isolatedX.contains(spot.x),
+              getDotPainter: (_, _, _, _) => FlDotCirclePainter(
+                radius: 2.5,
+                color: AppColors.heart,
+                strokeWidth: 0,
+              ),
+            ),
             // フィードバック反映: エリア塗りは付けず単線で表示 (2本に見える紛らわしさを回避)。
             belowBarData: BarAreaData(show: false),
           ),

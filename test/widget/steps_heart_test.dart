@@ -96,4 +96,53 @@ void main() {
       expect(find.text('睡眠中'), findsNothing);
     });
   });
+
+  group('#hr-gap buildHeartRateSpots (欠落区間で線を分断)', () {
+    test('10分超のギャップに nullSpot を挟む', () {
+      final points = <HeartRateRecordModel>[
+        hr(DateTime(2026, 6, 6, 8), 60),
+        hr(DateTime(2026, 6, 6, 8, 1), 61), // 連続 (1分)
+        hr(DateTime(2026, 6, 6, 9), 70), // 59分ギャップ → 分断
+        hr(DateTime(2026, 6, 6, 9, 1), 71),
+      ];
+      final spots = buildHeartRateSpots(points);
+
+      // 4 点 + 1 区切り = 5 要素。区切りは null スポット 1 つ。
+      expect(spots.length, 5);
+      expect(spots.where((s) => s.x.isNaN).length, 1);
+      // 区切りは 8:01 と 9:00 の間 (index 2)。
+      expect(spots[2].x.isNaN, isTrue);
+    });
+
+    test('連続データには nullSpot を挟まない', () {
+      final points = <HeartRateRecordModel>[
+        hr(DateTime(2026, 6, 6, 8), 60),
+        hr(DateTime(2026, 6, 6, 8, 5), 62), // 5分 (閾値内)
+        hr(DateTime(2026, 6, 6, 8, 10), 64),
+      ];
+      final spots = buildHeartRateSpots(points);
+
+      expect(spots.length, 3);
+      expect(spots.any((s) => s.x.isNaN), isFalse);
+    });
+
+    test('前後とも欠落の孤立点を isolatedX に収集する', () {
+      final isolated = <double>{};
+      final lone = DateTime(2026, 6, 6, 12);
+      final points = <HeartRateRecordModel>[
+        // 連続ペア (線になる)。
+        hr(DateTime(2026, 6, 6, 8), 60),
+        hr(DateTime(2026, 6, 6, 8, 1), 61),
+        // 前後とも > 10分 → 孤立点 (ドットで描く)。
+        hr(lone, 99),
+        // 連続ペア (線になる)。
+        hr(DateTime(2026, 6, 6, 18), 70),
+        hr(DateTime(2026, 6, 6, 18, 1), 71),
+      ];
+      buildHeartRateSpots(points, isolatedX: isolated);
+
+      expect(isolated, contains(lone.millisecondsSinceEpoch.toDouble()));
+      expect(isolated.length, 1);
+    });
+  });
 }

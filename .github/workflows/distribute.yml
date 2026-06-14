@@ -157,14 +157,21 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       # リリース: マイナーを +1 / パッチを 0 にして main へ書き戻す ([skip ci])。
-      - name: Bump minor version (main release)
+      # main はブランチ保護 (PR 必須) のため、github-actions[bot] による直接 push は
+      # 既定でブロックされる。発行する AAB の versionCode は git コミット数ベースで
+      # この push の成否に依存しないため、push 失敗は **致命的にしない** (best-effort)。
+      # versionName を恒久反映したい場合は develop→main PR 側で更新する運用とする。
+      - name: Bump minor version (main release, best-effort)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           NEW="$(bash tool/bump_version.sh main)"
           git commit -m "chore(release): bump version to ${NEW} [skip ci]" pubspec.yaml
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-          echo "::notice::main の versionName を ${NEW} に更新しました。"
+          if git push origin "HEAD:${GITHUB_REF_NAME}" 2>/tmp/push.err; then
+            echo "::notice::main の versionName を ${NEW} に更新しました。"
+          else
+            echo "::warning::main への versionName 書き戻しはブランチ保護によりスキップされました ($(cat /tmp/push.err | tail -1))。発行 AAB には影響しません。"
+          fi
       - name: Generate release notes
         run: bash tool/release_notes.sh
 

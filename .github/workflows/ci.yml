@@ -1,12 +1,13 @@
 name: CI
 
+# PR でのみ検証する。push (develop/main へのマージ) 時は Release ワークフロー
+# (distribute.yml) がビルド前に analyze/test を実行するため、二重実行を避けてここでは
+# 走らせない。
 on:
-  push:
-    branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
-# 同一ブランチで連続 push した場合は古い実行をキャンセルする。
+# 同一 PR で連続 push した場合は古い実行をキャンセルする。
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

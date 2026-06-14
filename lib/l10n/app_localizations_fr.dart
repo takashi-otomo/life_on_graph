@@ -253,8 +253,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get crossSubtitle => '24 h jusqu\'au réveil. Défilez horizontalement.';
 
   @override
-  String get crossEmpty =>
-      'Aucune donnée de sommeil : vue intégrée indisponible';
+  String get crossEmpty => 'Aucune donnée pour la vue combinée';
 
   @override
   String get language => 'Langue';

@@ -76,11 +76,34 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsWidgets);
   });
 
-  testWidgets('#39 睡眠なしは空状態を表示する', (tester) async {
+  testWidgets('#39 3種ともデータが無いときだけ空状態を表示する', (tester) async {
     await tester.pumpWidget(
       host(const CrossDataChart(segments: [], heartRate: [], steps: [])),
     );
-    expect(find.text('睡眠データがないため統合表示できません'), findsOneWidget);
+    expect(find.textContaining('統合表示できません'), findsOneWidget);
+  });
+
+  testWidgets('#39 睡眠が無くても心拍/歩数があれば描画する', (tester) async {
+    await tester.pumpWidget(
+      host(
+        CrossDataChart(
+          segments: const [],
+          heartRate: [
+            hr(base.add(const Duration(hours: 2)), 70),
+            hr(base.add(const Duration(hours: 2, minutes: 1)), 72),
+          ],
+          steps: [
+            step(
+              base.add(const Duration(hours: 1)),
+              base.add(const Duration(hours: 1, minutes: 30)),
+              500,
+            ),
+          ],
+        ),
+      ),
+    );
+    expect(find.textContaining('統合表示できません'), findsNothing);
+    expect(find.byType(CustomPaint), findsWidgets);
   });
 
   testWidgets('#39 窓内に心拍が1点でもマーカー描画され破綻しない (P1)', (tester) async {

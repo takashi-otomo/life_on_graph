@@ -75,7 +75,7 @@
   "nextDay": "Nächster Tag",
   "crossTitle": "Integrierte Ansicht (Schlaf × HF × Schritte)",
   "crossSubtitle": "24 Std. bis zum Aufwachen. Horizontal scrollen.",
-  "crossEmpty": "Keine Schlafdaten – integrierte Ansicht nicht verfügbar",
+  "crossEmpty": "Keine Daten für die kombinierte Ansicht",
   "language": "Sprache",
   "languageSystem": "Systemstandard",
   "rationaleTitle": "Über die Nutzung von Gesundheitsdaten",

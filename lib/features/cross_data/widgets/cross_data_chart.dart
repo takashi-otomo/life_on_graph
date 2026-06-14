@@ -42,7 +42,24 @@ class CrossDataChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final CrossDataWindow? window = CrossDataWindow.trailing24h(segments);
+    // 睡眠があれば睡眠終点を右端とした24時間。睡眠が無くても心拍/歩数があれば、その
+    // 最新時刻を右端とした24時間で描画する (3つともデータが無いときだけ非表示)。
+    CrossDataWindow? window = CrossDataWindow.trailing24h(segments);
+    if (window == null) {
+      DateTime? latest;
+      for (final HeartRateRecordModel p in heartRate) {
+        if (latest == null || p.startTime.isAfter(latest)) latest = p.startTime;
+      }
+      for (final StepsRecordModel s in steps) {
+        if (latest == null || s.endTime.isAfter(latest)) latest = s.endTime;
+      }
+      if (latest != null) {
+        window = CrossDataWindow(
+          start: latest.subtract(const Duration(hours: 24)),
+          end: latest,
+        );
+      }
+    }
     final AppLocalizations l = AppLocalizations.of(context);
 
     return AppCard(
@@ -326,34 +343,53 @@ class _CrossDataPainter extends CustomPainter {
         ? top + height / 2
         : top + height - pad - (bpm - minBpm) / range * (height - 2 * pad);
 
-    if (hr.length == 1) {
-      // 折れ線にできない単一サンプルはマーカーで描画する (欠損耐性)。
-      canvas.drawCircle(
-        Offset(x(hr.first.startTime), y(hr.first.beatsPerMinute)),
-        3.5,
-        Paint()..color = AppColors.heart,
-      );
-      return;
-    }
-    final Path path = Path();
-    for (int i = 0; i < hr.length; i++) {
-      final double px = x(hr[i].startTime);
-      final double py = y(hr[i].beatsPerMinute);
-      if (i == 0) {
-        path.moveTo(px, py);
+    // データが無い (=ブランク) 区間に線を引かないよう、隣接サンプルの時間差が
+    // 一定以上ならそこで線を切る。連続する点のまとまり (セグメント) ごとに描画し、
+    // 孤立した点はマーカーで表示する。
+    const Duration gapThreshold = Duration(minutes: 10);
+    final List<List<HeartRateRecordModel>> segments =
+        <List<HeartRateRecordModel>>[];
+    List<HeartRateRecordModel> seg = <HeartRateRecordModel>[hr.first];
+    for (int i = 1; i < hr.length; i++) {
+      if (hr[i].startTime.difference(hr[i - 1].startTime) > gapThreshold) {
+        segments.add(seg);
+        seg = <HeartRateRecordModel>[hr[i]];
       } else {
-        path.lineTo(px, py);
+        seg.add(hr[i]);
       }
     }
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppColors.heart
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    segments.add(seg);
+
+    final Paint linePaint = Paint()
+      ..color = AppColors.heart
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final Paint dotPaint = Paint()..color = AppColors.heart;
+
+    for (final List<HeartRateRecordModel> s in segments) {
+      if (s.length == 1) {
+        // 前後が空白の孤立サンプルはマーカーで描画する。
+        canvas.drawCircle(
+          Offset(x(s.first.startTime), y(s.first.beatsPerMinute)),
+          2.5,
+          dotPaint,
+        );
+        continue;
+      }
+      final Path path = Path();
+      for (int i = 0; i < s.length; i++) {
+        final double px = x(s[i].startTime);
+        final double py = y(s[i].beatsPerMinute);
+        if (i == 0) {
+          path.moveTo(px, py);
+        } else {
+          path.lineTo(px, py);
+        }
+      }
+      canvas.drawPath(path, linePaint);
+    }
   }
 
   void _paintTimeAxis(

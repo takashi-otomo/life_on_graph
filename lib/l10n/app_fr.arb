@@ -75,7 +75,7 @@
   "nextDay": "Jour suivant",
   "crossTitle": "Vue intégrée (sommeil × FC × pas)",
   "crossSubtitle": "24 h jusqu'au réveil. Défilez horizontalement.",
-  "crossEmpty": "Aucune donnée de sommeil : vue intégrée indisponible",
+  "crossEmpty": "Aucune donnée pour la vue combinée",
   "language": "Langue",
   "languageSystem": "Paramètre système",
   "rationaleTitle": "À propos de l'utilisation des données de santé",

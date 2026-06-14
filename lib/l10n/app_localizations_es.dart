@@ -252,7 +252,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get crossSubtitle => '24 h hasta despertar. Desplázate en horizontal.';
 
   @override
-  String get crossEmpty => 'Sin datos de sueño; vista integrada no disponible';
+  String get crossEmpty => 'Sin datos para la vista combinada';
 
   @override
   String get language => 'Idioma';

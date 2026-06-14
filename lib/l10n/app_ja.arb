@@ -75,7 +75,7 @@
   "nextDay": "翌日",
   "crossTitle": "統合ビュー (睡眠×心拍×歩数)",
   "crossSubtitle": "起床時刻までの24時間。横スクロールで確認できます",
-  "crossEmpty": "睡眠データがないため統合表示できません",
+  "crossEmpty": "データがないため統合表示できません",
   "language": "言語",
   "languageSystem": "端末の設定に従う",
   "rationaleTitle": "ヘルスデータの利用について",

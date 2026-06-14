@@ -254,8 +254,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get crossSubtitle => '24 Std. bis zum Aufwachen. Horizontal scrollen.';
 
   @override
-  String get crossEmpty =>
-      'Keine Schlafdaten – integrierte Ansicht nicht verfügbar';
+  String get crossEmpty => 'Keine Daten für die kombinierte Ansicht';
 
   @override
   String get language => 'Sprache';

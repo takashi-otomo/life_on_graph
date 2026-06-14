@@ -559,7 +559,7 @@ abstract class AppLocalizations {
   /// No description provided for @crossEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No sleep data, so the integrated view is unavailable'**
+  /// **'No data to show the combined view'**
   String get crossEmpty;
 
   /// No description provided for @language.

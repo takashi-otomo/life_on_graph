@@ -29,8 +29,10 @@ List<FlSpot> buildHeartRateSpots(
   for (int i = 0; i < sortedPoints.length; i++) {
     final int t = sortedPoints[i].startTime.millisecondsSinceEpoch;
     final bool gapBefore =
-        i == 0 || t - sortedPoints[i - 1].startTime.millisecondsSinceEpoch > gapMs;
-    final bool gapAfter = i == sortedPoints.length - 1 ||
+        i == 0 ||
+        t - sortedPoints[i - 1].startTime.millisecondsSinceEpoch > gapMs;
+    final bool gapAfter =
+        i == sortedPoints.length - 1 ||
         sortedPoints[i + 1].startTime.millisecondsSinceEpoch - t > gapMs;
     if (gapBefore && i > 0) spots.add(FlSpot.nullSpot);
     final double x = t.toDouble();
@@ -184,7 +186,10 @@ class _HeartRateChartState extends State<HeartRateChart> {
     // 欠落区間 (10分超) では線を分断し、空白を直線補間で繋がない (#hr-gap)。
     // 前後とも欠落の孤立点は線にならないためドットで描く。
     final Set<double> isolatedX = <double>{};
-    final List<FlSpot> spots = buildHeartRateSpots(sorted, isolatedX: isolatedX);
+    final List<FlSpot> spots = buildHeartRateSpots(
+      sorted,
+      isolatedX: isolatedX,
+    );
 
     return LineChart(
       LineChartData(

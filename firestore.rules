@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Life On Graph は端末内ローカルファースト設計で Cloud Firestore を使用しない。
+// 公開済みの Firebase クライアント API キーが万一悪用されても、また将来 Firestore を
+// 誤って有効化しても、クライアントからの読み書きを既定で全拒否する (defense-in-depth)。
+// 実際に Firestore を使う機能を追加する場合のみ、必要最小限の許可を明示的に足すこと。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

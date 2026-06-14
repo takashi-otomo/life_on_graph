@@ -685,7 +685,12 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     for (final HealthDataPoint p in points) {
       final int minute = p.dateFrom.millisecondsSinceEpoch ~/ 60000;
       final HealthDataPoint? existing = perMinute[minute];
-      if (existing == null || p.dateFrom.isBefore(existing.dateFrom)) {
+      // 最古を採用。同時刻 (複数ソース等) は uuid の昇順で決定的に選び、再同期でも
+      // 同じ代表を選んで重複が増えないようにする (#142)。
+      if (existing == null ||
+          p.dateFrom.isBefore(existing.dateFrom) ||
+          (p.dateFrom.isAtSameMomentAs(existing.dateFrom) &&
+              p.uuid.compareTo(existing.uuid) < 0)) {
         perMinute[minute] = p;
       }
     }

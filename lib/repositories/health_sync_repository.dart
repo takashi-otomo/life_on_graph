@@ -306,11 +306,18 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       final int days = _historyAuthorized ? historyBackfillDays : backfillDays;
       start = now.subtract(Duration(days: days));
     } else {
-      // 付与後の差分は保存済み last_sync_time をそのまま開始に用いる。
-      // 付与後に書かれたデータは 30 日を超えても読めるため、移動する 30 日床へ
-      // クランプすると長期間未起動・部分失敗後の再開で恒久的な欠損を生む。
-      // よって差分ではクランプしない (P1-1)。
-      start = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
+      // 付与後の差分は保存済み last_sync_time を起点とするが、起動時の前景同期が
+      // 長時間化しないよう **過去 recentSyncDays 日を上限**にクランプする (#sync-recent)。
+      //   start = max(last_sync_time, now - recentSyncDays)
+      // 日常利用 (数日以内に再起動) では last_sync をそのまま用いるため redundant な
+      // 再取得は発生せず、長期間未起動の場合のみ 7 日に切り詰めて高速化する。
+      // これは Health Connect の 30 日読取床 (不本意な制約) とは別の**意図的な速度上限**で、
+      // 切り詰めで取りこぼした古いデータは設定の「全データを再読み込み」で回収できる。
+      final DateTime lastSync = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
+      final DateTime recentFloor = now.subtract(
+        const Duration(days: AppConstants.recentSyncDays),
+      );
+      start = lastSync.isAfter(recentFloor) ? lastSync : recentFloor;
     }
     return SyncWindow(start: start, end: now);
   }

@@ -59,6 +59,14 @@ class AppConstants {
   /// メモリ抑制と取得回数のバランスを取り、初回同期より大きめにする。
   static const int fullReloadChunkDays = 30;
 
+  /// 2 回目以降 (差分) の起動時に遡る最大日数 (#sync-recent)。
+  ///
+  /// 差分の開始は `max(last_sync_time, now - recentSyncDays)` とし、**起動時の前景同期を
+  /// 高々この日数に上限**する。長期間未起動でも起動が重くならないようにするための
+  /// 意図的な速度上限であり、これより古い未取得データは設定の「全データを再読み込み」で
+  /// 遡って回収できる (恒久的欠損を避ける退避路を残す)。
+  static const int recentSyncDays = 7;
+
   /// 差分同期のクエリスキップ閾値 (設計doc 8 章)。
   ///
   /// 前回同期からの経過がこの値未満なら `getHealthDataFromTypes` を呼ばずに

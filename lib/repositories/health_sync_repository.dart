@@ -382,6 +382,8 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
     final int chunkDays = fullHistory
         ? AppConstants.fullReloadChunkDays
         : syncChunkDays;
+    // 心拍は高頻度で 1 チャンクの転送量が大きく OOM し得るため常に細かく分割する (#137)。
+    const int hrChunkDays = AppConstants.heartRateChunkDays;
 
     // 1 種別の取得失敗が他種別の保存を阻害しないよう、種別ごとに独立実行する。
     saved['sleep'] = await _runCategory(
@@ -413,7 +415,7 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
       failed: failed,
       types: const <HealthDataType>[HealthDataType.HEART_RATE],
       window: window,
-      chunkDays: chunkDays,
+      chunkDays: hrChunkDays,
       save: _saveHeartRate,
       onProgress: onProgress,
     );
@@ -676,9 +678,21 @@ class HealthSyncRepositoryImpl implements HealthSyncRepository {
   }
 
   Future<int> _saveHeartRate(List<HealthDataPoint> points) async {
+    // 心拍は常時計測端末で極めて高頻度になり、全件保存はメモリを圧迫する。1 分あたり
+    // 1 サンプル (その分の最古) に間引く。最古を選ぶことで決定的になり、再同期でも同じ
+    // uuid を選ぶため重複が増えない (#137)。
+    final Map<int, HealthDataPoint> perMinute = <int, HealthDataPoint>{};
+    for (final HealthDataPoint p in points) {
+      final int minute = p.dateFrom.millisecondsSinceEpoch ~/ 60000;
+      final HealthDataPoint? existing = perMinute[minute];
+      if (existing == null || p.dateFrom.isBefore(existing.dateFrom)) {
+        perMinute[minute] = p;
+      }
+    }
+
     final Map<String, HeartRateRecordModel> batch =
         <String, HeartRateRecordModel>{};
-    for (final HealthDataPoint p in points) {
+    for (final HealthDataPoint p in perMinute.values) {
       final HeartRateRecordModel record = HeartRateRecordModel(
         uuid: p.uuid,
         startTime: p.dateFrom,

@@ -9,6 +9,8 @@ import '../../providers/data_providers.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/sync_notifier.dart';
+import '../../l10n/app_localizations.dart';
+import '../../repositories/health_sync_repository.dart';
 import '../../widgets/health_status_banner.dart';
 import '../tutorial/tutorial_keys.dart';
 import '../cross_data/widgets/cross_data_chart.dart';
@@ -86,8 +88,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         bottom: false,
         child: Column(
           children: <Widget>[
-            if (sync is SyncInProgress)
-              const LinearProgressIndicator(minHeight: 3),
+            if (sync is SyncInProgress) const _SyncProgressBar(),
             KeyedSubtree(
               key: TutorialKeys.dateNav,
               child: const DateNavHeader(),
@@ -124,6 +125,75 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 同期中であることを件数付きで明示するバー (#sync-recent)。
+///
+/// 細い不確定バーだけでは「同期しているか分かりづらい」ため、進捗 (種別・取得件数・
+/// 全体割合) を一行で可視化する。[syncProgressProvider] が未通知の間は不確定表示。
+class _SyncProgressBar extends ConsumerWidget {
+  const _SyncProgressBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final SyncProgress? p = ref.watch(syncProgressProvider);
+    final String label = switch (p?.phase) {
+      SyncPhase.sleep => l.syncReadingSleep,
+      SyncPhase.steps => l.syncReadingSteps,
+      SyncPhase.heartRate => l.syncReadingHeart,
+      null => l.syncing,
+    };
+    final String detail = p == null
+        ? ''
+        : '  ·  ${l.syncRecordsRead(p.savedInPhase)}  (${p.phaseIndex + 1}/${p.phaseCount})';
+
+    return Container(
+      color: AppColors.accentSoft,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.accentText,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$label$detail',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: p?.fraction,
+              minHeight: 5,
+              backgroundColor: AppColors.background,
+              color: AppColors.accent,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -95,9 +95,10 @@ void main() {
       expect(window.end, now);
     });
 
-    test('差分は last_sync_time を維持し移動 30 日床にクランプしない (P1-1)', () async {
-      // 付与後に書かれたデータは 30 日超でも読めるため、60 日前の last_sync_time でも
-      // クランプせずそのまま開始に用いる (恒久的なデータ欠損を防ぐ)。
+    test('差分は過去 recentSyncDays 日を上限に切り詰める (#sync-recent)', () async {
+      // 長期間未起動 (60 日前の last_sync_time) でも起動時前景同期を高速化するため、
+      // 開始は now - recentSyncDays(7 日) に切り詰める。取りこぼした古いデータは
+      // 設定の「全データを再読み込み」で回収できる。
       final now = DateTime(2026, 6, 5, 12);
       final old = now.subtract(const Duration(days: 60));
       await db.metadataBox.put(
@@ -106,7 +107,23 @@ void main() {
       );
       final window = repo(FakeHealthClient()).computeSyncWindow(now);
 
-      expect(window.start, old);
+      expect(
+        window.start,
+        now.subtract(const Duration(days: AppConstants.recentSyncDays)),
+      );
+    });
+
+    test('差分が recentSyncDays 以内なら last_sync_time をそのまま用いる', () async {
+      // 日常利用 (数日以内の再起動) では上限に達しないため redundant な再取得をしない。
+      final now = DateTime(2026, 6, 5, 12);
+      final last = now.subtract(const Duration(days: 2));
+      await db.metadataBox.put(
+        HealthSyncRepositoryImpl.lastSyncTimeKey,
+        last.millisecondsSinceEpoch,
+      );
+      final window = repo(FakeHealthClient()).computeSyncWindow(now);
+
+      expect(window.start, last);
     });
 
     test('初回・履歴権限なしのバックフィルは 30 日に制限される', () {
@@ -496,7 +513,8 @@ void main() {
 
     test('履歴権限ありでも差分 (last_sync_time>0) は保存済み値をそのまま使う', () async {
       final now = DateTime(2026, 6, 5, 12);
-      final last = now.subtract(const Duration(days: 60));
+      // recentSyncDays 以内の last_sync。履歴権限の有無に依らず差分は last をそのまま用いる。
+      final last = now.subtract(const Duration(days: 2));
       await setLastSync(last);
       final client = FakeHealthClient(historyAlreadyAuthorized: true);
       final r = repo(client);

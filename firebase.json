@@ -18,6 +18,12 @@
       }
     }
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
     "public": "website/public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],

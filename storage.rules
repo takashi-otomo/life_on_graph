@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Life On Graph は端末内ローカルファースト設計で Cloud Storage を使用しない。
+// 公開済みの Firebase クライアント API キーが万一悪用されても、また将来 Storage を
+// 誤って有効化しても、クライアントからの読み書きを既定で全拒否する (defense-in-depth)。
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

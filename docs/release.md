@@ -137,11 +137,57 @@ tool/build_release.sh
 生成された `app-release.aab` を Play Console にアップロードする。
 `android/key.properties` と `*.jks` は `.gitignore` 済みでコミットされない。
 
-## Google Play 公開のセットアップ
+## Google Play 公開のセットアップ (main マージ → 自動公開)
 
-1. Google Play Console で対象アプリ (`dev.otomo.life_on_graph`) を作成し、**最初の AAB を手動アップロード**して内部テスト等で審査を通す (Play の初回制約)。
-2. [Play Console → API アクセス](https://play.google.com/console) で Google Cloud のサービスアカウントを連携し、リリース権限を付与。
-3. そのサービスアカウント JSON を `PLAY_SERVICE_ACCOUNT` Secret に登録。
-4. 以降 `main` マージで [r0adkll/upload-google-play](https://github.com/r0adkll/upload-google-play) が **production トラックへ自動公開**する。
+`main` マージで自動公開を稼働させるための **完全な手順**。前提①②は Play / GCP 側の手作業
+(コードからは実行不可)。③以降を満たすと CI が自動公開する。
 
-> 段階公開したい場合は `distribute.yml` の `status: completed` を `inProgress` + `userFraction` に変更する。
+### 前提: Play Console でのアプリ初期設定 (初回のみ・手作業)
+Play API は **既存アプリの新リリース**しか作れない。最初の 1 本と各種申告は手動で行う。
+1. Play Console で対象アプリ (`dev.otomo.life_on_graph`) を作成。
+2. **最初の AAB を手動アップロード**する。ローカル生成 (「初回 AAB をローカルでビルドする」節) か、
+   手動ワークフロー **`Build signed AAB (manual)`** (`build-aab.yml`) の成果物を使う。
+   最低 1 リリースを作る (内部テスト等のトラックでよい)。
+3. 公開に必須の申告を完了する (未完だと公開が弾かれる):
+   - ストア掲載情報 (6言語: `distribution/` のアセット)、プライバシーポリシー URL
+   - **データセーフティ**フォーム、**コンテンツのレーティング**、対象年齢、広告の有無
+   - アプリのアクセス権 (健康データ権限の用途説明 / Health Apps Declaration)
+
+### ① サービスアカウントの作成と権限付与 (手作業)
+1. [Play Console → 設定 → API アクセス](https://play.google.com/console) で Google Cloud
+   プロジェクト (`lifeongraph`) をリンクする。
+2. 「サービスアカウントを作成」リンクから [GCP のサービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts?project=lifeongraph)
+   を作成 (例: `play-publisher`)。**JSON 鍵**を発行・ダウンロード。
+3. Play Console の API アクセス画面で、当該サービスアカウントに **アプリ権限を付与**:
+   - 対象アプリ `dev.otomo.life_on_graph` を選択
+   - 権限: **「製品版へのリリース」「テスト版へのリリース」「アプリ情報の管理」**
+4. 反映まで数分かかることがある。
+
+### ② Secret 登録 (手作業)
+- GitHub → Settings → Secrets and variables → Actions に **`PLAY_SERVICE_ACCOUNT`** を作成し、
+  ①の **JSON 全文**を貼り付ける。これで `distribute.yml` の `guard` が `play=true` になり
+  main 公開ステップが有効化される。
+
+### ③ 設定の検証 (任意・推奨)
+- 手動ワークフロー **`Validate Google Play credentials (manual)`** (`play-validate.yml`) を
+  `main` / `develop` で実行する。変更を加えずに API アクセスを検証し利用可能トラックを表示する。
+  失敗時はメッセージに従い ①②、または初回アップロードを見直す。
+
+### ④ 自動公開 (main マージ時)
+`main` マージで `release-production` ジョブが署名済み AAB をビルドし
+[r0adkll/upload-google-play](https://github.com/r0adkll/upload-google-play) で公開する。
+公開前に `tool/check_whatsnew.sh` が言語別リリースノートを検証 (上限500字/必須6言語/空) する。
+
+### 公開トラック / 段階公開の切り替え (コード変更不要)
+Settings → Secrets and variables → Actions → **Variables** に設定すると `distribute.yml` が追従:
+
+| 変数 | 既定 | 説明 |
+|---|---|---|
+| `PLAY_TRACK` | `production` | `internal` / `alpha` / `beta` / `production` |
+| `PLAY_STATUS` | `completed` | `completed` (即時100%) / `inProgress` (段階) / `draft` (下書き=手動公開) / `halted` |
+| `PLAY_USER_FRACTION` | (なし) | `inProgress` 時の公開割合 (例 `0.1` = 10%) |
+
+> 例: 内部テストだけ自動化 → `PLAY_TRACK=internal`。段階公開 → `PLAY_STATUS=inProgress` +
+> `PLAY_USER_FRACTION=0.1`。アップロードのみ自動・公開は手動 → `PLAY_STATUS=draft`。
+
+> production 公開でも Play の審査状況により反映に時間がかかる場合がある。

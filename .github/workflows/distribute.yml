@@ -168,6 +168,12 @@ jobs:
       - name: Generate release notes
         run: bash tool/release_notes.sh
 
+      # Play 公開する場合は、公開前に whatsnew (言語別最新情報) を検証して fail-fast する
+      # (上限 500 字超・必須ロケール欠落・空ファイルを公開前に検出)。
+      - name: Preflight whatsnew (Play)
+        if: needs.guard.outputs.play == 'true'
+        run: bash tool/check_whatsnew.sh
+
       # アップロード鍵 (keystore) を Secrets から復元する (job が signing 必須)。
       - name: Decode upload keystore
         env:
@@ -202,15 +208,22 @@ jobs:
         if: needs.guard.outputs.play == 'true'
         run: flutter build appbundle --release
 
-      - name: Publish to Google Play (production)
+      # 公開トラックとロールアウトは Repository variables で上書きできる (既定は
+      # production / completed = 即時 100% 公開)。段階公開したい場合は Settings →
+      # Secrets and variables → Actions → Variables に以下を設定する:
+      #   PLAY_TRACK=production        (internal / alpha / beta / production)
+      #   PLAY_STATUS=inProgress       (completed / inProgress / draft / halted)
+      #   PLAY_USER_FRACTION=0.1       (status=inProgress のときの公開割合 0〜1)
+      - name: Publish to Google Play
         if: needs.guard.outputs.play == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: production
-          status: completed
+          track: ${{ vars.PLAY_TRACK || 'production' }}
+          status: ${{ vars.PLAY_STATUS || 'completed' }}
+          userFraction: ${{ (vars.PLAY_STATUS == 'inProgress' || vars.PLAY_STATUS == 'halted') && vars.PLAY_USER_FRACTION || '' }}
           whatsNewDirectory: distribution/whatsnew
 
       - name: Notice (Play publish skipped)

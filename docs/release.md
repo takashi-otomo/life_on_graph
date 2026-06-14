@@ -26,6 +26,31 @@
 > その commit が既に `main` 上にある場合は testers 配信をスキップする (`distribute.yml` の
 > `testers-gate`)。`main` 公開 (production) と重複しない。
 
+## main 保護ルール (人間の承認を経たマージのみ)
+
+`main` への変更は製品版公開 (Google Play / production) に直結するため、**本人 (所有者) が
+明示的に承認するまでマージしない**運用とする。二層で担保する。
+
+### ① 行動ルール (AI 開発支援)
+`CLAUDE.md`「🔒 `main` へのマージ規則」に従い、AI は `main` 向けは **PR 作成までで停止**し、
+`gh pr merge` 等を勝手に実行しない。「マージして」の依頼は `develop` のみ対象。`main` は
+当該 PR を特定した明示承認があったときだけマージする (承認は毎回必要)。
+
+### ② GitHub ブランチ保護 (Repository ruleset)
+`main` に対し次を強制する (Settings → Rules → Rulesets):
+- **PR 必須** (直接 push 不可)
+- **CI 必須** (`Analyze & Test` 緑)
+- **force push / 削除 禁止**
+- バイパス: **Repository admin** (= 所有者)。所有者は自分の PR をマージできる。
+
+> 補足: AI 開発支援は所有者のローカル認証情報で動作するため、GitHub から見ると
+> 「所有者」と区別できない。よって**実効的な抑止は ①の行動ルール**であり、②は
+> 「PR 経由 + CI 緑」を全変更に強制するガードレールとして併用する。
+>
+> リリースジョブ (`distribute.yml`) の `main` への versionName 書き戻しは、保護により
+> `github-actions[bot]` の直接 push が弾かれるため **best-effort (失敗しても続行)** にしている。
+> 発行する AAB の versionCode は git ベースで push 成否に依存しない。
+
 ## Firebase App Distribution
 
 CI: [`.github/workflows/distribute.yml`](../.github/workflows/distribute.yml)

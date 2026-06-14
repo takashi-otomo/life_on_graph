@@ -212,12 +212,50 @@ void main() {
       await r.ensureHistoryPermission(); // 初回バックフィル (過去3か月) にする
       await r.sync(now: now);
 
-      // 90 日 / 14 日 = 7 チャンク × 3 種別。
-      final int chunks =
-          (HealthSyncRepositoryImpl.historyBackfillDays /
-                  HealthSyncRepositoryImpl.syncChunkDays)
-              .ceil();
-      expect(client.queriedWindows.length, chunks * 3);
+      // 睡眠・歩数は syncChunkDays、心拍は heartRateChunkDays (小さい) で分割される (#137)。
+      final int days = HealthSyncRepositoryImpl.historyBackfillDays;
+      final int normalChunks = (days / HealthSyncRepositoryImpl.syncChunkDays)
+          .ceil();
+      final int hrChunks = (days / AppConstants.heartRateChunkDays).ceil();
+      expect(client.queriedWindows.length, normalChunks * 2 + hrChunks);
+    });
+
+    test('心拍は 1 分 1 サンプルに間引いて保存する (#137)', () async {
+      final DateTime base = DateTime(2026, 6, 5, 8);
+      // 同一分内に 3 サンプル、別の分に 1 サンプル。
+      final client = FakeHealthClient(
+        dataByType: {
+          HealthDataType.HEART_RATE: [
+            fakePoint(
+              uuid: 'h1',
+              type: HealthDataType.HEART_RATE,
+              from: base.add(const Duration(seconds: 10)),
+              to: base.add(const Duration(seconds: 10)),
+              value: 60,
+            ),
+            fakePoint(
+              uuid: 'h2',
+              type: HealthDataType.HEART_RATE,
+              from: base.add(const Duration(seconds: 30)),
+              to: base.add(const Duration(seconds: 30)),
+              value: 70,
+            ),
+            fakePoint(
+              uuid: 'h3',
+              type: HealthDataType.HEART_RATE,
+              from: base.add(const Duration(minutes: 1, seconds: 5)),
+              to: base.add(const Duration(minutes: 1, seconds: 5)),
+              value: 80,
+            ),
+          ],
+        },
+      );
+      await repo(client).sync(now: DateTime(2026, 6, 5, 12));
+
+      // 2 分ぶん = 2 件のみ。最古サンプル (h1=60, h3=80) が採用される。
+      expect(db.heartRateBox.length, 2);
+      final bpms = db.heartRateBox.values.map((r) => r.beatsPerMinute).toSet();
+      expect(bpms, <int>{60, 80});
     });
 
     test('onProgress が種別ごとに進捗 (件数・チャンク) を通知する', () async {

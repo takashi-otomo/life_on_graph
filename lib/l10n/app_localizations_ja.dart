@@ -247,7 +247,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get crossSubtitle => '起床時刻までの24時間。横スクロールで確認できます';
 
   @override
-  String get crossEmpty => '睡眠データがないため統合表示できません';
+  String get crossEmpty => 'データがないため統合表示できません';
 
   @override
   String get language => '言語';

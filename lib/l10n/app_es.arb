@@ -75,7 +75,7 @@
   "nextDay": "Día siguiente",
   "crossTitle": "Vista integrada (sueño × FC × pasos)",
   "crossSubtitle": "24 h hasta despertar. Desplázate en horizontal.",
-  "crossEmpty": "Sin datos de sueño; vista integrada no disponible",
+  "crossEmpty": "Sin datos para la vista combinada",
   "language": "Idioma",
   "languageSystem": "Predeterminado del sistema",
   "rationaleTitle": "Sobre el uso de datos de salud",

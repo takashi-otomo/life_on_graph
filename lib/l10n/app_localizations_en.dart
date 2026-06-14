@@ -251,8 +251,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get crossSubtitle => '24 hours up to wake time. Scroll horizontally.';
 
   @override
-  String get crossEmpty =>
-      'No sleep data, so the integrated view is unavailable';
+  String get crossEmpty => 'No data to show the combined view';
 
   @override
   String get language => 'Language';

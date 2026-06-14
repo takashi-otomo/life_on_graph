@@ -113,7 +113,7 @@
   "nextDay": "Next day",
   "crossTitle": "Integrated view (sleep × heart rate × steps)",
   "crossSubtitle": "24 hours up to wake time. Scroll horizontally.",
-  "crossEmpty": "No sleep data, so the integrated view is unavailable",
+  "crossEmpty": "No data to show the combined view",
   "language": "Language",
   "languageSystem": "System default",
   "rationaleTitle": "About health data use",

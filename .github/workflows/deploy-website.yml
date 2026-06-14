@@ -1,8 +1,11 @@
 name: Deploy Website (Firebase Hosting)
 
-# website/ が main にマージされたら Firebase Hosting (lifeongraph) へ自動デプロイする。
+# website/ が main にマージされたら Firebase Hosting (lifeongraph) の live へ自動デプロイする。
 # 公開ディレクトリは firebase.json の hosting.public = "website/public" を使う
 # (既にこの構成でデプロイ済みのため、リポジトリ直下から deploy するだけでよい)。
+#
+# 手動実行 (workflow_dispatch) は本番に影響しないよう **プレビュー チャンネル** へ配信し、
+# 動作確認に使う (一時 URL・期限付き)。live への公開は main への push のみ。
 on:
   push:
     branches: [main]
@@ -13,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: hosting-${{ github.ref }}
+  group: hosting-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
@@ -39,19 +42,29 @@ jobs:
           fi
 
   deploy:
-    name: Deploy to Firebase Hosting (live)
+    name: Deploy to Firebase Hosting
     needs: guard
-    # live への公開は main からのみ許可する (手動実行で任意ブランチを公開しない)。
-    if: needs.guard.outputs.ready == 'true' && github.ref == 'refs/heads/main'
+    # push は main のみ live。workflow_dispatch は任意ブランチでプレビュー配信 (動作確認用)。
+    if: >-
+      needs.guard.outputs.ready == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # firebase.json の hosting.public (= website/public) を live チャンネルへ公開する。
+      # push(main) → live、手動実行 → プレビュー(manual-test)。live は main からのみ。
+      - id: ch
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "channel=live" >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=manual-test" >> "$GITHUB_OUTPUT"
+          fi
+      # firebase.json の hosting.public (= website/public) を対象チャンネルへ公開する。
       # Hosting 専用のサービスアカウント (Firebase Hosting 管理者) を用いる。
       - name: Deploy
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_HOSTING_SA }}
-          channelId: live
+          channelId: ${{ steps.ch.outputs.channel }}
           projectId: ${{ env.FIREBASE_PROJECT }}

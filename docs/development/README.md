@@ -51,6 +51,7 @@ Android の **ヘルスコネクト (Health Connect)** に集約された **睡�
 | 08 | [デリバリー (Delivery)](08_delivery.md) | ブランチ戦略・CI/CD・Play リリース |
 | 09 | [その他の考慮点と学び](09_topics_and_learnings.md) | i18n・アプリロック・OOM 対処・知見 |
 | 10 | [実際に試す → クローズドテスト](10_try_it_and_closed_test.md) | 動かす手順・いじると面白い箇所・テスター参加導線 |
+| 11 | [今後の展望 (Roadmap)](11_roadmap.md) | 近期/中期/長期の計画・リリース段階・継続テーマ |
 
 > 一次情報は [`docs/01_requirements.md`](../01_requirements.md) /
 > [`docs/02_design.md`](../02_design.md) / [`docs/03_tasks.md`](../03_tasks.md) /

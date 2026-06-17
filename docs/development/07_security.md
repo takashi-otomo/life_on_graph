@@ -27,8 +27,17 @@ flowchart TD
 
 ### ① データ最小化
 
-- 申請権限を **READ_SLEEP / READ_STEPS / READ_HEART_RATE (+ READ_HEALTH_DATA_HISTORY)**
-  に限定。WRITE もバックグラウンド読み取りも申請しない。
+申請権限を **3 種 (+ 履歴)** に限定。WRITE もバックグラウンド読み取りも申請しない
+(`android/app/src/main/AndroidManifest.xml`):
+
+```xml
+<uses-permission android:name="android.permission.health.READ_SLEEP" />
+<uses-permission android:name="android.permission.health.READ_STEPS" />
+<uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+<uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
+<!-- WRITE_* / READ_*_IN_BACKGROUND は申請しない -->
+```
+
 - 不要権限の申請は審査却下要因にもなるため、最初から欲張らない。
 
 ### ② 暗号化 + 鍵隔離
@@ -78,6 +87,18 @@ flowchart TD
   **キー制限 (アプリ署名 + パッケージ名) + Security Rules + App Check** で担保する。
 - 実施: Firestore/Storage を **deny-all ルール**化 (将来誤って有効化しても全拒否)。
   GCP でのキー制限 (パッケージ名 + アップロード鍵/Play 署名鍵の SHA) を案内。
+
+```javascript
+// firestore.rules — クライアントからの読み書きを既定で全拒否
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
 - 本アプリはローカルファーストでバックエンドにヘルスデータを持たないため、この鍵経由で
   漏れるユーザーデータは存在しない (=実害は無い) ことを確認したうえで対処した。
 

@@ -31,8 +31,32 @@ flowchart TD
 | 集計/可視化 | 睡眠サマリー・歩数時間集計・心拍系列・期間集計・統合ビュー窓 |
 | UI | ダッシュボード・サマリー・設定・オンボーディング・アプリロック・カレンダー・空状態・i18n |
 
+例: 7 日上限クランプの単体テスト (`test/unit/health_sync_repository_test.dart`) —
+60 日前の `last_sync` でも開始が `now - 7日` に切り詰められることを固定する:
+
+```dart
+test('差分は過去 recentSyncDays 日を上限に切り詰める (#sync-recent)', () async {
+  final now = DateTime(2026, 6, 5, 12);
+  final old = now.subtract(const Duration(days: 60));
+  await db.metadataBox.put(
+    HealthSyncRepositoryImpl.lastSyncTimeKey, old.millisecondsSinceEpoch,
+  );
+  final window = repo(FakeHealthClient()).computeSyncWindow(now);
+  expect(window.start,
+      now.subtract(const Duration(days: AppConstants.recentSyncDays)));
+});
+```
+
 例: 心拍グラフの欠落分断は純粋関数 `buildHeartRateSpots` に切り出し、
 「10 分超で `nullSpot` 挿入」「連続では挿入しない」「孤立点を収集」を単体検証している。
+欠落区間で線を切る本体側のロジックはこう書ける (`heart_rate_chart.dart`):
+
+```dart
+final bool gapBefore = i == 0 ||
+    t - sortedPoints[i - 1].startTime.millisecondsSinceEpoch > gapMs; // 10分
+if (gapBefore && i > 0) spots.add(FlSpot.nullSpot);   // ← 線を分断
+spots.add(FlSpot(x, sortedPoints[i].beatsPerMinute.toDouble()));
+```
 
 ```mermaid
 flowchart LR

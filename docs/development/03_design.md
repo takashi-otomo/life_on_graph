@@ -136,6 +136,16 @@ sequenceDiagram
 - **2 回目以降は過去 7 日上限**: 長期間未起動でも起動時前景同期が重くならないよう、
   差分開始を `max(last_sync, now-7日)` にクランプ。取りこぼした古い履歴は設定の
   「全データ再読み込み」で回収できる退避路を残す。
+
+差分窓のクランプ (`lib/repositories/health_sync_repository.dart`):
+
+```dart
+// 差分 (last_sync_time > 0) の開始は max(last_sync, now - recentSyncDays)
+final DateTime lastSync = DateTime.fromMillisecondsSinceEpoch(lastSyncMs);
+final DateTime recentFloor =
+    now.subtract(const Duration(days: AppConstants.recentSyncDays)); // 7
+start = lastSync.isAfter(recentFloor) ? lastSync : recentFloor;
+```
 - **チャンク分割**: 全期間一括取得はメモリを圧迫するため、種別ごとに日数でチャンク化し
   「取得 → 保存 → 解放」を反復。特に**心拍は 1 日チャンク + 1 分間引き**で OOM を回避
   ([09](09_topics_and_learnings.md) のクラッシュ調査参照)。

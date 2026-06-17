@@ -5,6 +5,10 @@
 言語化したものです。Tech Blog の素材として、各工程の「何を・なぜ・どうやって」を
 詳細かつ再利用可能な形で残すことを目的とします。
 
+> 🧪 **実際に試せます** — コードを動かす手順とクローズドテスト参加方法は
+> **[10. 実際に試す → クローズドテスト](10_try_it_and_closed_test.md)** へ。
+> Android + ヘルスコネクトがあれば実機で触れます。
+
 ## プロダクト概要
 
 Android の **ヘルスコネクト (Health Connect)** に集約された **睡眠・歩数・心拍** を取得し、
@@ -46,6 +50,7 @@ Android の **ヘルスコネクト (Health Connect)** に集約された **睡�
 | 07 | [セキュリティ (Security)](07_security.md) | ローカルファースト・暗号化・コンプライアンス |
 | 08 | [デリバリー (Delivery)](08_delivery.md) | ブランチ戦略・CI/CD・Play リリース |
 | 09 | [その他の考慮点と学び](09_topics_and_learnings.md) | i18n・アプリロック・OOM 対処・知見 |
+| 10 | [実際に試す → クローズドテスト](10_try_it_and_closed_test.md) | 動かす手順・いじると面白い箇所・テスター参加導線 |
 
 > 一次情報は [`docs/01_requirements.md`](../01_requirements.md) /
 > [`docs/02_design.md`](../02_design.md) / [`docs/03_tasks.md`](../03_tasks.md) /

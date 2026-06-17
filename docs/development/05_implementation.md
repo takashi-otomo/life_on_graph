@@ -44,7 +44,39 @@ flowchart TD
     O --> R["sleep/steps/heart/metadata<br/>ボックス使用可"]
 ```
 
-- 破損時のリカバリ経路も実装 (open 失敗時のハンドリング)。鍵・データは平文ログに出さない。
+鍵の生成・取得 (`lib/core/encryption_key_provider.dart`) — 初回だけ 256bit 鍵を生成し、
+以降は secure storage から再利用する:
+
+```dart
+Future<Uint8List> getOrCreateKey() async {
+  final stored = await _keyStore.read(keyAlias);
+  if (stored != null) {
+    return base64Url.decode(stored);
+  }
+  final generated = Hive.generateSecureKey();          // 256bit
+  await _keyStore.write(keyAlias, base64UrlEncode(generated));
+  return Uint8List.fromList(generated);
+}
+```
+
+暗号化ボックスを開く (`lib/core/database_manager.dart`) — 3 種すべてに `HiveAesCipher`:
+
+```dart
+Future<void> _openEncryptedBoxes(HiveAesCipher cipher) async {
+  _sleepBox = await Hive.openBox<SleepRecordModel>(
+    sleepBoxName, encryptionCipher: cipher,
+  );
+  _stepsBox = await Hive.openBox<StepsRecordModel>(
+    stepsBoxName, encryptionCipher: cipher,
+  );
+  _heartRateBox = await Hive.openBox<HeartRateRecordModel>(
+    heartRateBoxName, encryptionCipher: cipher,
+  );
+}
+```
+
+- Auto Backup 復元等で鍵材料が欠落した場合のみ鍵を再生成して復旧する経路も実装
+  (ディスク I/O 障害などは誤った破壊的復旧を避け上位へ伝播)。鍵・データは平文ログに出さない。
 
 ### HealthSyncRepository (同期 + クレンジング)
 
@@ -79,7 +111,26 @@ java.lang.OutOfMemoryError: ... target footprint 268435456 (256MB)
 - **1 分 1 サンプルに間引き** (保存量と転送量を圧縮)。
 - `largeHeap="true"` でヒープ余裕を確保。
 
+間引きの実コード (`lib/repositories/health_sync_repository.dart`) — 1 分ごとに最古を採用し、
+同時刻は uuid で安定タイブレーク。**再同期しても同じ代表を選ぶので重複が増えない**:
+
+```dart
+final Map<int, HealthDataPoint> perMinute = <int, HealthDataPoint>{};
+for (final HealthDataPoint p in points) {
+  final int minute = p.dateFrom.millisecondsSinceEpoch ~/ 60000;
+  final HealthDataPoint? existing = perMinute[minute];
+  if (existing == null ||
+      p.dateFrom.isBefore(existing.dateFrom) ||
+      (p.dateFrom.isAtSameMomentAs(existing.dateFrom) &&
+          p.uuid.compareTo(existing.uuid) < 0)) {
+    perMinute[minute] = p;        // この分の代表サンプル
+  }
+}
+```
+
 結果、実機で過去 3 か月 (心拍 49,433 件) を**クラッシュなく完走**することを検証。
+logcat で OOM の真因 (プラグインのチャネルシリアライズ) を特定 → 設計修正、という
+**ログ駆動の問題解決**が効いた事例。
 
 ### ② 2 回目以降の起動同期を 7 日上限に
 

@@ -10,16 +10,22 @@
 > 🧪 **クローズドテスター募集中**
 > Life On Graph を実機で試せます。**Android + ヘルスコネクト**があればすぐ始められます。
 >
-> 1. テスター登録(下記のいずれか)
->    - 公式サイト: <https://lifeongraph.web.app>
->    - お問い合わせ/参加フォーム: <https://forms.gle/TQSUCq7ERuMLn6jB8>
-> 2. 参加用オプトインリンクを開く(登録後に案内)
->    - `https://play.google.com/apps/testing/dev.otomo.life_on_graph`
-> 3. Google Play からインストール
->    - `https://play.google.com/store/apps/details?id=dev.otomo.life_on_graph`
+> 1. **Google グループに参加**(テスター登録)
+>    - <https://groups.google.com/g/lifeongraphtester>
+>    - ⚠️ **Google Play にログインしているのと同じ Google アカウント**で参加してください
+> 2. **オプトイン**(テスト参加表明)
+>    - <https://play.google.com/apps/testing/dev.otomo.life_on_graph>
+>    - 「テスターになる」を選択
+> 3. **Google Play からインストール**
+>    - <https://play.google.com/store/apps/details?id=dev.otomo.life_on_graph>
 >
-> ※ クローズドテストの公開状況により、リンクが有効化されるまで時間差があります。
+> ※ グループ参加・トラック公開の反映に **数時間〜最大 1 日**かかることがあります。
+> リンクが「見つかりません」のときは、①グループ参加済みか ②Play ログインのアカウントが
+> グループ参加アカウントと一致しているか を確認してください。
 > 睡眠・歩数・心拍がヘルスコネクトに入っているほど、統合ビューが映えます。
+
+> 参考: 公式サイト <https://lifeongraph.web.app> / お問い合わせ・要望フォーム
+> <https://forms.gle/TQSUCq7ERuMLn6jB8>
 
 ### 触ってほしいポイント
 - 起動した瞬間に**待たされず**データが出る (ローカルファースト)。

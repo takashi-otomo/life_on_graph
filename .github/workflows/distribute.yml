@@ -8,6 +8,15 @@ name: Release (App Distribution / Google Play)
 on:
   push:
     branches: [develop, main]
+    # ドキュメントのみの変更ではテストビルド/配信を行わない (ビルド資源を浪費しない)。
+    # paths-ignore は「変更ファイルが全てこのパターンに合致するとき」のみスキップするため、
+    # コード + ドキュメントの混在 push は通常どおりビルドされる。
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "designs/**"
+      - ".maestro/**"
+      - "LICENSE"
   workflow_dispatch:
 
 concurrency:
